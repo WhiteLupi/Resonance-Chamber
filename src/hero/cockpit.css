@@ -27,41 +27,27 @@
     10px 100%, 0 calc(100% - 10px)
   );
 
-  font-family: 'Major Mono Display', ui-monospace, monospace;
+  font-family: 'Space Mono', ui-monospace, monospace;
   color: rgba(22, 22, 22, 0.85);
 
   opacity: 0;
   transform: translate(-50%, -18px);
-  animation: cockpit-fade-from-top 1.1s cubic-bezier(0.2, 0.8, 0.2, 1) 3s both;
   transition:
-    transform 0.45s cubic-bezier(0.5, 0, 0.3, 1),
-    opacity 0.35s ease;
+    transform 0.55s cubic-bezier(0.2, 0.8, 0.2, 1),
+    opacity 0.5s ease;
 }
 
-@keyframes cockpit-fade-from-top {
-  from { opacity: 0; transform: translate(-50%, -18px); }
-  to   { opacity: 1; transform: translate(-50%, 0); }
+.cockpit-navbar--in {
+  opacity: 1;
+  transform: translate(-50%, 0);
 }
 
 .cockpit-navbar--hidden {
-  animation: none;
   opacity: 0;
   transform: translate(-50%, -130%);
   pointer-events: none;
 }
 
-.cockpit-navbar::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  background: repeating-linear-gradient(
-    0deg,
-    rgba(255, 255, 255, 0.025) 0 1px,
-    transparent 1px 3px
-  );
-  mix-blend-mode: overlay;
-}
 
 .cockpit-navbar__left {
   display: flex;
@@ -71,19 +57,37 @@
   letter-spacing: 0.22em;
 }
 
-.cockpit-navbar__dot {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: #E60026;
-  box-shadow: 0 0 7px rgba(230, 0, 38, 0.65);
-  animation: cockpit-blip 2.4s ease-in-out infinite;
+.cockpit-navbar__sigil {
+  display: inline-block;
+  font-size: 14px;
+  line-height: 1;
+  color: #c97a3c;
+  text-shadow: 0 0 6px rgba(201, 122, 60, 0.55), 0 0 12px rgba(201, 122, 60, 0.3);
+  animation: cockpit-sigil-pulse 3.6s ease-in-out infinite;
 }
 
-@keyframes cockpit-blip {
-  0%, 100% { opacity: 1;    transform: scale(1); }
-  45%      { opacity: 0.35; transform: scale(0.7); }
-  50%      { opacity: 0.5;  transform: scale(0.8); }
+@keyframes cockpit-sigil-pulse {
+  0%, 100% { opacity: 1;    text-shadow: 0 0 6px rgba(201, 122, 60, 0.55), 0 0 12px rgba(201, 122, 60, 0.3); }
+  50%      { opacity: 0.7;  text-shadow: 0 0 3px rgba(201, 122, 60, 0.4),  0 0 6px rgba(201, 122, 60, 0.18); }
+}
+
+.cockpit-navbar__glyph {
+  display: inline-block;
+  font-size: 11px;
+  line-height: 1;
+  margin-right: 7px;
+  color: rgba(22, 22, 22, 0.55);
+  transform: translateY(-1px);
+}
+
+.cockpit-navbar__link:hover .cockpit-navbar__glyph,
+.cockpit-navbar__link:focus-visible .cockpit-navbar__glyph {
+  color: #c97a3c;
+  text-shadow: 0 0 5px rgba(201, 122, 60, 0.5);
+}
+
+.cockpit-navbar__right .cockpit-navbar__glyph {
+  margin-right: 6px;
 }
 
 .cockpit-navbar__center {
@@ -107,8 +111,8 @@
   position: absolute;
   left: 0; right: 0; bottom: -2px;
   height: 1px;
-  background: #E60026;
-  box-shadow: 0 0 5px rgba(230, 0, 38, 0.7);
+  background: #c97a3c;
+  box-shadow: 0 0 5px rgba(201, 122, 60, 0.7);
   transform: scaleX(0);
   transform-origin: left;
   transition: transform 0.22s ease;
@@ -116,7 +120,7 @@
 
 .cockpit-navbar__link:hover,
 .cockpit-navbar__link:focus-visible {
-  color: #E60026;
+  color: #c97a3c;
   outline: none;
 }
 
@@ -139,11 +143,105 @@
   letter-spacing: 0.22em;
 }
 
-.cockpit-navbar__bracket {
-  display: inline-block;
-  color: rgba(22, 22, 22, 0.5);
+
+/* telemetry card — left-side profile readout */
+
+.cockpit-telemetry {
+  position: absolute;
+  left: 64px;
+  bottom: 64px;
+  transform: translateY(12px);
+  z-index: 14;
+  min-width: 268px;
+  padding: 18px 22px 16px;
+
+  background: rgba(232, 230, 227, 0.18);
+  backdrop-filter: blur(20px) saturate(160%);
+  -webkit-backdrop-filter: blur(20px) saturate(160%);
+  border-top: 1px solid rgba(255, 255, 255, 0.28);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+
+  clip-path: polygon(
+    0 8px, 8px 0,
+    calc(100% - 8px) 0, 100% 8px,
+    100% calc(100% - 8px), calc(100% - 8px) 100%,
+    8px 100%, 0 calc(100% - 8px)
+  );
+
+  font-family: 'Space Mono', ui-monospace, monospace;
+  color: rgba(22, 22, 22, 0.82);
+  opacity: 0;
+  transition:
+    opacity 0.6s ease,
+    transform 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.cockpit-telemetry--in {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+
+.cockpit-telemetry__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 10px;
+  letter-spacing: 0.34em;
+  color: rgba(22, 22, 22, 0.55);
+  margin-bottom: 13px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.cockpit-telemetry__bracket {
+  color: rgba(201, 122, 60, 0.65);
   font-size: 11px;
-  line-height: 1;
+}
+
+.cockpit-telemetry__body {
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.cockpit-telemetry__row {
+  display: grid;
+  grid-template-columns: 64px 1fr;
+  align-items: center;
+  font-size: 11px;
+  letter-spacing: 0.22em;
+}
+
+.cockpit-telemetry__row dt {
+  color: rgba(22, 22, 22, 0.45);
+}
+
+.cockpit-telemetry__row dd {
+  margin: 0;
+  color: rgba(22, 22, 22, 0.85);
+}
+
+.cockpit-telemetry__bars {
+  display: inline-flex;
+  gap: 3px;
+}
+
+.cockpit-telemetry__bar {
+  display: block;
+  width: 8px;
+  height: 10px;
+  background: rgba(22, 22, 22, 0.18);
+}
+
+.cockpit-telemetry__bar--on {
+  background: #c97a3c;
+  box-shadow: 0 0 4px rgba(201, 122, 60, 0.55);
+}
+
+@media (max-width: 880px) {
+  .cockpit-telemetry { display: none; }
 }
 
 /* scroll CTA — bottom-center indicator */
@@ -158,7 +256,7 @@
   gap: 6px;
   z-index: 12;
 
-  font-family: 'Major Mono Display', ui-monospace, monospace;
+  font-family: 'Space Mono', ui-monospace, monospace;
   font-size: 9px;
   letter-spacing: 0.42em;
   color: rgba(35, 35, 35, 0.6);
@@ -179,7 +277,7 @@
 
 .cockpit-scroll:hover,
 .cockpit-scroll:focus-visible {
-  color: #E60026;
+  color: #c97a3c;
   outline: none;
 }
 
@@ -210,7 +308,7 @@
 
 .cockpit-scroll:hover .cockpit-scroll__chevron path,
 .cockpit-scroll:focus-visible .cockpit-scroll__chevron path {
-  filter: drop-shadow(0 0 4px rgba(230, 0, 38, 0.65));
+  filter: drop-shadow(0 0 4px rgba(201, 122, 60, 0.65));
 }
 
 /* custom cursor */
@@ -249,13 +347,13 @@
 .cockpit-cursor--link {
   width: 42px;
   height: 42px;
-  color: #E60026;
+  color: #c97a3c;
 }
 
 .cockpit-cursor--scroll {
   width: 70px;
   height: 70px;
-  color: #E60026;
+  color: #c97a3c;
 }
 
 .cockpit-cursor--scroll .cockpit-cursor__shape {
@@ -266,9 +364,12 @@
   position: absolute;
   top: 50%; left: 50%;
   transform: translate(-50%, -50%);
-  font-family: 'Major Mono Display', ui-monospace, monospace;
-  font-size: 18px;
-  color: #E60026;
+  font-family: 'Space Mono', ui-monospace, monospace;
+  font-size: 9px;
+  letter-spacing: 0.42em;
+  text-transform: lowercase;
+  white-space: nowrap;
+  color: #c97a3c;
   opacity: 0;
   transition: opacity 0.2s ease;
   pointer-events: none;

@@ -5,9 +5,12 @@
 html, body {
   margin: 0;
   padding: 0;
-  background: #e8e6e3;
   color: #1a1a1a;
   font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+}
+
+body {
+  background: #e0dcd4;
 }
 
 html {
@@ -47,9 +50,36 @@ body {
   overflow: hidden;
 }
 
+.hero-section::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 2;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 240 240' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.32  0 0 0 0 0.24  0 0 0 0 0.15  0 0 0 0.5 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  opacity: 0.18;
+  mix-blend-mode: multiply;
+}
+
+.hero-section::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 3;
+  background:
+    radial-gradient(ellipse at 50% 50%, transparent 38%, rgba(70, 38, 12, 0.18) 92%);
+}
+
 .hero-canvas-host {
   position: absolute;
   inset: 0;
+  opacity: 0;
+  animation: hero-canvas-fade-in 0.9s ease-out 0.05s forwards;
+}
+
+@keyframes hero-canvas-fade-in {
+  to { opacity: 1; }
 }
 
 .placeholder-section {
@@ -65,7 +95,7 @@ body {
     radial-gradient(ellipse at 70% 80%, rgba(40, 40, 50, 0.3), transparent 60%),
     #14141a;
   color: rgba(220, 220, 220, 0.55);
-  font-family: 'Major Mono Display', ui-monospace, monospace;
+  font-family: 'Space Mono', ui-monospace, monospace;
   letter-spacing: 0.4em;
   font-size: 13px;
 }

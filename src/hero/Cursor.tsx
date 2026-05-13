@@ -1,52 +1,78 @@
 import { useEffect, useRef, useState } from 'react';
 
 type Variant = 'default' | 'link' | 'scroll';
-type ShapeKind = 'circle' | 'triangle' | 'square' | 'diamond' | 'hexagon' | 'octagon' | 'crosshair';
+type ShapeKind = 'circle' | 'triangle' | 'square' | 'circle-half' | 'triangle-half';
 
-type Shape = {
-  kind: ShapeKind;
-  filled: boolean;
-};
-
-const SHAPES: Shape[] = [
-  { kind: 'circle',    filled: false },
-  { kind: 'triangle',  filled: false },
-  { kind: 'square',    filled: false },
-  { kind: 'diamond',   filled: true  },
-  { kind: 'hexagon',   filled: false },
-  { kind: 'circle',    filled: true  },
-  { kind: 'crosshair', filled: false },
-  { kind: 'octagon',   filled: false },
+const SHAPES: ShapeKind[] = [
+  'circle',
+  'triangle',
+  'square',
+  'circle-half',
+  'triangle-half',
 ];
 
-function ShapeSvg({ shape }: { shape: Shape }) {
-  const stroke = 'currentColor';
-  const fill = shape.filled ? 'currentColor' : 'none';
-  const strokeWidth = shape.filled ? 0 : 1.4;
-  const common = { stroke, fill, strokeWidth, strokeLinejoin: 'round' as const };
+const SHAPE_INTERVAL_MS = 7000;
 
-  switch (shape.kind) {
+function ShapeSvg({ kind }: { kind: ShapeKind }) {
+  const stroke = 'currentColor';
+  const sw = 1.4;
+
+  switch (kind) {
     case 'circle':
-      return <circle cx="15" cy="15" r="13" {...common} />;
-    case 'triangle':
-      return <polygon points="15,3 27,25 3,25" {...common} />;
-    case 'square':
-      return <rect x="3" y="3" width="24" height="24" {...common} />;
-    case 'diamond':
-      return <polygon points="15,2 28,15 15,28 2,15" {...common} />;
-    case 'hexagon':
-      return <polygon points="15,3 26,9 26,21 15,27 4,21 4,9" {...common} />;
-    case 'octagon':
-      return <polygon points="11,3 19,3 27,11 27,19 19,27 11,27 3,19 3,11" {...common} />;
-    case 'crosshair':
       return (
-        <g stroke={stroke} strokeWidth={1.4} fill="none" strokeLinecap="round">
-          <circle cx="15" cy="15" r="11" />
-          <line x1="15" y1="2"  x2="15" y2="7"  />
-          <line x1="15" y1="23" x2="15" y2="28" />
-          <line x1="2"  y1="15" x2="7"  y2="15" />
-          <line x1="23" y1="15" x2="28" y2="15" />
-        </g>
+        <>
+          <circle cx="15" cy="15" r="13" stroke={stroke} strokeWidth={sw} fill="none" />
+          <circle cx="15" cy="15" r="1.7" fill={stroke} />
+        </>
+      );
+    case 'triangle':
+      return (
+        <>
+          <polygon
+            points="15,3 27,25 3,25"
+            stroke={stroke}
+            strokeWidth={sw}
+            fill="none"
+            strokeLinejoin="round"
+          />
+          <circle cx="15" cy="19" r="1.7" fill={stroke} />
+        </>
+      );
+    case 'square':
+      return (
+        <>
+          <rect
+            x="3"
+            y="3"
+            width="24"
+            height="24"
+            stroke={stroke}
+            strokeWidth={sw}
+            fill="none"
+            strokeLinejoin="round"
+          />
+          <circle cx="15" cy="15" r="1.7" fill={stroke} />
+        </>
+      );
+    case 'circle-half':
+      return (
+        <>
+          <path d="M15,2 A13,13 0 0,1 15,28 Z" fill={stroke} />
+          <circle cx="15" cy="15" r="13" stroke={stroke} strokeWidth={sw} fill="none" />
+        </>
+      );
+    case 'triangle-half':
+      return (
+        <>
+          <polygon points="15,3 27,25 15,25" fill={stroke} />
+          <polygon
+            points="15,3 27,25 3,25"
+            stroke={stroke}
+            strokeWidth={sw}
+            fill="none"
+            strokeLinejoin="round"
+          />
+        </>
       );
   }
 }
@@ -115,7 +141,7 @@ export function Cursor() {
         while (next === i) next = Math.floor(Math.random() * SHAPES.length);
         return next;
       });
-    }, 4200);
+    }, SHAPE_INTERVAL_MS);
     return () => window.clearInterval(id);
   }, []);
 
@@ -127,9 +153,9 @@ export function Cursor() {
         viewBox="0 0 30 30"
         aria-hidden="true"
       >
-        <ShapeSvg shape={SHAPES[shapeIdx]} />
+        <ShapeSvg kind={SHAPES[shapeIdx]} />
       </svg>
-      <span className="cockpit-cursor__hint" aria-hidden="true">↓</span>
+      <span className="cockpit-cursor__hint" aria-hidden="true">scroll</span>
     </div>
   );
 }

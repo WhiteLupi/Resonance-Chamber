@@ -26,6 +26,9 @@ dist-ssr
 # debug screenshots from particle iterations
 step*.png
 font-*.png
+hero-*.png
+intro-*.png
+nav-*.png
 
 # local tooling state
 .claude/

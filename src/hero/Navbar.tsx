@@ -1,7 +1,15 @@
 import { useEffect, useState } from 'react';
 
+const INTRO_DELAY_MS = 3000;
+
 export function Navbar() {
+  const [introDone, setIntroDone] = useState(false);
   const [hidden, setHidden] = useState(false);
+
+  useEffect(() => {
+    const id = window.setTimeout(() => setIntroDone(true), INTRO_DELAY_MS);
+    return () => window.clearTimeout(id);
+  }, []);
 
   useEffect(() => {
     let lastY = window.scrollY;
@@ -12,11 +20,13 @@ export function Navbar() {
       ticking = true;
       requestAnimationFrame(() => {
         const y = window.scrollY;
-        const dir = y > lastY ? 'down' : 'up';
-        const delta = Math.abs(y - lastY);
-        if (delta > 4) {
-          if (y > 80 && dir === 'down') setHidden(true);
-          else if (dir === 'up') setHidden(false);
+        const delta = y - lastY;
+        if (Math.abs(delta) > 4) {
+          if (y > 80 && delta > 0) setHidden(true);
+          else if (delta < 0) setHidden(false);
+          lastY = y;
+        } else if (y <= 0) {
+          setHidden(false);
           lastY = y;
         }
         ticking = false;
@@ -27,24 +37,34 @@ export function Navbar() {
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
+  const cls = [
+    'cockpit-navbar',
+    introDone ? 'cockpit-navbar--in' : '',
+    hidden ? 'cockpit-navbar--hidden' : '',
+  ].filter(Boolean).join(' ');
+
   return (
-    <nav
-      className={`cockpit-navbar${hidden ? ' cockpit-navbar--hidden' : ''}`}
-      aria-label="primary"
-    >
+    <nav className={cls} aria-label="primary">
       <div className="cockpit-navbar__left">
-        <span className="cockpit-navbar__dot" aria-hidden="true" />
+        <span className="cockpit-navbar__sigil" aria-hidden="true">⌬</span>
         <span>SYS.K_WALTER</span>
       </div>
       <div className="cockpit-navbar__center">
-        <a className="cockpit-navbar__link" href="#about">ABOUT</a>
-        <span className="cockpit-navbar__sep" aria-hidden="true">·</span>
-        <a className="cockpit-navbar__link" href="#skills">SKILLS</a>
-        <span className="cockpit-navbar__sep" aria-hidden="true">·</span>
-        <a className="cockpit-navbar__link" href="#contact">CONTACT</a>
+        <a className="cockpit-navbar__link" href="#about">
+          <span className="cockpit-navbar__glyph" aria-hidden="true">⏃</span>
+          <span>ABOUT</span>
+        </a>
+        <a className="cockpit-navbar__link" href="#skills">
+          <span className="cockpit-navbar__glyph" aria-hidden="true">⊛</span>
+          <span>SKILLS</span>
+        </a>
+        <a className="cockpit-navbar__link" href="#contact">
+          <span className="cockpit-navbar__glyph" aria-hidden="true">⟁</span>
+          <span>CONTACT</span>
+        </a>
       </div>
       <div className="cockpit-navbar__right" aria-hidden="true">
-        <span className="cockpit-navbar__bracket">⌗</span>
+        <span className="cockpit-navbar__glyph">⬡</span>
         <span>2026.05</span>
       </div>
     </nav>

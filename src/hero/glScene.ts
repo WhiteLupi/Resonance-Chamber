@@ -10,40 +10,42 @@ import { createUpdatePass } from './gl/updatePass';
 import { createParticleRenderer } from './gl/particles';
 import { buildTextMask, collectInterior, type TextMask, type TextMaskOpts } from './gl/textMask';
 
-const BG_R = 0xdd / 255;
-const BG_G = 0xe0 / 255;
-const BG_B = 0xe4 / 255;
+const BG_R = 0xe0 / 255;
+const BG_G = 0xdc / 255;
+const BG_B = 0xd4 / 255;
 
-const PRIMARY_LINES = ["Let's hear", 'motion'];
+const PRIMARY_LINES = ["LET'S", 'HEAR', 'MOTION'];
 const SIGNATURE_LINES = ['KASIA WALTER'];
-const PRIMARY_FONT_FAMILY = '"Rubik Glitch", sans-serif';
-const SIGNATURE_FONT_FAMILY = '"Bungee", sans-serif';
+const PRIMARY_FONT_FAMILY = '"Major Mono Display", ui-monospace, monospace';
+const SIGNATURE_FONT_FAMILY = '"Major Mono Display", ui-monospace, monospace';
 const FONT_WEIGHT = 400;
 
 const PRIMARY_PADDING_X_CSS = 64;
 const PRIMARY_PADDING_Y_CSS = 180;
-const PRIMARY_SIZE_FRAC = 0.105;
-const PRIMARY_SIZE_MAX = 210;
-const PRIMARY_LINE_HEIGHT = 0.95;
-const PRIMARY_MAX_WIDTH_FRAC = 0.62;
+const PRIMARY_SIZE_FRAC = 0.13;
+const PRIMARY_SIZE_MAX = 260;
+const PRIMARY_LINE_HEIGHT = 1.04;
+const PRIMARY_MAX_WIDTH_FRAC = 0.5;
 
 const SIGNATURE_PADDING_X_CSS = 64;
-const SIGNATURE_PADDING_Y_CSS = 96;
-const SIGNATURE_SIZE_FRAC = 0.045;
-const SIGNATURE_SIZE_MAX = 80;
+const SIGNATURE_PADDING_Y_CSS = 56;
+const SIGNATURE_SIZE_FRAC = 0.018;
+const SIGNATURE_SIZE_MAX = 32;
 const SIGNATURE_LINE_HEIGHT = 1.0;
-const SIGNATURE_MAX_WIDTH_FRAC = 0.45;
+const SIGNATURE_MAX_WIDTH_FRAC = 0.28;
 
 const GRID_SIZE = 384;
 const DIRECTED_FRAC = 0.97;
-const PRIMARY_FRAC = 0.78;
+const PRIMARY_FRAC = 0.92;
 
 const ENTRANCE_PRIMARY_START = 0.0;
 const ENTRANCE_PRIMARY_END = 1.5;
 const ENTRANCE_SIGNATURE_START = 1.4;
-const ENTRANCE_SIGNATURE_END = 2.6;
+const ENTRANCE_SIGNATURE_END = 2.25;
 const APPROACH_DURATION = 1.7;
+const APPROACH_DURATION_SIGNATURE = 1.1;
 const SPAWN_TIME_JITTER = 0.15;
+const SIGNATURE_SPAWN_JITTER = 0.22;
 const FADE_IN = 0.18;
 const SPAWN_OFFSET_X_CSS = 120;
 
@@ -52,10 +54,10 @@ const CURL_AMP_FLIGHT = 15;
 const CURL_AMP_BG = 10;
 const CURL_SCALE = 0.0055;
 const CURL_TIME_SCALE = 0.18;
-const GLITCH_AMP_CSS = 7;
+const GLITCH_AMP_CSS = 14;
 const WAVE_AMP_CSS = 36;
 
-const PRIMARY_INTERIOR_THRESHOLD = 50;
+const PRIMARY_INTERIOR_THRESHOLD = 32;
 const SIGNATURE_INTERIOR_THRESHOLD = 130;
 
 const DT_CAP = 1 / 30;
@@ -150,6 +152,7 @@ export function startHero(host: HTMLElement): () => void {
       curlScale: CURL_SCALE / size.dpr,
       curlTimeScale: CURL_TIME_SCALE,
       approachDuration: APPROACH_DURATION,
+      approachDurationSignature: APPROACH_DURATION_SIGNATURE,
       settleBreath: GLITCH_AMP_CSS * size.dpr,
       spawnOffsetX: SPAWN_OFFSET_X_CSS * size.dpr,
       waveAmp: WAVE_AMP_CSS * size.dpr,
@@ -280,7 +283,8 @@ function makeInitData(
 
   assignGroup(initPos, initVel, 0, nPrimary, 0, interiorPrimary, maskPrimary,
     ENTRANCE_PRIMARY_START, ENTRANCE_PRIMARY_END);
-  assignGroup(initPos, initVel, nPrimary, nSignature, 1, interiorSignature, maskSignature,
+  assignSignatureWordSync(initPos, initVel, nPrimary, nSignature, 1,
+    interiorSignature, maskSignature,
     ENTRANCE_SIGNATURE_START, ENTRANCE_SIGNATURE_END);
 
   for (let i = 0; i < nAmbient; i++) {
@@ -319,6 +323,70 @@ function assignGroup(
     const tgt = interior[targetIdx];
     const tNorm = (tgt.x - xMin) / xRange;
     const jitter = (Math.random() - 0.5) * SPAWN_TIME_JITTER;
+    const spawnTime = entranceStart + tNorm * span + jitter;
+
+    initPos[idx * 4 + 0] = 0;
+    initPos[idx * 4 + 1] = 0;
+    initPos[idx * 4 + 2] = tgt.x;
+    initPos[idx * 4 + 3] = tgt.y;
+    initVel[idx * 4 + 0] = spawnTime;
+    initVel[idx * 4 + 1] = 0;
+    initVel[idx * 4 + 2] = group;
+    initVel[idx * 4 + 3] = 0;
+  }
+}
+
+function assignSignatureWordSync(
+  initPos: Float32Array,
+  initVel: Float32Array,
+  offset: number,
+  count: number,
+  group: number,
+  interior: { x: number; y: number }[],
+  mask: TextMask,
+  entranceStart: number,
+  entranceEnd: number,
+) {
+  if (count <= 0 || interior.length === 0 || !mask.bbox) return;
+
+  const xSet = new Set<number>();
+  for (const p of interior) xSet.add(p.x);
+  const xs = [...xSet].sort((a, b) => a - b);
+  let maxGap = 0;
+  let splitX = (mask.bbox.x0 + mask.bbox.x1) / 2;
+  for (let i = 1; i < xs.length; i++) {
+    const gap = xs[i] - xs[i - 1];
+    if (gap > maxGap) {
+      maxGap = gap;
+      splitX = (xs[i - 1] + xs[i]) / 2;
+    }
+  }
+
+  let w1Min = Infinity, w1Max = -Infinity;
+  let w2Min = Infinity, w2Max = -Infinity;
+  for (const p of interior) {
+    if (p.x < splitX) {
+      if (p.x < w1Min) w1Min = p.x;
+      if (p.x > w1Max) w1Max = p.x;
+    } else {
+      if (p.x < w2Min) w2Min = p.x;
+      if (p.x > w2Max) w2Max = p.x;
+    }
+  }
+  const w1Range = Math.max(1, w1Max - w1Min);
+  const w2Range = Math.max(1, w2Max - w2Min);
+  const span = entranceEnd - entranceStart;
+
+  for (let i = 0; i < count; i++) {
+    const idx = offset + i;
+    const targetIdx = Math.floor((i * interior.length) / count) % interior.length;
+    const tgt = interior[targetIdx];
+
+    const tNorm = tgt.x < splitX
+      ? (tgt.x - w1Min) / w1Range
+      : (tgt.x - w2Min) / w2Range;
+
+    const jitter = (Math.random() - 0.5) * SIGNATURE_SPAWN_JITTER;
     const spawnTime = entranceStart + tNorm * span + jitter;
 
     initPos[idx * 4 + 0] = 0;

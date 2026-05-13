@@ -13,7 +13,12 @@ uniform float u_fadeIn;
 uniform int u_gridSize;
 
 out float v_alpha;
-out float v_hasTarget;
+out float v_kind;   // 0 = ambient, 1 = primary, 2 = signature
+out float v_shade;  // per-particle brightness 0..1 (only used for primary)
+
+float hash11(float p) {
+  return fract(sin(p * 127.1) * 43758.5453);
+}
 
 void main() {
   int idx = gl_VertexID;
@@ -24,16 +29,21 @@ void main() {
 
   float spawnTime = vel.x;
   float hasTarget = spawnTime >= -0.5 ? 1.0 : 0.0;
+  float groupId = vel.z;
   float age = u_time - spawnTime;
   float fadeIn = clamp(age / u_fadeIn, 0.0, 1.0);
 
   v_alpha = age < 0.0 ? 0.0 : fadeIn;
-  v_hasTarget = hasTarget;
+  v_kind = hasTarget < 0.5 ? 0.0 : (groupId < 0.5 ? 1.0 : 2.0);
+  v_shade = hash11(float(idx) * 0.137);
 
   vec2 ndc = (pos.xy / u_resolution) * 2.0 - 1.0;
   ndc.y = -ndc.y;
   gl_Position = vec4(ndc, 0.0, 1.0);
-  gl_PointSize = mix(u_pointSize * 0.8, u_pointSize, hasTarget);
+
+  // primary slightly smaller to keep grain feel; signature solid; ambient between.
+  float sizeMul = v_kind < 0.5 ? 0.85 : (v_kind < 1.5 ? 0.92 : 1.0);
+  gl_PointSize = u_pointSize * sizeMul;
 }
 `;
 
@@ -41,7 +51,8 @@ const FS = /* glsl */ `#version 300 es
 precision highp float;
 
 in float v_alpha;
-in float v_hasTarget;
+in float v_kind;
+in float v_shade;
 out vec4 fragColor;
 
 void main() {
@@ -50,8 +61,15 @@ void main() {
   float r2 = dot(d, d);
   if (r2 > 0.25) discard;
   float edge = smoothstep(0.25, 0.18, r2);
-  float baseAlpha = mix(0.45, 0.92, v_hasTarget);
-  fragColor = vec4(0.078, 0.078, 0.078, edge * baseAlpha * v_alpha);
+
+  // single dark fill across all groups — clean ancient-stone particles, no CRT grain.
+  float baseAlpha =
+    v_kind < 0.5 ? 0.45 :
+    v_kind < 1.5 ? 0.9 :
+                   0.92;
+
+  // slightly warm-tinted dark — energy dust resting on warm stone.
+  fragColor = vec4(0.082, 0.073, 0.062, edge * baseAlpha * v_alpha);
 }
 `;
 

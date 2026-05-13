@@ -22,6 +22,7 @@ uniform float u_curlAmpBg;
 uniform float u_curlScale;
 uniform float u_curlTimeScale;
 uniform float u_approachDuration;
+uniform float u_approachDurationSignature;
 uniform float u_settleBreath;
 uniform float u_spawnOffsetX;
 uniform float u_waveAmp;
@@ -138,9 +139,11 @@ void main() {
     if (age < 0.0) {
       newPos = startPos;
     } else {
-      float t = clamp(age / u_approachDuration, 0.0, 1.0);
-      // both groups: ease-in-out (lazy start, fast middle, slow landing)
-      float ease = t * t * (3.0 - 2.0 * t);
+      float approachDur = group == 1 ? u_approachDurationSignature : u_approachDuration;
+      float t = clamp(age / approachDur, 0.0, 1.0);
+      // gentle ease-in — slightly slower start than linear, smooth landing without snap.
+      // Signature has a touch more bias for cohesion; primary stays barely past linear.
+      float ease = pow(t, group == 1 ? 1.45 : 1.25);
 
       // quadratic Bezier
       float oneMinusE = 1.0 - ease;
@@ -164,25 +167,9 @@ void main() {
 
       if (t >= 1.0) {
         if (group == 0) {
-          // primary (Rubik Glitch): continuous drift + sharp double-pulse glitch
-          float idHash2 = hash21(cellHash * 1.7 + 4.3);
-          float dirT = u_time * 0.28 + idHash2 * 6.2831853;
-          vec2 driftDir = vec2(cos(dirT), sin(dirT));
-          vec2 drift = driftDir * u_settleBreath * 0.06;
-
-          float cyclePeriod = 7.0;
-          float gPhase = mod(u_time, cyclePeriod) / cyclePeriod;
-          float p1 = step(0.0, gPhase) - step(0.007, gPhase);
-          float p2 = step(0.014, gPhase) - step(0.019, gPhase);
-          float glitchPulse = p1 + p2;
-
-          float row = floor(target.y / 16.0);
-          float seed = floor(u_time * 14.0);
-          float rowHash = hash21(vec2(row * 0.83, seed));
-          float horizShift = (rowHash - 0.5) * u_settleBreath * 1.3;
-          float perJitter = (hash21(cellHash + vec2(seed)) - 0.5) * 0.18 * u_settleBreath;
-
-          basePos = target + drift + vec2(horizShift + perJitter, 0.0) * glitchPulse;
+          // primary settled: completely static — carved inscription at rest.
+          // Energy lives in colors/glow, never in slogan motion.
+          basePos = target;
         } else {
           // signature (Bungee): completely static — no drift, no glitch
           basePos = target;
@@ -218,6 +205,7 @@ export type UpdateParams = {
   curlScale: number;
   curlTimeScale: number;
   approachDuration: number;
+  approachDurationSignature: number;
   settleBreath: number;
   spawnOffsetX: number;
   waveAmp: number;
@@ -246,6 +234,7 @@ export function createUpdatePass(
     'u_curlScale',
     'u_curlTimeScale',
     'u_approachDuration',
+    'u_approachDurationSignature',
     'u_settleBreath',
     'u_spawnOffsetX',
     'u_waveAmp',
@@ -275,6 +264,7 @@ export function createUpdatePass(
       gl.uniform1f(u.u_curlScale, p.curlScale);
       gl.uniform1f(u.u_curlTimeScale, p.curlTimeScale);
       gl.uniform1f(u.u_approachDuration, p.approachDuration);
+      gl.uniform1f(u.u_approachDurationSignature, p.approachDurationSignature);
       gl.uniform1f(u.u_settleBreath, p.settleBreath);
       gl.uniform1f(u.u_spawnOffsetX, p.spawnOffsetX);
       gl.uniform1f(u.u_waveAmp, p.waveAmp);
