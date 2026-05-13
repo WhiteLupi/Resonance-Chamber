@@ -68,8 +68,7 @@ void main() {
     v_kind < 1.5 ? 0.9 :
                    0.92;
 
-  // slightly warm-tinted dark — energy dust resting on warm stone.
-  fragColor = vec4(0.082, 0.073, 0.062, edge * baseAlpha * v_alpha);
+  fragColor = vec4(0.078, 0.078, 0.078, edge * baseAlpha * v_alpha);
 }
 `;
 

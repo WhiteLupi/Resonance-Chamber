@@ -10,33 +10,33 @@ import { createUpdatePass } from './gl/updatePass';
 import { createParticleRenderer } from './gl/particles';
 import { buildTextMask, collectInterior, type TextMask, type TextMaskOpts } from './gl/textMask';
 
-const BG_R = 0xe0 / 255;
-const BG_G = 0xdc / 255;
-const BG_B = 0xd4 / 255;
+const BG_R = 0xdd / 255;
+const BG_G = 0xe0 / 255;
+const BG_B = 0xe4 / 255;
 
-const PRIMARY_LINES = ["LET'S", 'HEAR', 'MOTION'];
+const PRIMARY_LINES = ["Let's hear", 'motion'];
 const SIGNATURE_LINES = ['KASIA WALTER'];
-const PRIMARY_FONT_FAMILY = '"Major Mono Display", ui-monospace, monospace';
-const SIGNATURE_FONT_FAMILY = '"Major Mono Display", ui-monospace, monospace';
+const PRIMARY_FONT_FAMILY = '"Rubik Glitch", sans-serif';
+const SIGNATURE_FONT_FAMILY = '"Space Mono", ui-monospace, monospace';
 const FONT_WEIGHT = 400;
 
 const PRIMARY_PADDING_X_CSS = 64;
 const PRIMARY_PADDING_Y_CSS = 180;
-const PRIMARY_SIZE_FRAC = 0.13;
-const PRIMARY_SIZE_MAX = 260;
-const PRIMARY_LINE_HEIGHT = 1.04;
-const PRIMARY_MAX_WIDTH_FRAC = 0.5;
+const PRIMARY_SIZE_FRAC = 0.105;
+const PRIMARY_SIZE_MAX = 210;
+const PRIMARY_LINE_HEIGHT = 0.95;
+const PRIMARY_MAX_WIDTH_FRAC = 0.62;
 
 const SIGNATURE_PADDING_X_CSS = 64;
-const SIGNATURE_PADDING_Y_CSS = 56;
-const SIGNATURE_SIZE_FRAC = 0.018;
-const SIGNATURE_SIZE_MAX = 32;
+const SIGNATURE_PADDING_Y_CSS = 96;
+const SIGNATURE_SIZE_FRAC = 0.028;
+const SIGNATURE_SIZE_MAX = 48;
 const SIGNATURE_LINE_HEIGHT = 1.0;
-const SIGNATURE_MAX_WIDTH_FRAC = 0.28;
+const SIGNATURE_MAX_WIDTH_FRAC = 0.45;
 
 const GRID_SIZE = 384;
 const DIRECTED_FRAC = 0.97;
-const PRIMARY_FRAC = 0.92;
+const PRIMARY_FRAC = 0.78;
 
 const ENTRANCE_PRIMARY_START = 0.0;
 const ENTRANCE_PRIMARY_END = 1.5;
@@ -57,7 +57,7 @@ const CURL_TIME_SCALE = 0.18;
 const GLITCH_AMP_CSS = 14;
 const WAVE_AMP_CSS = 36;
 
-const PRIMARY_INTERIOR_THRESHOLD = 32;
+const PRIMARY_INTERIOR_THRESHOLD = 50;
 const SIGNATURE_INTERIOR_THRESHOLD = 130;
 
 const DT_CAP = 1 / 30;
