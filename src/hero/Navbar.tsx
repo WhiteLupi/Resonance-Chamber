@@ -1,6 +1,19 @@
 import { useEffect, useState } from 'react';
+import { ShapeSvg, type ShapeKind } from './Cursor';
 
 const INTRO_DELAY_MS = 3000;
+
+function Glyph({ kind }: { kind: ShapeKind }) {
+  return (
+    <svg
+      className="cockpit-navbar__glyph"
+      viewBox="0 0 30 30"
+      aria-hidden="true"
+    >
+      <ShapeSvg kind={kind} />
+    </svg>
+  );
+}
 
 export function Navbar() {
   const [introDone, setIntroDone] = useState(false);
@@ -46,25 +59,25 @@ export function Navbar() {
   return (
     <nav className={cls} aria-label="primary">
       <div className="cockpit-navbar__left">
-        <span className="cockpit-navbar__sigil" aria-hidden="true">⌬</span>
+        <Glyph kind="circle-half" />
         <span>SYS.K_WALTER</span>
       </div>
       <div className="cockpit-navbar__center">
         <a className="cockpit-navbar__link" href="#about">
-          <span className="cockpit-navbar__glyph" aria-hidden="true">⏃</span>
+          <Glyph kind="circle" />
           <span>ABOUT</span>
         </a>
         <a className="cockpit-navbar__link" href="#skills">
-          <span className="cockpit-navbar__glyph" aria-hidden="true">⊛</span>
+          <Glyph kind="triangle" />
           <span>SKILLS</span>
         </a>
         <a className="cockpit-navbar__link" href="#contact">
-          <span className="cockpit-navbar__glyph" aria-hidden="true">⟁</span>
+          <Glyph kind="square" />
           <span>CONTACT</span>
         </a>
       </div>
       <div className="cockpit-navbar__right" aria-hidden="true">
-        <span className="cockpit-navbar__glyph">⬡</span>
+        <Glyph kind="triangle-half" />
         <span>2026.05</span>
       </div>
     </nav>

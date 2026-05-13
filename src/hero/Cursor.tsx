@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 
 type Variant = 'default' | 'link' | 'scroll';
-type ShapeKind = 'circle' | 'triangle' | 'square' | 'circle-half' | 'triangle-half';
+export type ShapeKind = 'circle' | 'triangle' | 'square' | 'circle-half' | 'triangle-half';
 
 const SHAPES: ShapeKind[] = [
   'circle',
@@ -13,7 +13,7 @@ const SHAPES: ShapeKind[] = [
 
 const SHAPE_INTERVAL_MS = 7000;
 
-function ShapeSvg({ kind }: { kind: ShapeKind }) {
+export function ShapeSvg({ kind }: { kind: ShapeKind }) {
   const stroke = 'currentColor';
   const sw = 1.4;
 
