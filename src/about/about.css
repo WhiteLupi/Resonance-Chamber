@@ -1,0 +1,79 @@
+/* About section styles. */
+
+.about-section {
+  position: relative;
+  z-index: 1;
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 96px 64px;
+  background: linear-gradient(180deg, #dde0e4 0%, #cdd0d4 55%, #bcc0c5 100%);
+  font-family: 'Space Mono', ui-monospace, monospace;
+  color: #141414;
+  overflow: hidden;
+}
+
+/* the single bounding box around all three sentences — Phase 3 reads its
+   getBoundingClientRect as the particle-collision rectangle */
+.inscription {
+  position: relative;
+  z-index: 2;
+  width: min(880px, 100%);
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
+}
+
+.inscription__line {
+  display: flex;
+  align-items: baseline;
+  gap: 30px;
+}
+
+.inscription__label {
+  flex: 0 0 auto;
+  font-size: clamp(11px, 1.05vw, 14px);
+  letter-spacing: 0.18em;
+  color: rgba(20, 20, 20, 0.4);
+  white-space: nowrap;
+  user-select: none;
+}
+
+.inscription__copy {
+  font-size: clamp(19px, 2.35vw, 27px);
+  line-height: 1.55;
+  letter-spacing: 0.005em;
+  color: #141414;
+}
+
+/* marginalia glyphs — bibliographic trace flanking the inscription.
+   Phase 1: static, subtle. Phase 5 adds the 5-8s fade polyrhythm. */
+.about-glyph-margin {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.about-glyph {
+  position: absolute;
+  width: 18px;
+  height: 18px;
+  color: rgba(20, 20, 20, 0.16);
+}
+
+@media (max-width: 720px) {
+  .about-section {
+    padding: 80px 24px;
+  }
+  .inscription__line {
+    flex-direction: column;
+    gap: 6px;
+  }
+  .inscription__label {
+    width: auto;
+  }
+  .about-glyph-margin {
+    display: none;
+  }
+}

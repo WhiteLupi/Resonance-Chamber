@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react'
 import { startHero } from './hero/glScene'
 import { Hero } from './hero/Hero'
+import { About } from './about/About'
 import { Cursor } from './hero/Cursor'
 
 function App() {
@@ -16,9 +17,7 @@ function App() {
     <>
       <div ref={stageRef} className="gl-stage" aria-hidden="true" />
       <Hero />
-      <section className="placeholder-section" id="about" aria-label="about">
-        <span className="placeholder-section__label">ABOUT — coming next</span>
-      </section>
+      <About />
       <Cursor />
     </>
   )
