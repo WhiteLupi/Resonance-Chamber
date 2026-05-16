@@ -29,6 +29,7 @@ font-*.png
 hero-*.png
 intro-*.png
 nav-*.png
+!hero-aligned-bottom.png
 
 # local tooling state
 .claude/
