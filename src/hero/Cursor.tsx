@@ -77,9 +77,16 @@ export function ShapeSvg({ kind }: { kind: ShapeKind }) {
   }
 }
 
+// Cursor enters the scroll-indicator state while the user is actively
+// scrolling down. After the scroll burst stops we hold the state briefly so
+// the indicator still confirms "going down" for a beat, then return to
+// default. Scroll-up cancels the state immediately. Link hover always wins.
+const SCROLL_HOLD_MS = 380;
+
 export function Cursor() {
   const ref = useRef<HTMLDivElement>(null);
-  const [variant, setVariant] = useState<Variant>('default');
+  const [hoverVariant, setHoverVariant] = useState<'default' | 'link'>('default');
+  const [scrolling, setScrolling] = useState(false);
   const [shapeIdx, setShapeIdx] = useState(0);
 
   useEffect(() => {
@@ -109,18 +116,14 @@ export function Cursor() {
     const onOver = (e: MouseEvent) => {
       const target = e.target as HTMLElement | null;
       if (!target) return;
-      if (target.closest('.cockpit-scroll')) {
-        setVariant('scroll');
-        return;
-      }
       if (target.closest('a, button, [role="button"]')) {
-        setVariant('link');
+        setHoverVariant('link');
         return;
       }
-      setVariant('default');
+      setHoverVariant('default');
     };
 
-    const onLeave = () => setVariant('default');
+    const onLeave = () => setHoverVariant('default');
 
     window.addEventListener('mousemove', onMove);
     window.addEventListener('mouseover', onOver);
@@ -133,6 +136,39 @@ export function Cursor() {
       document.removeEventListener('mouseleave', onLeave);
     };
   }, []);
+
+  useEffect(() => {
+    let lastY = window.scrollY;
+    let holdTimer: number | null = null;
+    const onScroll = () => {
+      const y = window.scrollY;
+      const delta = y - lastY;
+      lastY = y;
+      if (delta > 0) {
+        setScrolling(true);
+        if (holdTimer != null) window.clearTimeout(holdTimer);
+        holdTimer = window.setTimeout(() => {
+          setScrolling(false);
+          holdTimer = null;
+        }, SCROLL_HOLD_MS);
+      } else if (delta < 0) {
+        setScrolling(false);
+        if (holdTimer != null) {
+          window.clearTimeout(holdTimer);
+          holdTimer = null;
+        }
+      }
+    };
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => {
+      window.removeEventListener('scroll', onScroll);
+      if (holdTimer != null) window.clearTimeout(holdTimer);
+    };
+  }, []);
+
+  // Link hover wins. Otherwise show scroll indicator while scrolling down.
+  const variant: Variant =
+    hoverVariant === 'link' ? 'link' : scrolling ? 'scroll' : 'default';
 
   useEffect(() => {
     const id = window.setInterval(() => {
@@ -155,7 +191,10 @@ export function Cursor() {
       >
         <ShapeSvg kind={SHAPES[shapeIdx]} />
       </svg>
-      <span className="cockpit-cursor__hint" aria-hidden="true">scroll</span>
+      <span className="cockpit-cursor__hint" aria-hidden="true">
+        <span className="cockpit-cursor__hint-text">going down</span>
+        <span className="cockpit-cursor__hint-arrow">↓</span>
+      </span>
     </div>
   );
 }

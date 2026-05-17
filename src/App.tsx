@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react'
 import { startHero, type HeroScene } from './hero/glScene'
 import { Hero } from './hero/Hero'
+import { Navbar } from './hero/Navbar'
 import { About } from './about/About'
 import { Cursor } from './hero/Cursor'
 import { progressStore } from './about/dwellStore'
@@ -26,8 +27,12 @@ function App() {
     const setProgress = (p: number) => {
       const clamped = Math.max(0, Math.min(1, p));
       progressStore.value = clamped;
-      sceneRef.current?.setProgress(clamped);
+      // --dim drives the dark transformation (bg, fg, accent, canvas, particles).
+      // Gated past p > 0.55 so HUD animations finish before the room dims.
+      const dim = Math.max(0, Math.min(1, (clamped - 0.55) / 0.45));
+      sceneRef.current?.setProgress(dim);
       root.style.setProperty('--p', clamped.toFixed(4));
+      root.style.setProperty('--dim', dim.toFixed(4));
     };
 
     const onScroll = () => {
@@ -55,6 +60,7 @@ function App() {
       <div ref={stageRef} className="gl-stage" aria-hidden="true" />
       <Hero />
       <About />
+      <Navbar />
       <Cursor />
     </>
   )

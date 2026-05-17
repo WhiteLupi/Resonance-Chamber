@@ -13,9 +13,11 @@ import { buildTextMask, collectInterior, type TextMask, type TextMaskOpts } from
 const BG_R = 0xdd / 255;
 const BG_G = 0xe0 / 255;
 const BG_B = 0xe4 / 255;
-const BG_ABOUT_R = 0xbc / 255;
-const BG_ABOUT_G = 0xc0 / 255;
-const BG_ABOUT_B = 0xc5 / 255;
+// Vault-dark: matches the body --bg-vault color so the canvas clear stays
+// flush with the CSS-driven page background. Same sRGB linear lerp both sides.
+const BG_ABOUT_R = 0x04 / 255;
+const BG_ABOUT_G = 0x07 / 255;
+const BG_ABOUT_B = 0x0a / 255;
 
 const PRIMARY_LINES = ["Let's hear", 'motion'];
 const SIGNATURE_LINES = ['KASIA WALTER'];

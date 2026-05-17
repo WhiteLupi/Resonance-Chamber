@@ -37,10 +37,11 @@ void main() {
   v_kind = hasTarget < 0.5 ? 0.0 : (groupId < 0.5 ? 1.0 : 2.0);
   v_shade = hash11(float(idx) * 0.137);
 
-  // Scroll-driven fade. Ambient leaves first (0.0→0.4), slogan+signature
-  // fade in the middle (0.4→0.85).
-  float ambientFade  = 1.0 - smoothstep(0.0, 0.4,  u_scrollProgress);
-  float directedFade = 1.0 - smoothstep(0.4, 0.85, u_scrollProgress);
+  // Scroll-driven fade, keyed to --dim (0..1 over raw p=0.55..1.0). Both
+  // groups fully gone by dim≈0.55 (raw p≈0.80) so they never overlap the
+  // inscription's reveal at raw p≈0.86.
+  float ambientFade  = 1.0 - smoothstep(0.0,  0.25, u_scrollProgress);
+  float directedFade = 1.0 - smoothstep(0.25, 0.55, u_scrollProgress);
   float scrollFade = v_kind < 0.5 ? ambientFade : directedFade;
 
   v_alpha = (age < 0.0 ? 0.0 : fadeIn) * scrollFade;

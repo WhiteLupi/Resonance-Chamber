@@ -8,9 +8,11 @@
   position: relative;
   z-index: 1;
   height: 200vh;
-  background: var(--about-bg-pulse, #bcc0c5);
+  /* Section background inherits from body — the room dims continuously, no
+     seam between hero and about. */
+  background: transparent;
   font-family: 'Space Mono', ui-monospace, monospace;
-  color: #141414;
+  color: var(--fg);
 }
 
 .about-stage {
@@ -43,14 +45,15 @@
   top: 6%;
   width: 1px;
   height: 88%;
+  /* Warm-parchment hairline — appears only after the room is dark enough. */
   background: linear-gradient(
     to bottom,
-    rgba(20, 20, 20, 0) 0%,
-    rgba(20, 20, 20, 0.18) 14%,
-    rgba(20, 20, 20, 0.14) 86%,
-    rgba(20, 20, 20, 0) 100%
+    rgba(232, 230, 227, 0) 0%,
+    rgba(232, 230, 227, 0.24) 14%,
+    rgba(232, 230, 227, 0.18) 86%,
+    rgba(232, 230, 227, 0) 100%
   );
-  opacity: clamp(0, calc((var(--p, 0) - 0.5) / 0.3), 1);
+  opacity: clamp(0, calc((var(--p, 0) - 0.84) / 0.10), 1);
   pointer-events: none;
 }
 
@@ -59,33 +62,32 @@
   font-size: 10px;
   letter-spacing: 0.42em;
   text-transform: uppercase;
-  color: rgba(20, 20, 20, 0.5);
+  color: rgba(232, 230, 227, 0.55);
   margin: 0 0 4px;
-  --t: clamp(0, calc((var(--p, 0) - 0.45) / 0.25), 1);
+  /* Header reveals after the room has darkened AND particles are gone. */
+  --t: clamp(0, calc((var(--p, 0) - 0.82) / 0.08), 1);
   opacity: var(--t);
-  transform: translateY(calc((1 - var(--t)) * 8px));
 }
 
-/* Per-line entrance keyed to scroll progress. The lines stagger in across
-   p ∈ [0.55, 0.95] so the page-load gesture of arriving in About lasts about
-   half a viewport of scroll — a paced reveal, not a snap. */
+/* Per-line entrance keyed to scroll progress. Lines stagger across
+   p ∈ [0.86, 1.0] — bg is ~70% dark and particles are gone by then, so
+   inscription emerges into clean space, never on top of hero text. */
 .inscription__line {
   display: block;
   margin: 0;
-  --p-start: 0.55;
-  --p-end: 0.80;
+  --p-start: 0.86;
+  --p-end: 0.94;
   --t: clamp(0, calc((var(--p, 0) - var(--p-start)) / (var(--p-end) - var(--p-start))), 1);
   opacity: var(--t);
-  transform: translateY(calc((1 - var(--t)) * 14px));
 }
-.inscription__line[data-line="1"] { --p-start: 0.65; --p-end: 0.86; }
-.inscription__line[data-line="2"] { --p-start: 0.74; --p-end: 0.94; }
+.inscription__line[data-line="1"] { --p-start: 0.91; --p-end: 0.97; }
+.inscription__line[data-line="2"] { --p-start: 0.95; --p-end: 1.00; }
 
 .inscription__copy {
   font-size: clamp(19px, 2.35vw, 27px);
   line-height: 1.55;
   letter-spacing: 0.005em;
-  color: #141414;
+  color: var(--fg);
 }
 
 /* Voice v2 — letter substitution. Char-by-char inline-block 1ch slots keep

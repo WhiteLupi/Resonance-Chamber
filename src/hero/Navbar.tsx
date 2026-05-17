@@ -1,7 +1,12 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ShapeSvg, type ShapeKind } from './Cursor';
 
 const INTRO_DELAY_MS = 3000;
+// How close to the viewport top the pointer must be to force-reveal the navbar
+// from anywhere on the page.
+const REVEAL_TOP_PX = 100;
+// Below this scrollY the navbar always shows; above it, direction wins.
+const SCROLL_HIDE_THRESHOLD = 80;
 
 function Glyph({ kind }: { kind: ShapeKind }) {
   return (
@@ -24,30 +29,45 @@ export function Navbar() {
     return () => window.clearTimeout(id);
   }, []);
 
-  useEffect(() => {
-    let lastY = window.scrollY;
-    let ticking = false;
+  // Smart visibility: scroll-down hides, scroll-up shows. Mouse near the
+  // viewport top is an override that always reveals — regardless of section
+  // or scroll direction — so the nav is always reachable.
+  const scrolledHiddenRef = useRef(false);
+  const mouseNearTopRef = useRef(false);
 
+  useEffect(() => {
+    const update = () => {
+      setHidden(scrolledHiddenRef.current && !mouseNearTopRef.current);
+    };
+
+    let lastY = window.scrollY;
     const onScroll = () => {
-      if (ticking) return;
-      ticking = true;
-      requestAnimationFrame(() => {
-        const y = window.scrollY;
-        const delta = y - lastY;
-        if (Math.abs(delta) > 4) {
-          if (y > 80 && delta > 0) setHidden(true);
-          else if (delta < 0) setHidden(false);
-          lastY = y;
-        } else if (y <= 0) {
-          setHidden(false);
-          lastY = y;
-        }
-        ticking = false;
-      });
+      const y = window.scrollY;
+      if (y <= 0) {
+        scrolledHiddenRef.current = false;
+      } else if (y > SCROLL_HIDE_THRESHOLD && y > lastY) {
+        scrolledHiddenRef.current = true;
+      } else if (y < lastY) {
+        scrolledHiddenRef.current = false;
+      }
+      lastY = y;
+      update();
+    };
+
+    const onMouseMove = (e: MouseEvent) => {
+      const near = e.clientY < REVEAL_TOP_PX;
+      if (near !== mouseNearTopRef.current) {
+        mouseNearTopRef.current = near;
+        update();
+      }
     };
 
     window.addEventListener('scroll', onScroll, { passive: true });
-    return () => window.removeEventListener('scroll', onScroll);
+    window.addEventListener('mousemove', onMouseMove, { passive: true });
+    return () => {
+      window.removeEventListener('scroll', onScroll);
+      window.removeEventListener('mousemove', onMouseMove);
+    };
   }, []);
 
   const cls = [

@@ -1,9 +1,39 @@
 :root {
-  /* Single accent across both rooms — oxidized teal, the patina of the
-     instrument. --p is the hero→about scroll progress, written by App.tsx. */
+  /* --p is the hero→about scroll progress, written by App.tsx (0..1).
+     All colors are color-mix lerps in OKLab keyed off it — one source of
+     truth, one room that dims continuously. No section boundary visible. */
   --p: 0;
-  --accent: rgb(61, 110, 99);
-  --accent-shadow: rgba(61, 110, 99, 0.5);
+  /* --dim is the visual transformation gate, written by App.tsx. It stays 0
+     until --p crosses ~0.55 (HUD animations have time to exit cleanly), then
+     ramps to 1 by --p = 1. Body bg, fg, accent, canvas clearColor and the
+     particle fade all key off this single value — one chapter-break event. */
+  --dim: 0;
+
+  /* The room: hero-light to vault-dark. */
+  --bg-hero: #dde0e4;
+  --bg-vault: #04070a;
+  --bg: color-mix(in srgb, var(--bg-hero), var(--bg-vault) calc(var(--dim, 0) * 100%));
+
+  /* Foreground text inverts as the bg darkens. Hero text falls into shadow,
+     about inscription emerges in warm parchment. */
+  --fg-hero: #141414;
+  --fg-vault: #e8e6e3;
+  --fg: color-mix(in srgb, var(--fg-hero), var(--fg-vault) calc(var(--dim, 0) * 100%));
+
+  /* Muted variant for labels/hairlines — same lerp, lower contrast. */
+  --fg-muted: color-mix(in srgb, rgba(20, 20, 20, 0.5), rgba(232, 230, 227, 0.55) calc(var(--dim, 0) * 100%));
+
+  /* HUD text tiers — navbar/telemetry/cursor must keep contrast against the
+     darkening room. Same lerp at three opacity levels. */
+  --fg-strong: color-mix(in srgb, rgba(22, 22, 22, 0.85), rgba(232, 230, 227, 0.92) calc(var(--dim, 0) * 100%));
+  --fg-soft: color-mix(in srgb, rgba(22, 22, 22, 0.55), rgba(232, 230, 227, 0.62) calc(var(--dim, 0) * 100%));
+  --fg-faint: color-mix(in srgb, rgba(22, 22, 22, 0.28), rgba(232, 230, 227, 0.35) calc(var(--dim, 0) * 100%));
+
+  /* Accent teal: subdued on light, luminous on dark. Shadow tracks. */
+  --accent-low: rgb(61, 110, 99);
+  --accent-high: rgb(122, 196, 175);
+  --accent: color-mix(in srgb, var(--accent-low), var(--accent-high) calc(var(--dim, 0) * 100%));
+  --accent-shadow: color-mix(in srgb, rgba(61, 110, 99, 0.5), rgba(122, 196, 175, 0.7) calc(var(--dim, 0) * 100%));
 }
 
 * {
@@ -13,7 +43,7 @@
 html, body {
   margin: 0;
   padding: 0;
-  color: #1a1a1a;
+  color: var(--fg);
   font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
   /* kill rubber-band over-scroll bounce; otherwise body bg shows above hero
      without noise/vignette/canvas overlays, breaking the decayed-cockpit feel */
@@ -21,7 +51,7 @@ html, body {
 }
 
 body {
-  background: #dde0e4;
+  background: var(--bg);
 }
 
 html {
@@ -57,25 +87,31 @@ body {
   overflow: hidden;
 }
 
-.hero-section::after {
+/* Noise + vignette live on the body (not the hero section) so they cover the
+   viewport continuously — no abrupt cutoff at the hero/about edge where one
+   element has overlays and the other doesn't. Both fade out via raw --p well
+   before --dim starts darkening the room, so they never bleed onto the
+   inscription. */
+body::before {
   content: '';
-  position: absolute;
+  position: fixed;
   inset: 0;
   pointer-events: none;
-  z-index: 2;
+  z-index: 4;
   background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 240 240' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.18  0 0 0 0 0.18  0 0 0 0 0.20  0 0 0 0.5 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-  opacity: 0.18;
+  opacity: calc(0.18 * max(0, 1 - var(--p, 0) * 2.4));
   mix-blend-mode: multiply;
 }
 
-.hero-section::before {
+body::after {
   content: '';
-  position: absolute;
+  position: fixed;
   inset: 0;
   pointer-events: none;
-  z-index: 3;
+  z-index: 5;
   background:
     radial-gradient(ellipse at 50% 50%, transparent 42%, rgba(28, 28, 34, 0.16) 94%);
+  opacity: max(0, calc(1 - var(--p, 0) * 2.4));
 }
 
 .gl-stage {
