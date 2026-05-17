@@ -5,10 +5,6 @@ import { About } from './about/About'
 import { Cursor } from './hero/Cursor'
 import { progressStore } from './about/dwellStore'
 
-// Hero red and the gray it lerps to as scroll enters About.
-const RED = { r: 230, g: 57, b: 70 };
-const GRAY = { r: 122, g: 125, b: 130 };
-
 function App() {
   const stageRef = useRef<HTMLDivElement>(null)
   const sceneRef = useRef<HeroScene | null>(null)
@@ -32,11 +28,6 @@ function App() {
       progressStore.value = clamped;
       sceneRef.current?.setProgress(clamped);
       root.style.setProperty('--p', clamped.toFixed(4));
-      const r = Math.round(RED.r + (GRAY.r - RED.r) * clamped);
-      const g = Math.round(RED.g + (GRAY.g - RED.g) * clamped);
-      const b = Math.round(RED.b + (GRAY.b - RED.b) * clamped);
-      root.style.setProperty('--accent-red', `rgb(${r}, ${g}, ${b})`);
-      root.style.setProperty('--accent-red-shadow', `rgba(${r}, ${g}, ${b}, 0.5)`);
     };
 
     const onScroll = () => {

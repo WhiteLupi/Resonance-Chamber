@@ -23,7 +23,10 @@
   overflow: hidden;
 }
 
-/* the single bounding box around all three sentences — spec decision #4 */
+/* the single bounding box around all three sentences. A vertical hairline runs
+   down the left margin like the spine of a folio; a small mono label sits at
+   the top as a section marker. Both fade in alongside scroll progress so the
+   inscription "arrives" rather than just appearing. */
 .inscription {
   position: relative;
   z-index: 2;
@@ -33,10 +36,50 @@
   gap: 30px;
 }
 
+.inscription::before {
+  content: '';
+  position: absolute;
+  left: -32px;
+  top: 6%;
+  width: 1px;
+  height: 88%;
+  background: linear-gradient(
+    to bottom,
+    rgba(20, 20, 20, 0) 0%,
+    rgba(20, 20, 20, 0.18) 14%,
+    rgba(20, 20, 20, 0.14) 86%,
+    rgba(20, 20, 20, 0) 100%
+  );
+  opacity: clamp(0, calc((var(--p, 0) - 0.5) / 0.3), 1);
+  pointer-events: none;
+}
+
+.inscription__header {
+  font-family: 'Space Mono', ui-monospace, monospace;
+  font-size: 10px;
+  letter-spacing: 0.42em;
+  text-transform: uppercase;
+  color: rgba(20, 20, 20, 0.5);
+  margin: 0 0 4px;
+  --t: clamp(0, calc((var(--p, 0) - 0.45) / 0.25), 1);
+  opacity: var(--t);
+  transform: translateY(calc((1 - var(--t)) * 8px));
+}
+
+/* Per-line entrance keyed to scroll progress. The lines stagger in across
+   p ∈ [0.55, 0.95] so the page-load gesture of arriving in About lasts about
+   half a viewport of scroll — a paced reveal, not a snap. */
 .inscription__line {
   display: block;
   margin: 0;
+  --p-start: 0.55;
+  --p-end: 0.80;
+  --t: clamp(0, calc((var(--p, 0) - var(--p-start)) / (var(--p-end) - var(--p-start))), 1);
+  opacity: var(--t);
+  transform: translateY(calc((1 - var(--t)) * 14px));
 }
+.inscription__line[data-line="1"] { --p-start: 0.65; --p-end: 0.86; }
+.inscription__line[data-line="2"] { --p-start: 0.74; --p-end: 0.94; }
 
 .inscription__copy {
   font-size: clamp(19px, 2.35vw, 27px);
@@ -85,12 +128,13 @@
   color: inherit;
 }
 
-/* Voice v1 — cursor blink. Square wave (step-end), 1.0s. Always rendered;
-   the inscription's overall visibility comes from --p reaching ~1. */
+/* Voice v1 — cursor blink. The single drop of accent in About; cross-stitches
+   the patina-teal from Hero so both rooms read as the same instrument. */
 .inscription__caret {
   display: inline-block;
   margin-left: 2px;
-  color: #141414;
+  color: var(--accent);
+  filter: drop-shadow(0 0 4px var(--accent-shadow));
   animation: about-caret-blink 1s step-end infinite;
 }
 

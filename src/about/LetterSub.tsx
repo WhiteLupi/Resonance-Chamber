@@ -16,7 +16,7 @@ const ELIGIBLE = /[A-Za-z]/;
 const HOVER_RADIUS_PX = 72;
 const CASCADE_STAGGER_MS = 22;
 
-const TEAL = 'rgb(143, 169, 163)';
+const TEAL = 'rgb(61, 110, 99)';
 
 type Visual =
   | { showSwap: false }

@@ -1,10 +1,9 @@
 :root {
-  /* Scroll-driven CSS cockpit fade + red→gray accent lerp. Written by App.tsx
-     on scroll. Fallback values keep hero correct on first paint, before the
-     scroll handler has fired. */
+  /* Single accent across both rooms — oxidized teal, the patina of the
+     instrument. --p is the hero→about scroll progress, written by App.tsx. */
   --p: 0;
-  --accent-red: #e63946;
-  --accent-red-shadow: rgba(230, 57, 70, 0.5);
+  --accent: rgb(61, 110, 99);
+  --accent-shadow: rgba(61, 110, 99, 0.5);
 }
 
 * {
