@@ -21,11 +21,6 @@ export function Telemetry() {
       className={`cockpit-telemetry${introDone ? ' cockpit-telemetry--in' : ''}`}
       aria-label="profile telemetry"
     >
-      <div className="cockpit-telemetry__header">
-        <span className="cockpit-telemetry__bracket">[</span>
-        <span>PROFILE</span>
-        <span className="cockpit-telemetry__bracket">]</span>
-      </div>
       <dl className="cockpit-telemetry__body">
         {ROWS.map(([k, v]) => (
           <div className="cockpit-telemetry__row" key={k}>

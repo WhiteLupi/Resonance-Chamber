@@ -12,6 +12,9 @@
   align-items: center;
   gap: 28px;
   z-index: 50;
+  /* scroll into About: slide up off-screen. Composes with intro `transform`
+     via the `translate` long-hand so the entrance animation keeps working. */
+  translate: 0 calc(var(--p, 0) * -160%);
 
   background: rgba(232, 230, 227, 0.16);
   backdrop-filter: blur(26px) saturate(170%);
@@ -71,20 +74,20 @@
 .cockpit-navbar__left .cockpit-navbar__glyph {
   width: 13px;
   height: 13px;
-  color: #e63946;
-  filter: drop-shadow(0 0 4px rgba(230, 57, 70, 0.5));
+  color: var(--accent-red);
+  filter: drop-shadow(0 0 4px var(--accent-red-shadow));
   animation: cockpit-sigil-pulse 3.6s ease-in-out infinite;
 }
 
 @keyframes cockpit-sigil-pulse {
-  0%, 100% { opacity: 1;   filter: drop-shadow(0 0 4px rgba(230, 57, 70, 0.5)); }
+  0%, 100% { opacity: 1;   filter: drop-shadow(0 0 4px var(--accent-red-shadow)); }
   50%      { opacity: 0.7; filter: drop-shadow(0 0 2px rgba(230, 57, 70, 0.3)); }
 }
 
 .cockpit-navbar__link:hover .cockpit-navbar__glyph,
 .cockpit-navbar__link:focus-visible .cockpit-navbar__glyph {
-  color: #e63946;
-  filter: drop-shadow(0 0 4px rgba(230, 57, 70, 0.5));
+  color: var(--accent-red);
+  filter: drop-shadow(0 0 4px var(--accent-red-shadow));
 }
 
 .cockpit-navbar__center {
@@ -108,7 +111,7 @@
   position: absolute;
   left: 0; right: 0; bottom: -2px;
   height: 1px;
-  background: #e63946;
+  background: var(--accent-red);
   box-shadow: 0 0 5px rgba(230, 57, 70, 0.7);
   transform: scaleX(0);
   transform-origin: left;
@@ -117,7 +120,7 @@
 
 .cockpit-navbar__link:hover,
 .cockpit-navbar__link:focus-visible {
-  color: #e63946;
+  color: var(--accent-red);
   outline: none;
 }
 
@@ -148,6 +151,8 @@
   left: 64px;
   bottom: 64px;
   transform: translateY(12px);
+  /* scroll into About: slide down off-screen. Composes with intro `transform`. */
+  translate: 0 calc(var(--p, 0) * 160%);
   z-index: 14;
   min-width: 268px;
   padding: 18px 22px 16px;
@@ -233,7 +238,7 @@
 }
 
 .cockpit-telemetry__bar--on {
-  background: #e63946;
+  background: var(--accent-red);
   box-shadow: 0 0 4px rgba(230, 57, 70, 0.55);
 }
 
@@ -274,7 +279,7 @@
 
 .cockpit-scroll:hover,
 .cockpit-scroll:focus-visible {
-  color: #e63946;
+  color: var(--accent-red);
   outline: none;
 }
 
@@ -344,13 +349,13 @@
 .cockpit-cursor--link {
   width: 42px;
   height: 42px;
-  color: #e63946;
+  color: var(--accent-red);
 }
 
 .cockpit-cursor--scroll {
   width: 70px;
   height: 70px;
-  color: #e63946;
+  color: var(--accent-red);
 }
 
 .cockpit-cursor--scroll .cockpit-cursor__shape {
@@ -366,7 +371,7 @@
   letter-spacing: 0.42em;
   text-transform: lowercase;
   white-space: nowrap;
-  color: #e63946;
+  color: var(--accent-red);
   opacity: 0;
   transition: opacity 0.2s ease;
   pointer-events: none;

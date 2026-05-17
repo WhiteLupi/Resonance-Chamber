@@ -10,6 +10,7 @@ uniform vec2 u_resolution;
 uniform float u_pointSize;
 uniform float u_time;
 uniform float u_fadeIn;
+uniform float u_scrollProgress; // 0 at hero, 1 at about. Drives the scroll-out fade.
 uniform int u_gridSize;
 
 out float v_alpha;
@@ -33,9 +34,16 @@ void main() {
   float age = u_time - spawnTime;
   float fadeIn = clamp(age / u_fadeIn, 0.0, 1.0);
 
-  v_alpha = age < 0.0 ? 0.0 : fadeIn;
   v_kind = hasTarget < 0.5 ? 0.0 : (groupId < 0.5 ? 1.0 : 2.0);
   v_shade = hash11(float(idx) * 0.137);
+
+  // Scroll-driven fade. Ambient leaves first (0.0→0.4), slogan+signature
+  // fade in the middle (0.4→0.85).
+  float ambientFade  = 1.0 - smoothstep(0.0, 0.4,  u_scrollProgress);
+  float directedFade = 1.0 - smoothstep(0.4, 0.85, u_scrollProgress);
+  float scrollFade = v_kind < 0.5 ? ambientFade : directedFade;
+
+  v_alpha = (age < 0.0 ? 0.0 : fadeIn) * scrollFade;
 
   vec2 ndc = (pos.xy / u_resolution) * 2.0 - 1.0;
   ndc.y = -ndc.y;
@@ -73,7 +81,13 @@ void main() {
 `;
 
 export type ParticleRenderer = {
-  render: (state: ParticleState, time: number, resolution: { w: number; h: number; dpr: number }, fadeIn: number) => void;
+  render: (
+    state: ParticleState,
+    time: number,
+    resolution: { w: number; h: number; dpr: number },
+    fadeIn: number,
+    scrollProgress: number,
+  ) => void;
   dispose: () => void;
 };
 
@@ -86,12 +100,13 @@ export function createParticleRenderer(gl: WebGL2RenderingContext): ParticleRend
     'u_pointSize',
     'u_time',
     'u_fadeIn',
+    'u_scrollProgress',
     'u_gridSize',
   ] as const);
   const vao = gl.createVertexArray();
 
   return {
-    render(state, time, { w, h, dpr }, fadeIn) {
+    render(state, time, { w, h, dpr }, fadeIn, scrollProgress) {
       gl.viewport(0, 0, w, h);
       gl.useProgram(prog);
       gl.bindVertexArray(vao);
@@ -110,6 +125,7 @@ export function createParticleRenderer(gl: WebGL2RenderingContext): ParticleRend
       gl.uniform1f(u.u_pointSize, Math.max(2, 2.2 * dpr));
       gl.uniform1f(u.u_time, time);
       gl.uniform1f(u.u_fadeIn, fadeIn);
+      gl.uniform1f(u.u_scrollProgress, scrollProgress);
       gl.uniform1i(u.u_gridSize, state.gridSize);
 
       gl.drawArrays(gl.POINTS, 0, state.count);

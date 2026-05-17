@@ -1,3 +1,12 @@
+:root {
+  /* Scroll-driven CSS cockpit fade + red→gray accent lerp. Written by App.tsx
+     on scroll. Fallback values keep hero correct on first paint, before the
+     scroll handler has fired. */
+  --p: 0;
+  --accent-red: #e63946;
+  --accent-red-shadow: rgba(230, 57, 70, 0.5);
+}
+
 * {
   box-sizing: border-box;
 }
@@ -7,6 +16,9 @@ html, body {
   padding: 0;
   color: #1a1a1a;
   font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+  /* kill rubber-band over-scroll bounce; otherwise body bg shows above hero
+     without noise/vignette/canvas overlays, breaking the decayed-cockpit feel */
+  overscroll-behavior: none;
 }
 
 body {
@@ -15,7 +27,6 @@ body {
 
 html {
   scroll-behavior: smooth;
-  overflow-y: auto;
   scrollbar-width: none;
 }
 
@@ -26,7 +37,6 @@ html::-webkit-scrollbar {
 }
 
 body {
-  overflow-x: hidden;
   -ms-overflow-style: none;
 }
 

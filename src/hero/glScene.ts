@@ -13,6 +13,9 @@ import { buildTextMask, collectInterior, type TextMask, type TextMaskOpts } from
 const BG_R = 0xdd / 255;
 const BG_G = 0xe0 / 255;
 const BG_B = 0xe4 / 255;
+const BG_ABOUT_R = 0xbc / 255;
+const BG_ABOUT_G = 0xc0 / 255;
+const BG_ABOUT_B = 0xc5 / 255;
 
 const PRIMARY_LINES = ["Let's hear", 'motion'];
 const SIGNATURE_LINES = ['KASIA WALTER'];
@@ -62,12 +65,18 @@ const SIGNATURE_INTERIOR_THRESHOLD = 130;
 
 const DT_CAP = 1 / 30;
 
-export function startHero(host: HTMLElement): () => void {
+export type HeroScene = {
+  setProgress: (p: number) => void;
+  dispose: () => void;
+};
+
+export function startHero(host: HTMLElement): HeroScene {
   let ctx;
   try {
     ctx = createGLContext(host);
   } catch (err) {
-    return mountErrorMessage(host, err);
+    const cleanup = mountErrorMessage(host, err);
+    return { setProgress: () => {}, dispose: cleanup };
   }
 
   if (import.meta.env.DEV) {
@@ -126,6 +135,7 @@ export function startHero(host: HTMLElement): () => void {
 
   let raf = 0;
   let prevT = performance.now();
+  let scrollProgress = 0;
   const frame = () => {
     const now = performance.now();
     const dt = Math.min(DT_CAP, (now - prevT) / 1000);
@@ -159,26 +169,37 @@ export function startHero(host: HTMLElement): () => void {
     });
 
     gl.viewport(0, 0, size.w, size.h);
-    gl.clearColor(BG_R, BG_G, BG_B, 1);
+    const p = Math.max(0, Math.min(1, scrollProgress));
+    gl.clearColor(
+      BG_R + (BG_ABOUT_R - BG_R) * p,
+      BG_G + (BG_ABOUT_G - BG_G) * p,
+      BG_B + (BG_ABOUT_B - BG_B) * p,
+      1,
+    );
     gl.clear(gl.COLOR_BUFFER_BIT);
-    renderer.render(state, time, size, FADE_IN);
+    renderer.render(state, time, size, FADE_IN, p);
 
     raf = requestAnimationFrame(frame);
   };
   raf = requestAnimationFrame(frame);
 
-  return () => {
-    cancelAnimationFrame(raf);
-    window.removeEventListener('resize', onResize);
-    maskPrimary.dispose();
-    maskSignature.dispose();
-    renderer.dispose();
-    update.dispose();
-    state.dispose();
-    quad.dispose();
-    const lose = gl.getExtension('WEBGL_lose_context');
-    lose?.loseContext();
-    canvas.remove();
+  return {
+    setProgress(p: number) {
+      scrollProgress = p;
+    },
+    dispose() {
+      cancelAnimationFrame(raf);
+      window.removeEventListener('resize', onResize);
+      maskPrimary.dispose();
+      maskSignature.dispose();
+      renderer.dispose();
+      update.dispose();
+      state.dispose();
+      quad.dispose();
+      const lose = gl.getExtension('WEBGL_lose_context');
+      lose?.loseContext();
+      canvas.remove();
+    },
   };
 }
 
@@ -295,7 +316,7 @@ function makeInitData(
     initPos[idx * 4 + 3] = 0;
     initVel[idx * 4 + 0] = -1;
     initVel[idx * 4 + 1] = 0;
-    initVel[idx * 4 + 2] = 0;
+    initVel[idx * 4 + 2] = 2; // group=2 (ambient). Distinct from PRIMARY(0)/SIGNATURE(1).
     initVel[idx * 4 + 3] = 0;
   }
 

@@ -1,29 +1,26 @@
 import { forwardRef } from 'react';
+import type { DwellPhase } from './useDwell';
+import { LetterSub } from './LetterSub';
 
-const LINES: { label: string; copy: string }[] = [
-  {
-    label: '[ FN_KASIA :: 00 ]',
-    copy: 'Front-end developer. Browser animation.',
-  },
-  {
-    label: '[ FN_KASIA :: 01 ]',
-    copy: 'I hear motion. I tune an animation until the sound in my head resolves.',
-  },
-  {
-    label: '[ FN_KASIA :: 02 ]',
-    copy: "AI developer. The motion-craft decisions are mine; the code is the agent's.",
-  },
+const LINES: string[] = [
+  'I hear motion.',
+  'Most days I tune browser animation until the sound in my head resolves. The rest is React apps, when the brief is quieter.',
+  'I work a layer above the code — AI does the typing, the taste is mine.',
 ];
 
-/* Single bounding box around all three sentences (spec decision #4).
-   The forwarded ref is the particle-collision rectangle source for Phase 3. */
-export const Inscription = forwardRef<HTMLDivElement>(function Inscription(_, ref) {
+type Props = { phase: DwellPhase };
+
+export const Inscription = forwardRef<HTMLDivElement, Props>(function Inscription({ phase }, ref) {
   return (
     <div ref={ref} className="inscription">
-      {LINES.map(line => (
-        <p key={line.label} className="inscription__line">
-          <span className="inscription__label">{line.label}</span>
-          <span className="inscription__copy">{line.copy}</span>
+      {LINES.map((line, lineIdx) => (
+        <p key={lineIdx} className="inscription__line">
+          <span className="inscription__copy">
+            <LetterSub text={line} lineIdx={lineIdx} active={phase.v2} />
+            {lineIdx === LINES.length - 1 && (
+              <span className="inscription__caret" aria-hidden="true">{'▌'}</span>
+            )}
+          </span>
         </p>
       ))}
     </div>
