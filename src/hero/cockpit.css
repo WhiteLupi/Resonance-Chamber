@@ -76,21 +76,62 @@
 
 .hero-inscription__top {
   /* The invitation — small inscription tag, not a billboard. Lets the seal
-     hold the visual weight; text is annotation, not headline. */
+     hold the visual weight; text is annotation, not headline.
+
+     Scroll behavior: drifts up + slightly left + scales down + rotates
+     subtly as --p climbs. Not "scrolls up linearly" — reads as departing
+     into the void instead of leaving the document. */
   font-size: clamp(18px, 1.9vw, 38px);
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: rgba(232, 230, 227, 0.65);
+  transform:
+    translateY(calc(var(--p, 0) * -90px))
+    translateX(calc(var(--p, 0) * -22px))
+    rotate(calc(var(--p, 0) * -3deg))
+    scale(calc(1 - var(--p, 0) * 0.18));
+  /* Custom opacity overrides the reveal default — fades with scroll past
+     p > 0.05. */
+  opacity: 0;
+  will-change: transform, opacity;
+}
+
+.hero-section--revealed .hero-inscription__top {
+  opacity: calc(1 - max(0, (var(--p, 0) - 0.04)) * 1.8);
+  transform:
+    translateY(calc(var(--p, 0) * -90px))
+    translateX(calc(var(--p, 0) * -22px))
+    rotate(calc(var(--p, 0) * -3deg))
+    scale(calc(1 - var(--p, 0) * 0.18));
 }
 
 .hero-inscription__bottom {
-  /* The named outcome — present but in proportion with the engine. Sized
-     down from the previous "billboard" so the seal stays the centerpiece. */
+  /* The named outcome — letters scatter in different directions as the user
+     scrolls down. The word "motion" literally moves: each letter takes a
+     unique trajectory driven by --i (centered index, -2.5..+2.5 for 6
+     letters of "motion"). True to the manifesto. */
   font-size: clamp(40px, 5.8vw, 132px);
   letter-spacing: -0.01em;
   text-transform: lowercase;
   color: rgba(245, 244, 240, 0.94);
   transition-delay: 0.18s;
+  display: flex;
+  gap: 0;
+  white-space: nowrap;
+}
+
+.hero-inscription__letter {
+  display: inline-block;
+  /* Each letter scatters: vertical translate climbs with --p, horizontal
+     based on signed index --i, plus subtle per-letter rotation. Letters
+     at center barely move (i near 0); outer letters fling apart hard. */
+  transform:
+    translateY(calc(var(--p, 0) * -130px))
+    translateX(calc(var(--i, 0) * var(--p, 0) * 38px))
+    rotate(calc(var(--i, 0) * var(--p, 0) * 5deg))
+    scale(calc(1 - var(--p, 0) * 0.28));
+  opacity: calc(1 - max(0, (var(--p, 0) - 0.04)) * 1.9);
+  will-change: transform, opacity;
 }
 
 .hero-section--revealed .hero-inscription__bottom {
@@ -123,16 +164,19 @@
   text-align: center;
   white-space: nowrap;
   opacity: 0;
-  transition:
-    opacity 0.9s cubic-bezier(0.2, 0.8, 0.2, 1) 0.5s,
-    transform 0.9s cubic-bezier(0.2, 0.8, 0.2, 1) 0.5s;
   pointer-events: auto;
   user-select: none;
 }
 
+/* Signature holds longest — fades only past p > 0.20, slow drift down (sinks
+   like the inscription tag falling into the engine's wake). The other
+   elements clear out first; this one watches them leave. */
 .hero-section--revealed .hero-signature {
-  opacity: 1;
-  transform: translateX(-50%) translateY(0);
+  opacity: calc(1 - max(0, (var(--p, 0) - 0.18)) * 2.0);
+  transform:
+    translateX(-50%)
+    translateY(calc(var(--p, 0) * 60px))
+    scale(calc(1 - var(--p, 0) * 0.15));
 }
 
 /* Corner markers — chapter id top-left, byline top-right. They span the
@@ -158,6 +202,11 @@
 
 .hero-marker--tl {
   left: 64px;
+  /* Drifts further left + up as scroll — pulled into the void in its own
+     direction instead of marching uniformly upward with the rest. */
+  transform:
+    translateY(calc(var(--p, 0) * -34px))
+    translateX(calc(var(--p, 0) * -48px));
 }
 
 .hero-marker--tr {
@@ -165,6 +214,14 @@
   display: inline-flex;
   align-items: center;
   gap: 9px;
+  /* Mirror — drifts right + up, balancing the asymmetric exit of __tl. */
+  transform:
+    translateY(calc(var(--p, 0) * -34px))
+    translateX(calc(var(--p, 0) * 48px));
+}
+
+.hero-section--revealed .hero-marker {
+  opacity: calc(1 - max(0, (var(--p, 0) - 0.04)) * 2.2);
 }
 
 .hero-marker__dot {

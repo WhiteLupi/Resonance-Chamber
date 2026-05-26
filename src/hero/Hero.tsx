@@ -23,7 +23,15 @@ export function Hero({ locked }: HeroProps) {
           LET&rsquo;S · HEAR
         </div>
         <div className="hero-inscription__bottom" aria-hidden={!locked}>
-          MOTION
+          {Array.from('motion').map((ch, i, arr) => (
+            <span
+              key={i}
+              className="hero-inscription__letter"
+              style={{ ['--i' as string]: i - (arr.length - 1) / 2 }}
+            >
+              {ch}
+            </span>
+          ))}
         </div>
       </div>
       {/* Invitation hint — visible before lock, dissolves after the engine
