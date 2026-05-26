@@ -137,6 +137,46 @@ export function startHero(host: HTMLElement): HeroScene {
   glowSprite.scale.setScalar(1.1);
   tetraGroup.add(glowSprite);
 
+  // Sonar rings — periodic outward pulses from the seal, signalling the
+  // engine is broadcasting. Wide screens have lots of horizontal space and
+  // these radial rings carry energy across it, giving the composition a
+  // rhythmic heartbeat instead of a static centerpiece.
+  const ringCanvas = document.createElement('canvas');
+  ringCanvas.width = ringCanvas.height = 256;
+  const rctx = ringCanvas.getContext('2d')!;
+  // Build an additive ring texture: transparent center, thin bright ring at
+  // the edge, soft outer falloff.
+  const rGrad = rctx.createRadialGradient(128, 128, 80, 128, 128, 128);
+  rGrad.addColorStop(0,    `rgba(0,0,0,0)`);
+  rGrad.addColorStop(0.70, `rgba(0,0,0,0)`);
+  rGrad.addColorStop(0.86, `rgba(${acR},${acG},${acB},0.30)`);
+  rGrad.addColorStop(0.94, `rgba(${acR},${acG},${acB},0.80)`);
+  rGrad.addColorStop(0.98, `rgba(${acR},${acG},${acB},0.35)`);
+  rGrad.addColorStop(1,    `rgba(0,0,0,0)`);
+  rctx.fillStyle = rGrad;
+  rctx.fillRect(0, 0, 256, 256);
+  const ringTex = new THREE.CanvasTexture(ringCanvas);
+
+  const RING_COUNT = 3;
+  const RING_PERIOD = 6.4;
+  const RING_MIN_SCALE = 0.5;
+  const RING_MAX_SCALE = 6.2;
+  type Ring = { sprite: THREE.Sprite; mat: THREE.SpriteMaterial; phase: number };
+  const rings: Ring[] = [];
+  for (let i = 0; i < RING_COUNT; i++) {
+    const mat = new THREE.SpriteMaterial({
+      map: ringTex,
+      blending: THREE.AdditiveBlending,
+      transparent: true,
+      depthWrite: false,
+      opacity: 0,
+    });
+    const sprite = new THREE.Sprite(mat);
+    sprite.scale.setScalar(RING_MIN_SCALE);
+    tetraGroup.add(sprite);
+    rings.push({ sprite, mat, phase: i / RING_COUNT });
+  }
+
   // Roots
   type Tendril = {
     lines: { line: Line2; endIdx: number; geom: LineGeometry }[];
@@ -603,6 +643,21 @@ export function startHero(host: HTMLElement): HeroScene {
 
     glowSprite.scale.setScalar((1.0 + charge * 0.5) * breath);
     haloMat.opacity = (0.50 + charge * 0.18) * sceneVis;
+
+    // Sonar rings — staggered outward pulses, fade as they expand. Visible
+    // only after charge (>0.05) so the pre-lock seal stays a quiet core,
+    // and damped by sceneVis so they quiet down with the rest of the seal
+    // as the user scrolls into about.
+    const ringVis = Math.min(1, charge / 0.5) * sceneVis;
+    for (const r of rings) {
+      const local = ((t / RING_PERIOD) + r.phase) % 1;
+      const scale = RING_MIN_SCALE + local * (RING_MAX_SCALE - RING_MIN_SCALE);
+      r.sprite.scale.setScalar(scale * breath);
+      // Ease: rise quickly to peak around 15% then fall — like a heartbeat
+      const rise = Math.min(1, local / 0.12);
+      const fall = Math.pow(1 - Math.max(0, (local - 0.12) / 0.88), 1.4);
+      r.mat.opacity = rise * fall * 0.55 * ringVis;
+    }
 
     bloom.strength = (0.32 + charge * 0.20) * sceneVis;
 
