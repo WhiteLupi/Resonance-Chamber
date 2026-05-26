@@ -2,9 +2,14 @@ import { useRef } from 'react';
 import { Inscription } from './Inscription';
 import { useDwell } from './useDwell';
 import { BgBreath } from './BgBreath';
+import { Telemetry } from '../hero/Telemetry';
 import './about.css';
 
-export function About() {
+type AboutProps = {
+  locked: boolean;
+};
+
+export function About({ locked }: AboutProps) {
   const inscriptionRef = useRef<HTMLDivElement>(null);
   const phase = useDwell();
 
@@ -14,6 +19,7 @@ export function About() {
         <BgBreath active={phase.v4} />
         <Inscription ref={inscriptionRef} phase={phase} />
       </div>
+      <Telemetry revealed={locked} />
     </section>
   );
 }

@@ -1,23 +1,25 @@
-import { Telemetry } from './Telemetry';
 import './cockpit.css';
 
 type HeroProps = {
   locked: boolean;
 };
 
-// Headline + signature stay hidden until the seal locks. They appear over the
-// still-animating seal — the seal becomes the centerpiece of the dark hero,
-// not the whole hero. Tied to the lock event the scene fires from glScene.ts.
+// Vertical inscription column. The seal renders behind (canvas, fixed inset 0),
+// the text frames it vertically: invitation above, named outcome below,
+// signature at the base. The seal is the central glyph of a carved sentence
+// — not an object decorated with corner labels.
 export function Hero({ locked }: HeroProps) {
   return (
     <section className={`hero-section ${locked ? 'hero-section--revealed' : ''}`}>
-      <h1 className="hero-headline" aria-hidden={!locked}>
-        <span>LET&rsquo;S</span>
-        <span>HEAR</span>
-        <span>MOTION</span>
-      </h1>
-      <div className="hero-signature" aria-hidden={!locked}>KASIA WALTER</div>
-      <Telemetry revealed={locked} />
+      <div className="hero-inscription">
+        <div className="hero-inscription__top" aria-hidden={!locked}>
+          LET&rsquo;S · HEAR
+        </div>
+        <div className="hero-inscription__bottom" aria-hidden={!locked}>
+          MOTION
+        </div>
+      </div>
+      <div className="hero-signature" aria-hidden={!locked}>— K · WALTER</div>
     </section>
   );
 }

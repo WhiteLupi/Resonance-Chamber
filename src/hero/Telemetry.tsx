@@ -14,16 +14,15 @@ const ROWS: Array<[string, string]> = [
   ['ORIGIN', 'POLAND'],
 ];
 
-// `revealed` is the seal-lock signal — telemetry is part of the dark hero that
-// arrives once the user finishes charging, not a from-frame-one decoration.
+// Telemetry now belongs to the about section ("inside the engine"). Hidden in
+// hero, slides in once the user scrolls into about. Hidden state inverts the
+// old behavior — readout shows when y > 60, hides when y <= 20.
 export function Telemetry({ revealed }: TelemetryProps) {
-  const [hidden, setHidden] = useState(false);
+  const [hidden, setHidden] = useState(true);
 
-  // Telemetry leaves earlier than the navbar and returns later — it's a
-  // hero-only artifact, not a global persistent UI. Pure threshold (no
-  // direction tracking): any scroll past 30px hides it; only a return to the
-  // very top of the page brings it back. Hysteresis between 5 and 30 prevents
-  // jitter on tiny scroll wobble.
+  // Inverted threshold from old behavior — telemetry is the readout you see
+  // ONCE INSIDE the engine (in about), not from frame one. Slides in past
+  // y=60, slides back out below y=20. Hysteresis prevents jitter at the seam.
   useEffect(() => {
     let ticking = false;
     const onScroll = () => {
@@ -31,8 +30,8 @@ export function Telemetry({ revealed }: TelemetryProps) {
       ticking = true;
       requestAnimationFrame(() => {
         const y = window.scrollY;
-        if (y > 30) setHidden(true);
-        else if (y <= 5) setHidden(false);
+        if (y > 60) setHidden(false);
+        else if (y <= 20) setHidden(true);
         ticking = false;
       });
     };

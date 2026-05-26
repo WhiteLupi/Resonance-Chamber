@@ -8,9 +8,10 @@
   position: relative;
   z-index: 1;
   height: 200vh;
-  /* Same dark value as canvas + body — transition is invisible apart from
-     the seal disappearing once about covers it. No gradient, no fade. */
-  background: var(--bg-vault);
+  /* Transparent — the dimmed seal (sceneVis driven by setProgress in
+     glScene.ts) stays as a faint ambient backdrop behind the about
+     inscription. About is "inside the engine," not behind a wall. */
+  background: transparent;
   font-family: 'Space Mono', ui-monospace, monospace;
   color: var(--fg);
 }

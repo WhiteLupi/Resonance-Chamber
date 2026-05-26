@@ -12,7 +12,11 @@ import { LineGeometry } from 'three/addons/lines/LineGeometry.js';
 // render time despite the muted source color.
 const ACCENT = 0x3d6e63;
 const CORE_R = 0.18;
-const ROOTS_SCALE = 2.7;
+// Smaller reach so the seal occupies the middle ~70% of viewport, leaving
+// the top + bottom thirds free for the inscription text (LET'S · HEAR above,
+// MOTION below). The seal is the central glyph of a carved sentence —
+// readability of that sentence requires the seal not crowd the lines.
+const ROOTS_SCALE = 1.15;
 // charge crosses this and we lock — the seal stays in the charged state forever
 // and comets decouple back to idle drift speed. Slightly below 1 to avoid the
 // asymptote of the exp-lerp never quite reaching 1.
@@ -152,6 +156,7 @@ export function startHero(host: HTMLElement): HeroScene {
   const lineRes = new THREE.Vector2(viewW * pixelRatio, viewH * pixelRatio);
   const tendrils: Tendril[] = [];
 
+  const rootBaseOpacity = new WeakMap<LineMaterial, number>();
   const mkMat = (linewidth: number, opacity: number) => {
     const m = new LineMaterial({
       color: BASE_COLOR,
@@ -161,6 +166,7 @@ export function startHero(host: HTMLElement): HeroScene {
       worldUnits: false,
     });
     m.resolution.copy(lineRes);
+    rootBaseOpacity.set(m, opacity);
     rootMats.push(m);
     return m;
   };
@@ -456,6 +462,12 @@ export function startHero(host: HTMLElement): HeroScene {
   let mouseX = 0, mouseY = 0;
   let parallaxX = 0, parallaxY = 0;
 
+  // Scene visibility — driven by setProgress(p). 1.0 at hero, ramps to 0 as
+  // user scrolls into about. Multiplied into emissive / bloom / material
+  // opacities so the seal dims via shader (not opacity fade on the host) and
+  // becomes a faint ambient backdrop for the about inscription.
+  let sceneVis = 1.0;
+
   const onMouseMove = (e: MouseEvent) => {
     mouseX = (e.clientX / viewW) * 2 - 1;
     mouseY = (e.clientY / viewH) * 2 - 1;
@@ -588,17 +600,22 @@ export function startHero(host: HTMLElement): HeroScene {
     // Core breathing + emissive
     const breath = 1 + Math.sin(t * 1.25) * 0.04;
     coreMesh.scale.setScalar(breath);
-    coreMat.emissiveIntensity = 3.2 + charge * 3.0 + Math.sin(t * 1.7) * 0.15;
+    coreMat.emissiveIntensity = (3.2 + charge * 3.0 + Math.sin(t * 1.7) * 0.15) * sceneVis;
 
     glowSprite.scale.setScalar((1.0 + charge * 0.5) * breath);
-    haloMat.opacity = 0.50 + charge * 0.18;
+    haloMat.opacity = (0.50 + charge * 0.18) * sceneVis;
 
-    bloom.strength = 0.32 + charge * 0.20;
+    bloom.strength = (0.32 + charge * 0.20) * sceneVis;
+
+    cMat.opacity = 0.95 * sceneVis;
 
     const tintTarget = charge > 0.01
       ? new THREE.Color(BASE_COLOR).lerp(new THREE.Color(ACCENT), charge * 0.4).getHex()
       : BASE_COLOR;
-    for (const m of rootMats) m.color.setHex(tintTarget);
+    for (const m of rootMats) {
+      m.color.setHex(tintTarget);
+      m.opacity = (rootBaseOpacity.get(m) ?? 0.8) * sceneVis;
+    }
 
     composer.render();
     raf = requestAnimationFrame(loop);
@@ -619,9 +636,17 @@ export function startHero(host: HTMLElement): HeroScene {
   window.addEventListener('resize', onResize);
 
   return {
-    setProgress(_p: number) {
-      // Canvas stays at full opacity throughout — about's solid bg (same
-      // dark value) covers it once scrolled. No fade, no clash.
+    setProgress(p: number) {
+      // Scene-dim via shader as user scrolls into about — seal dims from
+      // foreground engine to ambient backdrop without an opacity fade on
+      // the host element. p=0..0.15: full brightness. p=0.15..0.75: ramps
+      // down. p>=0.75: minimum backdrop visibility.
+      const fadeStart = 0.15;
+      const fadeEnd = 0.75;
+      const local = Math.max(0, Math.min(1, (p - fadeStart) / (fadeEnd - fadeStart)));
+      // Min 0.08 so the seal stays as a faint ghost behind the inscription
+      // — the engine is still there even when you've entered it.
+      sceneVis = 1 - local * 0.92;
     },
     onLock(cb) {
       lockSubs.add(cb);
