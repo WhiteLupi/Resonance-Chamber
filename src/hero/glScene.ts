@@ -158,9 +158,12 @@ export function startHero(host: HTMLElement): HeroScene {
   const ringTex = new THREE.CanvasTexture(ringCanvas);
 
   const RING_COUNT = 4;
-  const RING_DURATION = 4.6;
+  // Longer travel + bigger max scale so rings reach the viewport edges and
+  // beyond — pulses dissolve into the walls of the room rather than fading
+  // mid-air close to the seal.
+  const RING_DURATION = 7.5;
   const RING_MIN_SCALE = 0.5;
-  const RING_MAX_SCALE = 6.4;
+  const RING_MAX_SCALE = 13.0;
   type Ring = {
     sprite: THREE.Sprite;
     mat: THREE.SpriteMaterial;
