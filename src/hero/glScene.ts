@@ -157,11 +157,16 @@ export function startHero(host: HTMLElement): HeroScene {
   rctx.fillRect(0, 0, 256, 256);
   const ringTex = new THREE.CanvasTexture(ringCanvas);
 
-  const RING_COUNT = 3;
-  const RING_PERIOD = 6.4;
+  const RING_COUNT = 4;
+  const RING_DURATION = 4.6;
   const RING_MIN_SCALE = 0.5;
-  const RING_MAX_SCALE = 6.2;
-  type Ring = { sprite: THREE.Sprite; mat: THREE.SpriteMaterial; phase: number };
+  const RING_MAX_SCALE = 6.4;
+  type Ring = {
+    sprite: THREE.Sprite;
+    mat: THREE.SpriteMaterial;
+    active: boolean;
+    startT: number;
+  };
   const rings: Ring[] = [];
   for (let i = 0; i < RING_COUNT; i++) {
     const mat = new THREE.SpriteMaterial({
@@ -174,8 +179,20 @@ export function startHero(host: HTMLElement): HeroScene {
     const sprite = new THREE.Sprite(mat);
     sprite.scale.setScalar(RING_MIN_SCALE);
     tetraGroup.add(sprite);
-    rings.push({ sprite, mat, phase: i / RING_COUNT });
+    rings.push({ sprite, mat, active: false, startT: 0 });
   }
+
+  // Fire one ring outward — recycles the oldest if all four are mid-flight.
+  // Called on mousedown and once on engine lock; deliberately not on a timer
+  // so the seal stays quiet unless something happened.
+  const triggerRing = (now: number) => {
+    let target = rings.find(r => !r.active);
+    if (!target) {
+      target = rings.reduce((a, b) => a.startT < b.startT ? a : b);
+    }
+    target.active = true;
+    target.startT = now;
+  };
 
   // Roots
   type Tendril = {
@@ -511,10 +528,16 @@ export function startHero(host: HTMLElement): HeroScene {
     mouseX = (e.clientX / viewW) * 2 - 1;
     mouseY = (e.clientY / viewH) * 2 - 1;
   };
-  const onMouseDown = () => { clickHeld = true; };
+  const onMouseDown = () => {
+    clickHeld = true;
+    triggerRing(clock.getElapsedTime());
+  };
   const onMouseUp   = () => { clickHeld = false; };
   const onBlur      = () => { clickHeld = false; };
-  const onTouchStart = () => { clickHeld = true; };
+  const onTouchStart = () => {
+    clickHeld = true;
+    triggerRing(clock.getElapsedTime());
+  };
   const onTouchEnd   = () => { clickHeld = false; };
   window.addEventListener('mousemove', onMouseMove);
   window.addEventListener('mousedown', onMouseDown);
@@ -541,6 +564,8 @@ export function startHero(host: HTMLElement): HeroScene {
     if (!locked && charge >= LOCK_THRESHOLD) {
       charge = 1;
       fireLock();
+      // Announce activation with one final ring — the engine just turned on.
+      triggerRing(t);
     }
 
     // Parallax — outerGroup deeper than tetraGroup
@@ -644,19 +669,26 @@ export function startHero(host: HTMLElement): HeroScene {
     glowSprite.scale.setScalar((1.0 + charge * 0.5) * breath);
     haloMat.opacity = (0.50 + charge * 0.18) * sceneVis;
 
-    // Sonar rings — staggered outward pulses, fade as they expand. Visible
-    // only after charge (>0.05) so the pre-lock seal stays a quiet core,
-    // and damped by sceneVis so they quiet down with the rest of the seal
-    // as the user scrolls into about.
-    const ringVis = Math.min(1, charge / 0.5) * sceneVis;
+    // Sonar rings — each pulse is a discrete event (mousedown / lock), not a
+    // metronome. Idle rings sit at opacity 0; active rings expand outward
+    // and fade over RING_DURATION seconds, then return to idle.
     for (const r of rings) {
-      const local = ((t / RING_PERIOD) + r.phase) % 1;
+      if (!r.active) {
+        r.mat.opacity = 0;
+        continue;
+      }
+      const local = (t - r.startT) / RING_DURATION;
+      if (local >= 1) {
+        r.active = false;
+        r.mat.opacity = 0;
+        continue;
+      }
       const scale = RING_MIN_SCALE + local * (RING_MAX_SCALE - RING_MIN_SCALE);
       r.sprite.scale.setScalar(scale * breath);
-      // Ease: rise quickly to peak around 15% then fall — like a heartbeat
-      const rise = Math.min(1, local / 0.12);
-      const fall = Math.pow(1 - Math.max(0, (local - 0.12) / 0.88), 1.4);
-      r.mat.opacity = rise * fall * 0.55 * ringVis;
+      // Heartbeat ease — rises fast (peak around 10%) then long decay.
+      const rise = Math.min(1, local / 0.10);
+      const fall = Math.pow(1 - Math.max(0, (local - 0.10) / 0.90), 1.5);
+      r.mat.opacity = rise * fall * 0.60 * sceneVis;
     }
 
     bloom.strength = (0.32 + charge * 0.20) * sceneVis;

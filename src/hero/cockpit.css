@@ -54,9 +54,11 @@
 
 .hero-inscription__top,
 .hero-inscription__bottom {
-  font-family: 'Major Mono Display', ui-monospace, monospace;
-  font-weight: 400;
-  text-transform: uppercase;
+  /* Sora — variable modern geometric sans. Subtle character in letterforms
+     (slightly geometric, slightly alien) without going literary serif or
+     glitchy display. Pairs the ancient seal with a contemporary inscription
+     voice. */
+  font-family: 'Sora', system-ui, sans-serif;
   text-align: center;
   /* Inner accent glow (subtle, oxidized teal) layered with dark shadow —
      reads as "carved by the engine's own light," not just black-on-dark text. */
@@ -73,20 +75,22 @@
 }
 
 .hero-inscription__top {
-  /* The invitation — bigger now to balance MOTION's mass at the bottom; the
-     top of the inscription should anchor the eye, not just whisper. */
-  font-size: clamp(36px, 5.4vw, 148px);
-  letter-spacing: 0.32em;
+  /* The invitation — medium weight, wide tracking. Anchors the top without
+     dominating; same Sora family as MOTION so they read as one voice. */
+  font-size: clamp(34px, 5vw, 128px);
+  font-weight: 500;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
   color: rgba(232, 230, 227, 0.72);
 }
 
 .hero-inscription__bottom {
-  /* The named outcome — strong but not crushing. Cap pulled in so MOTION
-     sits in proportion with the seal + LET'S · HEAR instead of dominating.
-     Slow letter-spacing breath gives the word literal motion — true to its
-     name, picked up only on dwell, never distracts. */
-  font-size: clamp(56px, 11vw, 248px);
-  letter-spacing: 0.10em;
+  /* The named outcome — Sora 800 black weight, tight tracking. The word
+     stands as a manifesto, modern but still carved by the engine's light. */
+  font-size: clamp(64px, 12vw, 280px);
+  font-weight: 800;
+  letter-spacing: -0.025em;
+  text-transform: lowercase;
   color: rgba(245, 244, 240, 0.96);
   transition-delay: 0.18s;
 }
@@ -96,8 +100,9 @@
 }
 
 @keyframes motion-breathe {
-  0%, 100% { letter-spacing: 0.10em; }
-  50%      { letter-spacing: 0.13em; }
+  /* Subtle letter-spacing breath — kinetic type, true to MOTION's name. */
+  0%, 100% { letter-spacing: -0.025em; }
+  50%      { letter-spacing: -0.005em; }
 }
 
 .hero-section--revealed .hero-inscription__top,
