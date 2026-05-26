@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 
-const INTRO_DELAY_MS = 3400;
+type TelemetryProps = {
+  revealed: boolean;
+};
 
 // Readout of the instrument. Each row a field that earns its line — no
 // signal-bar decoration, no "creative dev" tautology. LISTENING / TUNED cross-
@@ -12,14 +14,10 @@ const ROWS: Array<[string, string]> = [
   ['ORIGIN', 'POLAND'],
 ];
 
-export function Telemetry() {
-  const [introDone, setIntroDone] = useState(false);
+// `revealed` is the seal-lock signal — telemetry is part of the dark hero that
+// arrives once the user finishes charging, not a from-frame-one decoration.
+export function Telemetry({ revealed }: TelemetryProps) {
   const [hidden, setHidden] = useState(false);
-
-  useEffect(() => {
-    const id = window.setTimeout(() => setIntroDone(true), INTRO_DELAY_MS);
-    return () => window.clearTimeout(id);
-  }, []);
 
   // Telemetry leaves earlier than the navbar and returns later — it's a
   // hero-only artifact, not a global persistent UI. Pure threshold (no
@@ -45,7 +43,7 @@ export function Telemetry() {
 
   const cls = [
     'cockpit-telemetry',
-    introDone && 'cockpit-telemetry--in',
+    revealed && 'cockpit-telemetry--in',
     hidden && 'cockpit-telemetry--hidden',
   ].filter(Boolean).join(' ');
 

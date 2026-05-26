@@ -59,6 +59,8 @@ void main() {
 const FS = /* glsl */ `#version 300 es
 precision highp float;
 
+uniform vec3 u_particleColor; // 0..1 linear, controls the fill of every particle
+
 in float v_alpha;
 in float v_kind;
 in float v_shade;
@@ -71,13 +73,13 @@ void main() {
   if (r2 > 0.25) discard;
   float edge = smoothstep(0.25, 0.18, r2);
 
-  // single dark fill across all groups — clean ancient-stone particles, no CRT grain.
+  // single fill across all groups — variant chooses the pigment (stone/ochre/bone/teal).
   float baseAlpha =
     v_kind < 0.5 ? 0.45 :
     v_kind < 1.5 ? 0.9 :
                    0.92;
 
-  fragColor = vec4(0.078, 0.078, 0.078, edge * baseAlpha * v_alpha);
+  fragColor = vec4(u_particleColor, edge * baseAlpha * v_alpha);
 }
 `;
 
@@ -88,6 +90,8 @@ export type ParticleRenderer = {
     resolution: { w: number; h: number; dpr: number },
     fadeIn: number,
     scrollProgress: number,
+    particleColor: [number, number, number],
+    pointSizeMul: number,
   ) => void;
   dispose: () => void;
 };
@@ -103,11 +107,12 @@ export function createParticleRenderer(gl: WebGL2RenderingContext): ParticleRend
     'u_fadeIn',
     'u_scrollProgress',
     'u_gridSize',
+    'u_particleColor',
   ] as const);
   const vao = gl.createVertexArray();
 
   return {
-    render(state, time, { w, h, dpr }, fadeIn, scrollProgress) {
+    render(state, time, { w, h, dpr }, fadeIn, scrollProgress, particleColor, pointSizeMul) {
       gl.viewport(0, 0, w, h);
       gl.useProgram(prog);
       gl.bindVertexArray(vao);
@@ -123,11 +128,12 @@ export function createParticleRenderer(gl: WebGL2RenderingContext): ParticleRend
       gl.uniform1i(u.u_velTex, 1);
 
       gl.uniform2f(u.u_resolution, w, h);
-      gl.uniform1f(u.u_pointSize, Math.max(2, 2.2 * dpr));
+      gl.uniform1f(u.u_pointSize, Math.max(2, 2.2 * dpr) * pointSizeMul);
       gl.uniform1f(u.u_time, time);
       gl.uniform1f(u.u_fadeIn, fadeIn);
       gl.uniform1f(u.u_scrollProgress, scrollProgress);
       gl.uniform1i(u.u_gridSize, state.gridSize);
+      gl.uniform3f(u.u_particleColor, particleColor[0], particleColor[1], particleColor[2]);
 
       gl.drawArrays(gl.POINTS, 0, state.count);
       gl.bindVertexArray(null);

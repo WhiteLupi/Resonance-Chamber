@@ -167,9 +167,18 @@ void main() {
 
       if (t >= 1.0) {
         if (group == 0) {
-          // primary settled: completely static — carved inscription at rest.
-          // Energy lives in colors/glow, never in slogan motion.
+          // primary settled. Default: completely static (carved). Variants like
+          // fossil pass u_settleBreath > 0 to add per-particle micro-oscillation
+          // (slow Lissajous, amplitude in pixels) so the inscription reads as
+          // alive at rest instead of frozen.
           basePos = target;
+          if (u_settleBreath > 0.01) {
+            float ph = hash21(cellHash * 1.7 + 9.1) * 6.2831853;
+            basePos += vec2(
+              sin(u_time * 0.62 + ph) * u_settleBreath,
+              cos(u_time * 0.51 + ph + 1.7) * u_settleBreath
+            );
+          }
         } else {
           // signature (Bungee): completely static — no drift, no glitch
           basePos = target;

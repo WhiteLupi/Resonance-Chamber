@@ -1,439 +1,655 @@
-import {
-  createGLContext,
-  sizeCanvas,
-  WebGL2NotSupportedError,
-  FloatRenderNotSupportedError,
-} from './gl/context';
-import { createFullscreenQuad } from './gl/quad';
-import { createParticleState } from './gl/state';
-import { createUpdatePass } from './gl/updatePass';
-import { createParticleRenderer } from './gl/particles';
-import { buildTextMask, collectInterior, type TextMask, type TextMaskOpts } from './gl/textMask';
+import * as THREE from 'three';
+import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+import { Line2 } from 'three/addons/lines/Line2.js';
+import { LineMaterial } from 'three/addons/lines/LineMaterial.js';
+import { LineGeometry } from 'three/addons/lines/LineGeometry.js';
 
-const BG_R = 0xdd / 255;
-const BG_G = 0xe0 / 255;
-const BG_B = 0xe4 / 255;
-// Vault-dark: matches the body --bg-vault color so the canvas clear stays
-// flush with the CSS-driven page background. Same sRGB linear lerp both sides.
-const BG_ABOUT_R = 0x04 / 255;
-const BG_ABOUT_G = 0x07 / 255;
-const BG_ABOUT_B = 0x0a / 255;
-
-const PRIMARY_LINES = ["Let's hear", 'motion'];
-const SIGNATURE_LINES = ['KASIA WALTER'];
-const PRIMARY_FONT_FAMILY = '"Rubik Glitch", sans-serif';
-const SIGNATURE_FONT_FAMILY = '"Space Mono", ui-monospace, monospace';
-const FONT_WEIGHT = 400;
-
-const PRIMARY_PADDING_X_CSS = 64;
-const PRIMARY_PADDING_Y_CSS = 180;
-const PRIMARY_SIZE_FRAC = 0.105;
-const PRIMARY_SIZE_MAX = 210;
-const PRIMARY_LINE_HEIGHT = 0.95;
-const PRIMARY_MAX_WIDTH_FRAC = 0.62;
-
-const SIGNATURE_PADDING_X_CSS = 64;
-const SIGNATURE_PADDING_Y_CSS = 96;
-const SIGNATURE_SIZE_FRAC = 0.028;
-const SIGNATURE_SIZE_MAX = 48;
-const SIGNATURE_LINE_HEIGHT = 1.0;
-const SIGNATURE_MAX_WIDTH_FRAC = 0.45;
-
-const GRID_SIZE = 384;
-const DIRECTED_FRAC = 0.97;
-const PRIMARY_FRAC = 0.78;
-
-const ENTRANCE_PRIMARY_START = 0.0;
-const ENTRANCE_PRIMARY_END = 1.5;
-const ENTRANCE_SIGNATURE_START = 1.4;
-const ENTRANCE_SIGNATURE_END = 2.25;
-const APPROACH_DURATION = 1.7;
-const APPROACH_DURATION_SIGNATURE = 1.1;
-const SPAWN_TIME_JITTER = 0.15;
-const SIGNATURE_SPAWN_JITTER = 0.22;
-const FADE_IN = 0.18;
-const SPAWN_OFFSET_X_CSS = 120;
-
-const WIND_SPEED = 25;
-const CURL_AMP_FLIGHT = 15;
-const CURL_AMP_BG = 10;
-const CURL_SCALE = 0.0055;
-const CURL_TIME_SCALE = 0.18;
-const GLITCH_AMP_CSS = 14;
-const WAVE_AMP_CSS = 36;
-
-const PRIMARY_INTERIOR_THRESHOLD = 50;
-const SIGNATURE_INTERIOR_THRESHOLD = 130;
-
-const DT_CAP = 1 / 30;
+// Oxidized teal — single accent shared with CSS --accent (#3d6e63). The seal
+// is the "ancient engine" — the energy reads as patinated/copper-oxidized,
+// not fluorescent. Emissive intensity + bloom push it to luminous range at
+// render time despite the muted source color.
+const ACCENT = 0x3d6e63;
+const CORE_R = 0.18;
+const ROOTS_SCALE = 2.7;
+// charge crosses this and we lock — the seal stays in the charged state forever
+// and comets decouple back to idle drift speed. Slightly below 1 to avoid the
+// asymptote of the exp-lerp never quite reaching 1.
+const LOCK_THRESHOLD = 0.985;
 
 export type HeroScene = {
   setProgress: (p: number) => void;
+  onLock: (cb: () => void) => () => void;
   dispose: () => void;
 };
 
 export function startHero(host: HTMLElement): HeroScene {
-  let ctx;
-  try {
-    ctx = createGLContext(host);
-  } catch (err) {
-    const cleanup = mountErrorMessage(host, err);
-    return { setProgress: () => {}, dispose: cleanup };
-  }
+  const lockSubs = new Set<() => void>();
+  let locked = false;
+  const fireLock = () => {
+    if (locked) return;
+    locked = true;
+    for (const cb of lockSubs) cb();
+  };
 
-  if (import.meta.env.DEV) {
-    console.info('[hero] WebGL2 init', {
-      floatRender: ctx.floatRender,
-      halfFloatRender: ctx.halfFloatRender,
-      maxTextureSize: ctx.gl.getParameter(ctx.gl.MAX_TEXTURE_SIZE),
-      vendor: ctx.gl.getParameter(ctx.gl.VENDOR),
-      renderer: ctx.gl.getParameter(ctx.gl.RENDERER),
+  const canvas = document.createElement('canvas');
+  canvas.style.cssText =
+    'position:absolute;inset:0;width:100%;height:100%;display:block;' +
+    'user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;';
+  canvas.addEventListener('contextmenu', (e) => e.preventDefault());
+  host.appendChild(canvas);
+
+  // Intro fade — promote host opacity from 0→1 on the next frame so the CSS
+  // transition (set on .gl-stage) animates the reveal. setProgress takes over
+  // afterwards to hand off into the about section.
+  requestAnimationFrame(() => {
+    host.style.opacity = '1';
+  });
+
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false });
+  const pixelRatio = Math.min(window.devicePixelRatio, 2);
+  renderer.setPixelRatio(pixelRatio);
+
+  const measure = () => ({
+    w: host.clientWidth || window.innerWidth,
+    h: host.clientHeight || window.innerHeight,
+  });
+  let { w: viewW, h: viewH } = measure();
+  renderer.setSize(viewW, viewH);
+  // Matches --bg-vault (#04070a) exactly so canvas blends seamlessly with
+  // body + about — transition reads as "seal removed", not "color change".
+  renderer.setClearColor(0x04070a);
+
+  const scene = new THREE.Scene();
+  // Wider FOV + further camera so the comet shell (orbit radius 2.5–3.2) fits
+  // with margin. Roots reach ≈ 2.21 × ROOTS_SCALE so they overflow vertically
+  // and reach close to horizontal edges on 16:9.
+  const camera = new THREE.PerspectiveCamera(42, viewW / viewH, 0.1, 100);
+  camera.position.set(0, 0, 9.0);
+
+  scene.add(new THREE.AmbientLight(0xffffff, 0.32));
+  const keyLight = new THREE.DirectionalLight(0xffffff, 0.6);
+  keyLight.position.set(2, 3, 4);
+  scene.add(keyLight);
+  const rimLight = new THREE.DirectionalLight(ACCENT, 0.4);
+  rimLight.position.set(-3, -1, -2);
+  scene.add(rimLight);
+
+  const composer = new EffectComposer(renderer);
+  composer.setSize(viewW, viewH);
+  composer.addPass(new RenderPass(scene, camera));
+  // Very tight bloom — small radius so glow stays at the core, doesn't
+  // leak to canvas edges. (When bloom spread reached the framebuffer edges
+  // it lifted canvas pixels above clearColor, producing a visible seam vs.
+  // the solid about-section bg below.) Emissive is bumped separately to
+  // compensate — the seal glows via its own pixels, not bloom-spread.
+  const bloom = new UnrealBloomPass(new THREE.Vector2(viewW, viewH), 0.32, 0.18, 0.18);
+  composer.addPass(bloom);
+
+  const outerGroup = new THREE.Group();
+  const tetraGroup = new THREE.Group();
+  const particlesGroup = new THREE.Group();
+  outerGroup.add(tetraGroup);
+  outerGroup.add(particlesGroup);
+  scene.add(outerGroup);
+
+  tetraGroup.scale.setScalar(1.7);
+
+  // Core sphere — emissive intensity bumped to compensate for the darker
+  // oxidized accent; HDR pushes the rendered pixels into luminous range so
+  // bloom still catches it hard.
+  const coreMat = new THREE.MeshStandardMaterial({
+    color: 0xd4cfc6,
+    emissive: new THREE.Color(ACCENT),
+    emissiveIntensity: 2.4,
+    roughness: 0.45,
+    metalness: 0.0,
+  });
+  const coreGeom = new THREE.SphereGeometry(CORE_R, 32, 22);
+  const coreMesh = new THREE.Mesh(coreGeom, coreMat);
+  tetraGroup.add(coreMesh);
+
+  // Halo sprite — soft radial accent
+  const haloCanvas = document.createElement('canvas');
+  haloCanvas.width = haloCanvas.height = 256;
+  const hctx = haloCanvas.getContext('2d')!;
+  const ac = new THREE.Color(ACCENT);
+  const acR = (ac.r * 255) | 0, acG = (ac.g * 255) | 0, acB = (ac.b * 255) | 0;
+  const grad = hctx.createRadialGradient(128, 128, 0, 128, 128, 128);
+  grad.addColorStop(0,    `rgba(${acR},${acG},${acB},0.55)`);
+  grad.addColorStop(0.30, `rgba(${acR},${acG},${acB},0.30)`);
+  grad.addColorStop(0.70, `rgba(${acR},${acG},${acB},0.08)`);
+  grad.addColorStop(1,    `rgba(0,0,0,0)`);
+  hctx.fillStyle = grad;
+  hctx.fillRect(0, 0, 256, 256);
+  const haloTex = new THREE.CanvasTexture(haloCanvas);
+  const haloMat = new THREE.SpriteMaterial({
+    map: haloTex,
+    blending: THREE.AdditiveBlending,
+    transparent: true,
+    depthWrite: false,
+  });
+  const glowSprite = new THREE.Sprite(haloMat);
+  glowSprite.scale.setScalar(1.1);
+  tetraGroup.add(glowSprite);
+
+  // Roots
+  type Tendril = {
+    lines: { line: Line2; endIdx: number; geom: LineGeometry }[];
+    samples: number;
+    type: 'main' | 'branch';
+    parent?: Tendril;
+    branchT?: number;
+    growthStart?: number;
+    growthDuration?: number;
+    growth: number;
+  };
+
+  const rootsGroup = new THREE.Group();
+  const BASE_COLOR = 0xdcd5cb;
+  const rootMats: LineMaterial[] = [];
+  const lineRes = new THREE.Vector2(viewW * pixelRatio, viewH * pixelRatio);
+  const tendrils: Tendril[] = [];
+
+  const mkMat = (linewidth: number, opacity: number) => {
+    const m = new LineMaterial({
+      color: BASE_COLOR,
+      linewidth,
+      transparent: true,
+      opacity,
+      worldUnits: false,
     });
+    m.resolution.copy(lineRes);
+    rootMats.push(m);
+    return m;
+  };
+  const matThick = mkMat(5.0, 0.72);
+  const matMid = mkMat(3.4, 0.82);
+  const matThin = mkMat(2.0, 0.90);
+  const matWisp = mkMat(0.9, 0.85);
+  const matBranchThick = mkMat(2.6, 0.75);
+  const matBranchThin = mkMat(1.1, 0.85);
+
+  const layersForTendril = (jitter: number) => [
+    { mat: matThick, ratio: 0.45 + jitter * 0.05 },
+    { mat: matMid,   ratio: 0.72 + jitter * 0.04 },
+    { mat: matThin,  ratio: 0.90 + jitter * 0.03 },
+    { mat: matWisp,  ratio: 1.00 },
+  ];
+  const branchLayers = [
+    { mat: matBranchThick, ratio: 0.60 },
+    { mat: matBranchThin,  ratio: 1.00 },
+  ];
+
+  type Helix = { amp: number; freq: number; phase: number };
+
+  // Build a Line2 with hidden state (instanceCount = 0) — growth animation reveals segments.
+  const makeLine = (points: THREE.Vector3[], endIdx: number, mat: LineMaterial) => {
+    const flat: number[] = [];
+    for (let i = 0; i < endIdx; i++) {
+      flat.push(points[i].x, points[i].y, points[i].z);
+    }
+    const g = new LineGeometry();
+    g.setPositions(flat);
+    const line = new Line2(g, mat);
+    line.computeLineDistances();
+    g.instanceCount = 0;
+    rootsGroup.add(line);
+    return { line, endIdx, geom: g };
+  };
+
+  const buildTendril = (
+    spinePoints: THREE.Vector3[],
+    helix: Helix | null,
+    layers: { mat: LineMaterial; ratio: number }[],
+    samples: number,
+  ) => {
+    const spine = new THREE.CatmullRomCurve3(spinePoints, false, 'catmullrom', 0.5);
+    const points: THREE.Vector3[] = [];
+    for (let i = 0; i <= samples; i++) {
+      const t = i / samples;
+      const p = spine.getPointAt(t).clone();
+      if (helix && helix.amp > 0) {
+        const tan = spine.getTangentAt(t).normalize();
+        const up = Math.abs(tan.y) > 0.85
+          ? new THREE.Vector3(1, 0, 0)
+          : new THREE.Vector3(0, 1, 0);
+        const perpA = new THREE.Vector3().crossVectors(tan, up).normalize();
+        const perpB = new THREE.Vector3().crossVectors(tan, perpA).normalize();
+        const envelope = t < 0.08
+          ? t / 0.08
+          : Math.pow(1 - (t - 0.08) / 0.92, 1.4);
+        const amp = helix.amp * envelope;
+        const phase = helix.phase + t * helix.freq * Math.PI * 2;
+        p.add(perpA.clone().multiplyScalar(Math.cos(phase) * amp));
+        p.add(perpB.clone().multiplyScalar(Math.sin(phase) * amp));
+      }
+      points.push(p);
+    }
+    const lines: { line: Line2; endIdx: number; geom: LineGeometry }[] = [];
+    for (const layer of layers) {
+      const endIdx = Math.max(2, Math.floor(points.length * layer.ratio));
+      lines.push(makeLine(points, endIdx, layer.mat));
+    }
+    return { lines, points, spine, samplesCount: points.length };
+  };
+
+  // Spherical direction distribution — tendrils radiate in all directions equally.
+  const dirFromSeed = (seed: number): THREE.Vector3 => {
+    const a1 = seed * 2.71;
+    const a2 = seed * 4.53;
+    return new THREE.Vector3(
+      Math.cos(a1) * Math.cos(a2 * 0.5),
+      Math.sin(a2 * 0.5),
+      Math.sin(a1) * Math.cos(a2 * 0.5),
+    ).normalize();
+  };
+
+  // Origin uses CORE_R / ROOTS_SCALE so roots stay anchored on the core surface
+  // in world space (rootsGroup scales by ROOTS_SCALE; the origin scales with it,
+  // but the core sits in tetraGroup at unscaled CORE_R).
+  const buildSpine = (dir: THREE.Vector3, lengthMul: number, swayBias: number): THREE.Vector3[] => {
+    const origin = dir.clone().multiplyScalar(CORE_R / ROOTS_SCALE);
+    const endDir = new THREE.Vector3(
+      dir.x + Math.sin(swayBias * 7.13) * 0.30,
+      dir.y + Math.sin(swayBias * 5.27) * 0.30,
+      dir.z + Math.cos(swayBias * 9.31) * 0.30,
+    ).normalize();
+    const end = endDir.multiplyScalar(lengthMul);
+    const upRef = Math.abs(dir.y) > 0.9
+      ? new THREE.Vector3(1, 0, 0)
+      : new THREE.Vector3(0, 1, 0);
+    const perp = new THREE.Vector3().crossVectors(dir, upRef).normalize();
+    const sway1 = Math.sin(swayBias * 11.7) * 0.45;
+    const sway2 = Math.cos(swayBias * 13.3) * 0.30;
+    const p1 = new THREE.Vector3().lerpVectors(origin, end, 0.28)
+      .add(perp.clone().multiplyScalar(sway1));
+    const p2 = new THREE.Vector3().lerpVectors(origin, end, 0.55)
+      .add(perp.clone().multiplyScalar(-sway2));
+    const p3 = new THREE.Vector3().lerpVectors(origin, end, 0.80)
+      .add(perp.clone().multiplyScalar(sway1 * 0.35));
+    return [origin, p1, p2, p3, end];
+  };
+
+  const addBranch = (
+    parentTendril: Tendril,
+    parentSpine: THREE.Vector3[],
+    t: number,
+    sideSign: number,
+    lengthMul: number,
+    helix: Helix | null,
+  ) => {
+    const spineCurve = new THREE.CatmullRomCurve3(parentSpine, false, 'catmullrom', 0.5);
+    const origin = spineCurve.getPointAt(t).clone();
+    const tangent = spineCurve.getTangentAt(t).normalize();
+    const upRef = Math.abs(tangent.y) > 0.85
+      ? new THREE.Vector3(1, 0, 0)
+      : new THREE.Vector3(0, 1, 0);
+    const perp = new THREE.Vector3().crossVectors(tangent, upRef).normalize();
+    const branchLen = 0.40 * lengthMul;
+    const end = origin.clone()
+      .add(tangent.clone().multiplyScalar(branchLen * 0.4))
+      .add(perp.clone().multiplyScalar(sideSign * branchLen * 0.75))
+      .add(new THREE.Vector3(0, -branchLen * 0.5, 0));
+    const mid = new THREE.Vector3().lerpVectors(origin, end, 0.5)
+      .add(perp.clone().multiplyScalar(sideSign * 0.08));
+    const built = buildTendril([origin, mid, end], helix, branchLayers, 28);
+    tendrils.push({
+      lines: built.lines,
+      samples: built.samplesCount,
+      type: 'branch',
+      parent: parentTendril,
+      branchT: t,
+      growth: 0,
+    });
+  };
+
+  const addRoot = (opts: {
+    dirSeed: number; length: number; swayBias: number;
+    branches: number; helix: Helix | null;
+    growthStart: number; growthDuration: number;
+  }) => {
+    const dir = dirFromSeed(opts.dirSeed);
+    const spine = buildSpine(dir, opts.length, opts.swayBias);
+    const jitter = Math.sin(opts.swayBias * 5.1);
+    const built = buildTendril(spine, opts.helix, layersForTendril(jitter), 64);
+    const mainTendril: Tendril = {
+      lines: built.lines,
+      samples: built.samplesCount,
+      type: 'main',
+      growthStart: opts.growthStart,
+      growthDuration: opts.growthDuration,
+      growth: 0,
+    };
+    tendrils.push(mainTendril);
+    for (let b = 0; b < opts.branches; b++) {
+      const bt = 0.32 + b * 0.22 + Math.sin(opts.swayBias * (17.3 + b * 2)) * 0.06;
+      const sideSign = (b % 2 === 0) ? 1 : -1;
+      const bHelix: Helix | null = opts.helix
+        ? { amp: opts.helix.amp * 0.5, freq: opts.helix.freq * 1.3, phase: opts.helix.phase + 1.5 }
+        : null;
+      addBranch(mainTendril, spine, bt, sideSign, opts.length * 0.9, bHelix);
+    }
+  };
+
+  const addRootPair = (opts: {
+    dirSeed: number; length: number; swayBias: number;
+    helixAmp: number; helixFreq: number;
+    branches: [number, number];
+    growthStart: number; growthDuration: number;
+  }) => {
+    const dir = dirFromSeed(opts.dirSeed);
+    const spine = buildSpine(dir, opts.length, opts.swayBias);
+    const jitterA = Math.sin(opts.swayBias * 5.1);
+    const jitterB = Math.cos(opts.swayBias * 5.1);
+    const builtA = buildTendril(spine, { amp: opts.helixAmp, freq: opts.helixFreq, phase: 0 }, layersForTendril(jitterA), 64);
+    const builtB = buildTendril(spine, { amp: opts.helixAmp, freq: opts.helixFreq, phase: Math.PI }, layersForTendril(jitterB), 64);
+    const tA: Tendril = { lines: builtA.lines, samples: builtA.samplesCount, type: 'main', growthStart: opts.growthStart, growthDuration: opts.growthDuration, growth: 0 };
+    const tB: Tendril = { lines: builtB.lines, samples: builtB.samplesCount, type: 'main', growthStart: opts.growthStart + 0.02, growthDuration: opts.growthDuration, growth: 0 };
+    tendrils.push(tA, tB);
+    for (let b = 0; b < opts.branches[0]; b++) {
+      const bt = 0.35 + b * 0.20;
+      addBranch(tA, spine, bt,  1, opts.length * 0.85, { amp: opts.helixAmp * 0.4, freq: opts.helixFreq * 1.2, phase: 0.8 });
+    }
+    for (let b = 0; b < opts.branches[1]; b++) {
+      const bt = 0.40 + b * 0.18;
+      addBranch(tB, spine, bt, -1, opts.length * 0.85, { amp: opts.helixAmp * 0.4, freq: opts.helixFreq * 1.2, phase: Math.PI + 0.8 });
+    }
+  };
+
+  // Composition (15 main tendrils + branches), staggered growthStart 0–0.20 for
+  // organic emergence — each spine charts an independent path through the field.
+  addRootPair({ dirSeed: 1.1, length: 1.30, swayBias: 1.1, helixAmp: 0.10, helixFreq: 2.6, branches: [1, 0], growthStart: 0.00, growthDuration: 0.85 });
+  addRootPair({ dirSeed: 2.4, length: 1.20, swayBias: 2.4, helixAmp: 0.09, helixFreq: 3.0, branches: [0, 1], growthStart: 0.05, growthDuration: 0.82 });
+  addRootPair({ dirSeed: 5.7, length: 1.15, swayBias: 5.7, helixAmp: 0.08, helixFreq: 2.4, branches: [0, 0], growthStart: 0.10, growthDuration: 0.80 });
+  addRootPair({ dirSeed: 8.3, length: 1.25, swayBias: 8.3, helixAmp: 0.10, helixFreq: 2.2, branches: [1, 0], growthStart: 0.07, growthDuration: 0.83 });
+
+  addRoot({ dirSeed: 3.1,  length: 0.55, swayBias: 3.1,  branches: 0, helix: { amp: 0.06, freq: 2.0, phase: 1.2 }, growthStart: 0.14, growthDuration: 0.70 });
+  addRoot({ dirSeed: 4.0,  length: 1.05, swayBias: 4.0,  branches: 0, helix: { amp: 0.07, freq: 2.5, phase: 0.6 }, growthStart: 0.08, growthDuration: 0.80 });
+  addRoot({ dirSeed: 6.2,  length: 1.10, swayBias: 6.2,  branches: 1, helix: { amp: 0.08, freq: 2.7, phase: 4.2 }, growthStart: 0.04, growthDuration: 0.82 });
+  addRoot({ dirSeed: 7.0,  length: 0.75, swayBias: 7.0,  branches: 0, helix: { amp: 0.05, freq: 3.0, phase: 2.4 }, growthStart: 0.16, growthDuration: 0.72 });
+  addRoot({ dirSeed: 9.1,  length: 1.20, swayBias: 9.1,  branches: 0, helix: { amp: 0.09, freq: 2.4, phase: 5.0 }, growthStart: 0.02, growthDuration: 0.84 });
+  addRoot({ dirSeed: 10.4, length: 0.90, swayBias: 10.4, branches: 0, helix: { amp: 0.06, freq: 2.2, phase: 3.6 }, growthStart: 0.18, growthDuration: 0.72 });
+  addRoot({ dirSeed: 11.6, length: 1.15, swayBias: 11.6, branches: 1, helix: { amp: 0.08, freq: 2.8, phase: 1.5 }, growthStart: 0.06, growthDuration: 0.82 });
+
+  rootsGroup.scale.setScalar(ROOTS_SCALE);
+  tetraGroup.add(rootsGroup);
+
+  // Comets — 24 particles on random 3D orbital planes
+  const COMET_COUNT = 24;
+  const cuX = new Float32Array(COMET_COUNT), cuY = new Float32Array(COMET_COUNT), cuZ = new Float32Array(COMET_COUNT);
+  const cvX = new Float32Array(COMET_COUNT), cvY = new Float32Array(COMET_COUNT), cvZ = new Float32Array(COMET_COUNT);
+  const cRadius = new Float32Array(COMET_COUNT);
+  const cPhase = new Float32Array(COMET_COUNT);
+  const cBaseSpeed = new Float32Array(COMET_COUNT);
+  const cPrevX = new Float32Array(COMET_COUNT), cPrevY = new Float32Array(COMET_COUNT), cPrevZ = new Float32Array(COMET_COUNT);
+
+  for (let i = 0; i < COMET_COUNT; i++) {
+    let nx = Math.random() * 2 - 1;
+    let ny = Math.random() * 2 - 1;
+    let nz = Math.random() * 2 - 1;
+    const nl = 1 / Math.sqrt(nx*nx + ny*ny + nz*nz);
+    nx *= nl; ny *= nl; nz *= nl;
+    let tx = 1, ty = 0, tz = 0;
+    if (Math.abs(nx) > 0.9) { tx = 0; ty = 1; }
+    let ux = ny * tz - nz * ty;
+    let uy = nz * tx - nx * tz;
+    let uz = nx * ty - ny * tx;
+    const ul = 1 / Math.sqrt(ux*ux + uy*uy + uz*uz);
+    ux *= ul; uy *= ul; uz *= ul;
+    cuX[i] = ux; cuY[i] = uy; cuZ[i] = uz;
+    cvX[i] = ny * uz - nz * uy;
+    cvY[i] = nz * ux - nx * uz;
+    cvZ[i] = nx * uy - ny * ux;
+
+    cRadius[i] = 2.5 + Math.random() * 0.7;
+    cPhase[i] = Math.random() * Math.PI * 2;
+    cBaseSpeed[i] = 0.7 + Math.random() * 0.5;
+
+    const cs = Math.cos(cPhase[i]) * cRadius[i];
+    const sn = Math.sin(cPhase[i]) * cRadius[i];
+    cPrevX[i] = cs * cuX[i] + sn * cvX[i];
+    cPrevY[i] = cs * cuY[i] + sn * cvY[i];
+    cPrevZ[i] = cs * cuZ[i] + sn * cvZ[i];
   }
 
-  const { gl, canvas } = ctx;
+  const cPositions = new Float32Array(COMET_COUNT * 6);
+  const cColors = new Float32Array(COMET_COUNT * 6);
+  const accentCol = new THREE.Color(ACCENT);
+  for (let i = 0; i < COMET_COUNT; i++) {
+    // tail dim → head bright (vertex colors)
+    cColors[i*6 + 0] = accentCol.r * 0.08;
+    cColors[i*6 + 1] = accentCol.g * 0.08;
+    cColors[i*6 + 2] = accentCol.b * 0.08;
+    cColors[i*6 + 3] = accentCol.r;
+    cColors[i*6 + 4] = accentCol.g;
+    cColors[i*6 + 5] = accentCol.b;
+  }
 
-  let size = sizeCanvas(ctx, host);
+  const cGeo = new THREE.BufferGeometry();
+  cGeo.setAttribute('position', new THREE.BufferAttribute(cPositions, 3));
+  cGeo.setAttribute('color',    new THREE.BufferAttribute(cColors, 3));
+  const cMat = new THREE.LineBasicMaterial({
+    vertexColors: true,
+    transparent: true,
+    opacity: 0.95,
+    blending: THREE.AdditiveBlending,
+    depthWrite: false,
+  });
+  const cometLines = new THREE.LineSegments(cGeo, cMat);
+  particlesGroup.add(cometLines);
+
+  // Anchors for proximity tug — placed on the comet orbital shell so passes
+  // actually trigger.
+  const anchorVerts = [
+    new THREE.Vector3( 2.6, 0,  0 ),
+    new THREE.Vector3(-2.6, 0,  0 ),
+    new THREE.Vector3( 0,   0,  2.6),
+    new THREE.Vector3( 0,   0, -2.6),
+  ];
+  const PROX = 0.55;
+
+  // Interaction
+  let charge = 0;
+  let clickHeld = false;
+  let mouseX = 0, mouseY = 0;
+  let parallaxX = 0, parallaxY = 0;
+
+  const onMouseMove = (e: MouseEvent) => {
+    mouseX = (e.clientX / viewW) * 2 - 1;
+    mouseY = (e.clientY / viewH) * 2 - 1;
+  };
+  const onMouseDown = () => { clickHeld = true; };
+  const onMouseUp   = () => { clickHeld = false; };
+  const onBlur      = () => { clickHeld = false; };
+  const onTouchStart = () => { clickHeld = true; };
+  const onTouchEnd   = () => { clickHeld = false; };
+  window.addEventListener('mousemove', onMouseMove);
+  window.addEventListener('mousedown', onMouseDown);
+  window.addEventListener('mouseup',   onMouseUp);
+  window.addEventListener('blur',      onBlur);
+  window.addEventListener('touchstart', onTouchStart, { passive: true });
+  window.addEventListener('touchend',   onTouchEnd);
+
+  const easeOutCubic = (x: number) => 1 - Math.pow(1 - x, 3);
+
+  // Loop
+  const clock = new THREE.Clock();
+  let lastT = clock.getElapsedTime();
+  let raf = 0;
+
+  const loop = () => {
+    const t = clock.getElapsedTime();
+    const dt = Math.min(0.05, t - lastT);
+    lastT = t;
+
+    // Charge: 1 while clickHeld OR locked (locked pins at full), 0 otherwise.
+    const target = (locked || clickHeld) ? 1 : 0;
+    charge += (target - charge) * Math.min(1, dt * 2.2);
+    if (!locked && charge >= LOCK_THRESHOLD) {
+      charge = 1;
+      fireLock();
+    }
+
+    // Parallax — outerGroup deeper than tetraGroup
+    parallaxX += (mouseX - parallaxX) * 0.08;
+    parallaxY += (mouseY - parallaxY) * 0.08;
+    outerGroup.rotation.y =  parallaxX * 0.5;
+    outerGroup.rotation.x = -parallaxY * 0.38;
+    tetraGroup.rotation.y =  parallaxX * 0.12;
+    tetraGroup.rotation.x = -parallaxY * 0.10;
+
+    rootsGroup.rotation.y = t * 0.04;
+    rootsGroup.rotation.x = Math.sin(t * 0.06) * 0.05;
+    rootsGroup.position.y = Math.sin(t * 0.4) * 0.015;
+
+    // Growth — main: staggered by growthStart/Duration; branch: gated on parent.
+    for (const tend of tendrils) {
+      if (tend.type === 'main') {
+        const localRaw = (charge - (tend.growthStart ?? 0)) / (tend.growthDuration ?? 0.85);
+        const local = Math.max(0, Math.min(1, localRaw));
+        tend.growth = easeOutCubic(local);
+      } else {
+        const parentG = tend.parent!.growth;
+        const span = 1 - (tend.branchT ?? 0);
+        const local = span > 0.01
+          ? Math.max(0, Math.min(1, (parentG - (tend.branchT ?? 0)) / span))
+          : 0;
+        tend.growth = easeOutCubic(local);
+      }
+      const targetIdx = Math.floor(tend.growth * tend.samples);
+      for (const { line, endIdx } of tend.lines) {
+        const segs = Math.max(0, Math.min(targetIdx, endIdx) - 1);
+        (line.geometry as LineGeometry).instanceCount = segs;
+      }
+    }
+
+    // Comets — pre-lock: speed scales with charge (slow → fast streaks). Post-
+    // lock: speed decouples and stays at idle drift even though charge is 1.
+    const cometSpeedMul = locked ? 0.35 : 0.35 + charge * 3.2;
+    const cPosAttr = cGeo.attributes.position.array as Float32Array;
+    let pullX = 0, pullY = 0, pullZ = 0;
+    for (let i = 0; i < COMET_COUNT; i++) {
+      cPhase[i] += cBaseSpeed[i] * cometSpeedMul * dt;
+      const cs = Math.cos(cPhase[i]) * cRadius[i];
+      const sn = Math.sin(cPhase[i]) * cRadius[i];
+      const tx_ = cs * cuX[i] + sn * cvX[i];
+      const ty_ = cs * cuY[i] + sn * cvY[i];
+      const tz_ = cs * cuZ[i] + sn * cvZ[i];
+
+      const lr = Math.min(1, dt * 14);
+      const px = cPrevX[i] + (tx_ - cPrevX[i]) * lr;
+      const py = cPrevY[i] + (ty_ - cPrevY[i]) * lr;
+      const pz = cPrevZ[i] + (tz_ - cPrevZ[i]) * lr;
+
+      const dx = px - cPrevX[i];
+      const dy = py - cPrevY[i];
+      const dz = pz - cPrevZ[i];
+      const sp = Math.sqrt(dx*dx + dy*dy + dz*dz);
+
+      const trail = Math.min(1.0, sp * 30);
+      const inv = sp > 0.00001 ? 1 / sp : 0;
+      cPosAttr[i*6 + 0] = px - dx * inv * trail;
+      cPosAttr[i*6 + 1] = py - dy * inv * trail;
+      cPosAttr[i*6 + 2] = pz - dz * inv * trail;
+      cPosAttr[i*6 + 3] = px;
+      cPosAttr[i*6 + 4] = py;
+      cPosAttr[i*6 + 5] = pz;
+
+      let minD = 1e9;
+      let nvx = 0, nvy = 0, nvz = 0;
+      for (let k = 0; k < anchorVerts.length; k++) {
+        const vv = anchorVerts[k];
+        const ddx = px - vv.x, ddy = py - vv.y, ddz = pz - vv.z;
+        const d = ddx*ddx + ddy*ddy + ddz*ddz;
+        if (d < minD) { minD = d; nvx = vv.x; nvy = vv.y; nvz = vv.z; }
+      }
+      const dist = Math.sqrt(minD);
+      const aff = Math.max(0, 1 - dist / PROX);
+      if (aff > 0) {
+        pullX += (px - nvx) * aff;
+        pullY += (py - nvy) * aff;
+        pullZ += (pz - nvz) * aff;
+      }
+
+      cPrevX[i] = px; cPrevY[i] = py; cPrevZ[i] = pz;
+    }
+    cGeo.attributes.position.needsUpdate = true;
+
+    // Proximity tug — post-lock dampens (no charge multiplier) so the seal
+    // settles still while comets continue drifting.
+    const tugStrength = locked ? 0.0015 : 0.008 * charge;
+    const tugLerp = 0.15;
+    tetraGroup.position.x += (pullX * tugStrength - tetraGroup.position.x) * tugLerp;
+    tetraGroup.position.y += (pullY * tugStrength - tetraGroup.position.y) * tugLerp;
+    tetraGroup.position.z += (pullZ * tugStrength - tetraGroup.position.z) * tugLerp;
+
+    // Core breathing + emissive
+    const breath = 1 + Math.sin(t * 1.25) * 0.04;
+    coreMesh.scale.setScalar(breath);
+    coreMat.emissiveIntensity = 3.2 + charge * 3.0 + Math.sin(t * 1.7) * 0.15;
+
+    glowSprite.scale.setScalar((1.0 + charge * 0.5) * breath);
+    haloMat.opacity = 0.50 + charge * 0.18;
+
+    bloom.strength = 0.32 + charge * 0.20;
+
+    const tintTarget = charge > 0.01
+      ? new THREE.Color(BASE_COLOR).lerp(new THREE.Color(ACCENT), charge * 0.4).getHex()
+      : BASE_COLOR;
+    for (const m of rootMats) m.color.setHex(tintTarget);
+
+    composer.render();
+    raf = requestAnimationFrame(loop);
+  };
+  raf = requestAnimationFrame(loop);
+
   const onResize = () => {
-    size = sizeCanvas(ctx, host);
+    const s = measure();
+    viewW = s.w; viewH = s.h;
+    renderer.setSize(viewW, viewH);
+    composer.setSize(viewW, viewH);
+    bloom.setSize(viewW, viewH);
+    camera.aspect = viewW / viewH;
+    camera.updateProjectionMatrix();
+    const px = renderer.getPixelRatio();
+    for (const m of rootMats) m.resolution.set(viewW * px, viewH * px);
   };
   window.addEventListener('resize', onResize);
 
-  const quad = createFullscreenQuad(gl);
-
-  let maskPrimary: TextMask = buildTextMask(gl, buildPrimaryMaskOpts(size.w, size.h, size.dpr));
-  let maskSignature: TextMask = buildTextMask(gl, buildSignatureMaskOpts(size.w, size.h, size.dpr));
-  let lastMaskKey = `${size.w}x${size.h}`;
-
-  const { initPos, initVel } = makeInitData(GRID_SIZE, size.w, size.h, maskPrimary, maskSignature);
-  const state = createParticleState(gl, {
-    gridSize: GRID_SIZE,
-    floatRender: ctx.floatRender,
-    initPos,
-    initVel,
-  });
-
-  const update = createUpdatePass(gl, state, quad);
-  const renderer = createParticleRenderer(gl);
-
-  let startTime = performance.now();
-  const reseed = () => {
-    const data = makeInitData(GRID_SIZE, size.w, size.h, maskPrimary, maskSignature);
-    state.uploadInit(data.initPos, data.initVel);
-    startTime = performance.now();
-  };
-
-  const ensureFontLoaded = () => {
-    const primaryName = PRIMARY_FONT_FAMILY.split(',')[0].trim();
-    const signatureName = SIGNATURE_FONT_FAMILY.split(',')[0].trim();
-    Promise.all([
-      document.fonts.load(`${FONT_WEIGHT} 100px ${primaryName}`),
-      document.fonts.load(`${FONT_WEIGHT} 100px ${signatureName}`),
-    ]).then(() => {
-      lastMaskKey = '__force__';
-    });
-  };
-  ensureFontLoaded();
-
-  let raf = 0;
-  let prevT = performance.now();
-  let scrollProgress = 0;
-  const frame = () => {
-    const now = performance.now();
-    const dt = Math.min(DT_CAP, (now - prevT) / 1000);
-    const time = (now - startTime) / 1000;
-    prevT = now;
-
-    const key = `${size.w}x${size.h}`;
-    if (key !== lastMaskKey) {
-      maskPrimary.dispose();
-      maskSignature.dispose();
-      maskPrimary = buildTextMask(gl, buildPrimaryMaskOpts(size.w, size.h, size.dpr));
-      maskSignature = buildTextMask(gl, buildSignatureMaskOpts(size.w, size.h, size.dpr));
-      lastMaskKey = key;
-      reseed();
-    }
-
-    update.run({
-      dt,
-      time,
-      resolution: { w: size.w, h: size.h },
-      windSpeed: WIND_SPEED * size.dpr,
-      curlAmp: CURL_AMP_FLIGHT * size.dpr,
-      curlAmpBg: CURL_AMP_BG * size.dpr,
-      curlScale: CURL_SCALE / size.dpr,
-      curlTimeScale: CURL_TIME_SCALE,
-      approachDuration: APPROACH_DURATION,
-      approachDurationSignature: APPROACH_DURATION_SIGNATURE,
-      settleBreath: GLITCH_AMP_CSS * size.dpr,
-      spawnOffsetX: SPAWN_OFFSET_X_CSS * size.dpr,
-      waveAmp: WAVE_AMP_CSS * size.dpr,
-    });
-
-    gl.viewport(0, 0, size.w, size.h);
-    const p = Math.max(0, Math.min(1, scrollProgress));
-    gl.clearColor(
-      BG_R + (BG_ABOUT_R - BG_R) * p,
-      BG_G + (BG_ABOUT_G - BG_G) * p,
-      BG_B + (BG_ABOUT_B - BG_B) * p,
-      1,
-    );
-    gl.clear(gl.COLOR_BUFFER_BIT);
-    renderer.render(state, time, size, FADE_IN, p);
-
-    raf = requestAnimationFrame(frame);
-  };
-  raf = requestAnimationFrame(frame);
-
   return {
-    setProgress(p: number) {
-      scrollProgress = p;
+    setProgress(_p: number) {
+      // Canvas stays at full opacity throughout — about's solid bg (same
+      // dark value) covers it once scrolled. No fade, no clash.
+    },
+    onLock(cb) {
+      lockSubs.add(cb);
+      if (locked) cb();
+      return () => { lockSubs.delete(cb); };
     },
     dispose() {
       cancelAnimationFrame(raf);
       window.removeEventListener('resize', onResize);
-      maskPrimary.dispose();
-      maskSignature.dispose();
+      window.removeEventListener('mousemove', onMouseMove);
+      window.removeEventListener('mousedown', onMouseDown);
+      window.removeEventListener('mouseup',   onMouseUp);
+      window.removeEventListener('blur',      onBlur);
+      window.removeEventListener('touchstart', onTouchStart);
+      window.removeEventListener('touchend',   onTouchEnd);
+      for (const m of rootMats) m.dispose();
+      for (const tend of tendrils) {
+        for (const { geom } of tend.lines) geom.dispose();
+      }
+      coreMat.dispose();
+      coreGeom.dispose();
+      haloMat.dispose();
+      haloTex.dispose();
+      cMat.dispose();
+      cGeo.dispose();
+      composer.dispose();
       renderer.dispose();
-      update.dispose();
-      state.dispose();
-      quad.dispose();
-      const lose = gl.getExtension('WEBGL_lose_context');
-      lose?.loseContext();
       canvas.remove();
     },
   };
-}
-
-function computeFontSize(
-  lines: string[],
-  family: string,
-  weight: number,
-  sizeFrac: number,
-  sizeMax: number,
-  maxWidthFrac: number,
-  widthCss: number,
-): number {
-  const heightBasedCss = Math.min(widthCss * sizeFrac, sizeMax);
-  const probeCtx = document.createElement('canvas').getContext('2d');
-  if (!probeCtx) return heightBasedCss;
-  const nominal = 100;
-  probeCtx.font = `${weight} ${nominal}px ${family}`;
-  let widest = 0;
-  for (const line of lines) {
-    const lw = probeCtx.measureText(line).width;
-    if (lw > widest) widest = lw;
-  }
-  if (widest <= 0) return heightBasedCss;
-  const targetWidthCss = widthCss * maxWidthFrac;
-  const widthBasedCss = (nominal * targetWidthCss) / widest;
-  return Math.min(heightBasedCss, widthBasedCss);
-}
-
-function buildPrimaryMaskOpts(width: number, height: number, dpr: number): TextMaskOpts {
-  const cssSize = computeFontSize(
-    PRIMARY_LINES, PRIMARY_FONT_FAMILY, FONT_WEIGHT,
-    PRIMARY_SIZE_FRAC, PRIMARY_SIZE_MAX, PRIMARY_MAX_WIDTH_FRAC,
-    width / dpr,
-  );
-  return {
-    lines: PRIMARY_LINES,
-    fontFamily: PRIMARY_FONT_FAMILY,
-    fontWeight: FONT_WEIGHT,
-    fontSize: cssSize * dpr,
-    width,
-    height,
-    anchor: 'top-left',
-    paddingX: PRIMARY_PADDING_X_CSS * dpr,
-    paddingY: PRIMARY_PADDING_Y_CSS * dpr,
-    lineHeight: PRIMARY_LINE_HEIGHT,
-    textAlign: 'left',
-  };
-}
-
-function buildSignatureMaskOpts(width: number, height: number, dpr: number): TextMaskOpts {
-  const cssSize = computeFontSize(
-    SIGNATURE_LINES, SIGNATURE_FONT_FAMILY, FONT_WEIGHT,
-    SIGNATURE_SIZE_FRAC, SIGNATURE_SIZE_MAX, SIGNATURE_MAX_WIDTH_FRAC,
-    width / dpr,
-  );
-  return {
-    lines: SIGNATURE_LINES,
-    fontFamily: SIGNATURE_FONT_FAMILY,
-    fontWeight: FONT_WEIGHT,
-    fontSize: cssSize * dpr,
-    width,
-    height,
-    anchor: 'bottom-right',
-    paddingX: SIGNATURE_PADDING_X_CSS * dpr,
-    paddingY: SIGNATURE_PADDING_Y_CSS * dpr,
-    lineHeight: SIGNATURE_LINE_HEIGHT,
-    textAlign: 'right',
-  };
-}
-
-function makeInitData(
-  gridSize: number,
-  w: number,
-  h: number,
-  maskPrimary: TextMask,
-  maskSignature: TextMask,
-): { initPos: Float32Array; initVel: Float32Array } {
-  const n = gridSize * gridSize;
-  const initPos = new Float32Array(n * 4);
-  const initVel = new Float32Array(n * 4);
-
-  const interiorPrimary = collectInterior(maskPrimary, PRIMARY_INTERIOR_THRESHOLD);
-  const interiorSignature = collectInterior(maskSignature, SIGNATURE_INTERIOR_THRESHOLD);
-  const hasPrimary = interiorPrimary.length > 0 && !!maskPrimary.bbox;
-  const hasSignature = interiorSignature.length > 0 && !!maskSignature.bbox;
-
-  interiorPrimary.sort((a, b) => (a.x - b.x) || (a.y - b.y));
-  interiorSignature.sort((a, b) => (a.x - b.x) || (a.y - b.y));
-
-  const nDirected = (hasPrimary || hasSignature) ? Math.floor(n * DIRECTED_FRAC) : 0;
-  let nPrimary = 0;
-  let nSignature = 0;
-  if (hasPrimary && hasSignature) {
-    nPrimary = Math.floor(nDirected * PRIMARY_FRAC);
-    nSignature = nDirected - nPrimary;
-  } else if (hasPrimary) {
-    nPrimary = nDirected;
-  } else if (hasSignature) {
-    nSignature = nDirected;
-  }
-  const nAmbient = n - nPrimary - nSignature;
-
-  assignGroup(initPos, initVel, 0, nPrimary, 0, interiorPrimary, maskPrimary,
-    ENTRANCE_PRIMARY_START, ENTRANCE_PRIMARY_END);
-  assignSignatureWordSync(initPos, initVel, nPrimary, nSignature, 1,
-    interiorSignature, maskSignature,
-    ENTRANCE_SIGNATURE_START, ENTRANCE_SIGNATURE_END);
-
-  for (let i = 0; i < nAmbient; i++) {
-    const idx = nPrimary + nSignature + i;
-    initPos[idx * 4 + 0] = Math.random() * (w + 200);
-    initPos[idx * 4 + 1] = Math.random() * h;
-    initPos[idx * 4 + 2] = 0;
-    initPos[idx * 4 + 3] = 0;
-    initVel[idx * 4 + 0] = -1;
-    initVel[idx * 4 + 1] = 0;
-    initVel[idx * 4 + 2] = 2; // group=2 (ambient). Distinct from PRIMARY(0)/SIGNATURE(1).
-    initVel[idx * 4 + 3] = 0;
-  }
-
-  return { initPos, initVel };
-}
-
-function assignGroup(
-  initPos: Float32Array,
-  initVel: Float32Array,
-  offset: number,
-  count: number,
-  group: number,
-  interior: { x: number; y: number }[],
-  mask: TextMask,
-  entranceStart: number,
-  entranceEnd: number,
-) {
-  if (count <= 0 || interior.length === 0 || !mask.bbox) return;
-  const xMin = mask.bbox.x0;
-  const xRange = Math.max(1, mask.bbox.x1 - xMin);
-  const span = entranceEnd - entranceStart;
-  for (let i = 0; i < count; i++) {
-    const idx = offset + i;
-    const targetIdx = Math.floor((i * interior.length) / count) % interior.length;
-    const tgt = interior[targetIdx];
-    const tNorm = (tgt.x - xMin) / xRange;
-    const jitter = (Math.random() - 0.5) * SPAWN_TIME_JITTER;
-    const spawnTime = entranceStart + tNorm * span + jitter;
-
-    initPos[idx * 4 + 0] = 0;
-    initPos[idx * 4 + 1] = 0;
-    initPos[idx * 4 + 2] = tgt.x;
-    initPos[idx * 4 + 3] = tgt.y;
-    initVel[idx * 4 + 0] = spawnTime;
-    initVel[idx * 4 + 1] = 0;
-    initVel[idx * 4 + 2] = group;
-    initVel[idx * 4 + 3] = 0;
-  }
-}
-
-function assignSignatureWordSync(
-  initPos: Float32Array,
-  initVel: Float32Array,
-  offset: number,
-  count: number,
-  group: number,
-  interior: { x: number; y: number }[],
-  mask: TextMask,
-  entranceStart: number,
-  entranceEnd: number,
-) {
-  if (count <= 0 || interior.length === 0 || !mask.bbox) return;
-
-  const xSet = new Set<number>();
-  for (const p of interior) xSet.add(p.x);
-  const xs = [...xSet].sort((a, b) => a - b);
-  let maxGap = 0;
-  let splitX = (mask.bbox.x0 + mask.bbox.x1) / 2;
-  for (let i = 1; i < xs.length; i++) {
-    const gap = xs[i] - xs[i - 1];
-    if (gap > maxGap) {
-      maxGap = gap;
-      splitX = (xs[i - 1] + xs[i]) / 2;
-    }
-  }
-
-  let w1Min = Infinity, w1Max = -Infinity;
-  let w2Min = Infinity, w2Max = -Infinity;
-  for (const p of interior) {
-    if (p.x < splitX) {
-      if (p.x < w1Min) w1Min = p.x;
-      if (p.x > w1Max) w1Max = p.x;
-    } else {
-      if (p.x < w2Min) w2Min = p.x;
-      if (p.x > w2Max) w2Max = p.x;
-    }
-  }
-  const w1Range = Math.max(1, w1Max - w1Min);
-  const w2Range = Math.max(1, w2Max - w2Min);
-  const span = entranceEnd - entranceStart;
-
-  for (let i = 0; i < count; i++) {
-    const idx = offset + i;
-    const targetIdx = Math.floor((i * interior.length) / count) % interior.length;
-    const tgt = interior[targetIdx];
-
-    const tNorm = tgt.x < splitX
-      ? (tgt.x - w1Min) / w1Range
-      : (tgt.x - w2Min) / w2Range;
-
-    const jitter = (Math.random() - 0.5) * SIGNATURE_SPAWN_JITTER;
-    const spawnTime = entranceStart + tNorm * span + jitter;
-
-    initPos[idx * 4 + 0] = 0;
-    initPos[idx * 4 + 1] = 0;
-    initPos[idx * 4 + 2] = tgt.x;
-    initPos[idx * 4 + 3] = tgt.y;
-    initVel[idx * 4 + 0] = spawnTime;
-    initVel[idx * 4 + 1] = 0;
-    initVel[idx * 4 + 2] = group;
-    initVel[idx * 4 + 3] = 0;
-  }
-}
-
-function mountErrorMessage(host: HTMLElement, err: unknown): () => void {
-  const div = document.createElement('div');
-  div.style.cssText =
-    'position:absolute;inset:0;display:grid;place-items:center;padding:24px;' +
-    'color:#600;font:14px/1.5 system-ui,sans-serif;text-align:center';
-  div.textContent =
-    err instanceof WebGL2NotSupportedError
-      ? 'Twoja przeglądarka nie wspiera WebGL2.'
-      : err instanceof FloatRenderNotSupportedError
-        ? 'Twoja karta nie wspiera renderowania do float textur.'
-        : 'Błąd inicjalizacji WebGL.';
-  host.appendChild(div);
-  return () => div.remove();
 }

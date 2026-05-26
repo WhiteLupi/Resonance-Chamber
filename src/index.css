@@ -9,10 +9,12 @@
      particle fade all key off this single value — one chapter-break event. */
   --dim: 0;
 
-  /* The room: hero-light to vault-dark. */
-  --bg-hero: #dde0e4;
+  /* Unified vault — warm-leaning near-black, the "ancient temple at night"
+     ground. Same value across canvas + body + about so section transitions
+     are invisible without opacity fades. */
+  --bg-hero: #04070a;
   --bg-vault: #04070a;
-  --bg: color-mix(in srgb, var(--bg-hero), var(--bg-vault) calc(var(--dim, 0) * 100%));
+  --bg: var(--bg-vault);
 
   /* Foreground text inverts as the bg darkens. Hero text falls into shadow,
      about inscription emerges in warm parchment. */
@@ -55,7 +57,9 @@ body {
 }
 
 html {
-  scroll-behavior: smooth;
+  /* No native scroll-behavior: Lenis owns the smoothing for wheel/touch and
+     for anchor jumps (via its anchors:true option). Native smooth-scroll would
+     fight Lenis on programmatic targets. */
   scrollbar-width: none;
 }
 
@@ -87,22 +91,23 @@ body {
   overflow: hidden;
 }
 
-/* Noise + vignette live on the body (not the hero section) so they cover the
-   viewport continuously — no abrupt cutoff at the hero/about edge where one
-   element has overlays and the other doesn't. Both fade out via raw --p well
-   before --dim starts darkening the room, so they never bleed onto the
-   inscription. */
+/* Decayed-stone grain — SVG turbulence with screen blend so it ADDS light
+   specks on dark (multiply blend was for the old light hero and went
+   invisible/dirty on vault). Stays present across hero + about for continuity
+   with the "ancient temple" thesis. */
 body::before {
   content: '';
   position: fixed;
   inset: 0;
   pointer-events: none;
   z-index: 4;
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 240 240' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.18  0 0 0 0 0.18  0 0 0 0 0.20  0 0 0 0.5 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-  opacity: calc(0.18 * max(0, 1 - var(--p, 0) * 2.4));
-  mix-blend-mode: multiply;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 240 240' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='1.1' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.55  0 0 0 0 0.52  0 0 0 0 0.48  0 0 0 0.6 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  opacity: 0.08;
+  mix-blend-mode: screen;
 }
 
+/* Cave vignette — deeper edges than the original; tuned so the framing
+   reads on near-black ground. */
 body::after {
   content: '';
   position: fixed;
@@ -110,8 +115,10 @@ body::after {
   pointer-events: none;
   z-index: 5;
   background:
-    radial-gradient(ellipse at 50% 50%, transparent 42%, rgba(28, 28, 34, 0.16) 94%);
-  opacity: max(0, calc(1 - var(--p, 0) * 2.4));
+    radial-gradient(ellipse 115% 85% at 50% 52%,
+      transparent 36%,
+      rgba(0, 0, 0, 0.45) 76%,
+      rgba(0, 0, 0, 0.78) 100%);
 }
 
 .gl-stage {
@@ -119,11 +126,10 @@ body::after {
   inset: 0;
   z-index: 0;
   opacity: 0;
-  animation: hero-canvas-fade-in 0.9s ease-out 0.05s forwards;
-}
-
-@keyframes hero-canvas-fade-in {
-  to { opacity: 1; }
+  /* Single intro fade-in; no scroll-driven fade — the seal stays sharp until
+     about's solid bg simply covers it. Same dark value on both sides means
+     the transition is invisible apart from the seal disappearing. */
+  transition: opacity 0.6s ease-out;
 }
 
 .placeholder-section {
