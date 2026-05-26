@@ -60,9 +60,10 @@ export function startHero(host: HTMLElement): HeroScene {
   });
   let { w: viewW, h: viewH } = measure();
   renderer.setSize(viewW, viewH);
-  // Matches --bg-vault (#04070a) exactly so canvas blends seamlessly with
-  // body + about — transition reads as "seal removed", not "color change".
-  renderer.setClearColor(0x04070a);
+  // Pure black — matches --bg-vault. The seal is the only light source in
+  // a void; no warm tint to read as "brudno," no vignette to read as
+  // "muddy ellipse." Maximum contrast for the engine.
+  renderer.setClearColor(0x000000);
 
   const scene = new THREE.Scene();
   // Wider FOV + further camera so the comet shell (orbit radius 2.5–3.2) fits

@@ -9,11 +9,11 @@
      particle fade all key off this single value — one chapter-break event. */
   --dim: 0;
 
-  /* Unified vault — warm-leaning near-black, the "ancient temple at night"
-     ground. Same value across canvas + body + about so section transitions
-     are invisible without opacity fades. */
-  --bg-hero: #04070a;
-  --bg-vault: #04070a;
+  /* Pure black void — the seal is the only light source. No warm tint
+     (read as "brudno"), no vignette darkening (read as "dirty"). Maximum
+     contrast for the engine's energy to do the work. */
+  --bg-hero: #000000;
+  --bg-vault: #000000;
   --bg: var(--bg-vault);
 
   /* Foreground text inverts as the bg darkens. Hero text falls into shadow,
@@ -91,22 +91,9 @@ body {
   overflow: hidden;
 }
 
-/* Cave vignette — deeper edges than the original; tuned so the framing
-   reads on near-black ground. (Body::before paper-grain noise removed —
-   read as a papyrus mask over the seal and stopped earning its place
-   once the seal's bloom + line work carry the visual texture.) */
-body::after {
-  content: '';
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  z-index: 5;
-  background:
-    radial-gradient(ellipse 115% 85% at 50% 52%,
-      transparent 36%,
-      rgba(0, 0, 0, 0.45) 76%,
-      rgba(0, 0, 0, 0.78) 100%);
-}
+/* Vignette removed — on pure black it had no surface to darken and read
+   as a muddy ellipse drawn on top of the void. The seal's bloom carries
+   the framing now. */
 
 .gl-stage {
   position: fixed;
