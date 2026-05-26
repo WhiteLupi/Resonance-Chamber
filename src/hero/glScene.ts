@@ -12,11 +12,10 @@ import { LineGeometry } from 'three/addons/lines/LineGeometry.js';
 // render time despite the muted source color.
 const ACCENT = 0x3d6e63;
 const CORE_R = 0.18;
-// Smaller reach so the seal occupies the middle ~70% of viewport, leaving
-// the top + bottom thirds free for the inscription text (LET'S · HEAR above,
-// MOTION below). The seal is the central glyph of a carved sentence —
-// readability of that sentence requires the seal not crowd the lines.
-const ROOTS_SCALE = 1.15;
+// Roots reach just past the viewport edges vertically — tendrils emerge from
+// off-canvas, the engine feels bigger than the frame can contain. Text sits
+// over the upper/lower edges with strong text-shadow for legibility.
+const ROOTS_SCALE = 1.6;
 // charge crosses this and we lock — the seal stays in the charged state forever
 // and comets decouple back to idle drift speed. Slightly below 1 to avoid the
 // asymptote of the exp-lerp never quite reaching 1.

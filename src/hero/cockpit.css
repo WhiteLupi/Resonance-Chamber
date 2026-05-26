@@ -20,8 +20,36 @@
   flex-direction: column;
   align-items: center;
   justify-content: space-between;
-  padding: 17vh 0 17vh;
+  padding: 9vh 0 11vh;
   pointer-events: none;
+}
+
+/* Vertical axis hairline — suggests the inscription is engraved along the
+   engine's axis. Faint accent tint with center hot-spot (where the seal
+   sits). Stays subtle but locks the centered composition visually. */
+.hero-section::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  z-index: 7;
+  background: linear-gradient(to bottom,
+    transparent 0%,
+    rgba(61, 110, 99, 0.0) 12%,
+    rgba(61, 110, 99, 0.16) 38%,
+    rgba(122, 196, 175, 0.32) 50%,
+    rgba(61, 110, 99, 0.16) 62%,
+    rgba(61, 110, 99, 0.0) 88%,
+    transparent 100%);
+  opacity: 0;
+  transition: opacity 1.4s ease-out 0.3s;
+  pointer-events: none;
+}
+
+.hero-section--revealed::before {
+  opacity: 1;
 }
 
 .hero-inscription__top,
@@ -30,7 +58,11 @@
   font-weight: 400;
   text-transform: uppercase;
   text-align: center;
-  text-shadow: 0 0 28px rgba(4, 7, 10, 0.9);
+  /* Inner accent glow (subtle, oxidized teal) layered with dark shadow —
+     reads as "carved by the engine's own light," not just black-on-dark text. */
+  text-shadow:
+    0 0 28px rgba(4, 7, 10, 0.92),
+    0 0 60px rgba(61, 110, 99, 0.18);
   opacity: 0;
   transform: translateY(6px);
   transition:
@@ -41,18 +73,31 @@
 }
 
 .hero-inscription__top {
-  /* The invitation — quieter, the verb that introduces the engine. */
-  font-size: clamp(28px, 4.8vw, 72px);
-  letter-spacing: 0.16em;
-  color: rgba(232, 230, 227, 0.70);
+  /* The invitation — bigger now to balance MOTION's mass at the bottom; the
+     top of the inscription should anchor the eye, not just whisper. */
+  font-size: clamp(36px, 5.4vw, 148px);
+  letter-spacing: 0.32em;
+  color: rgba(232, 230, 227, 0.72);
 }
 
 .hero-inscription__bottom {
-  /* The named outcome — heavier, larger; what the engine produces. */
-  font-size: clamp(56px, 9.5vw, 152px);
-  letter-spacing: 0.04em;
+  /* The named outcome — strong but not crushing. Cap pulled in so MOTION
+     sits in proportion with the seal + LET'S · HEAR instead of dominating.
+     Slow letter-spacing breath gives the word literal motion — true to its
+     name, picked up only on dwell, never distracts. */
+  font-size: clamp(56px, 11vw, 248px);
+  letter-spacing: 0.10em;
   color: rgba(245, 244, 240, 0.96);
   transition-delay: 0.18s;
+}
+
+.hero-section--revealed .hero-inscription__bottom {
+  animation: motion-breathe 7s ease-in-out infinite 1.4s;
+}
+
+@keyframes motion-breathe {
+  0%, 100% { letter-spacing: 0.10em; }
+  50%      { letter-spacing: 0.13em; }
 }
 
 .hero-section--revealed .hero-inscription__top,
@@ -85,6 +130,120 @@
 .hero-section--revealed .hero-signature {
   opacity: 1;
   transform: translateX(-50%) translateY(0);
+}
+
+/* Corner markers — chapter id top-left, byline top-right. They span the
+   horizontal corridor on wide screens so the centered inscription doesn't
+   read as lonely; they're the same instrument voice as the about hairline
+   ("§ 02 · TRANSMISSION") so the typographic system stays consistent. */
+.hero-marker {
+  position: absolute;
+  top: 88px;
+  z-index: 8;
+  font-family: 'Space Mono', ui-monospace, monospace;
+  font-weight: 400;
+  font-size: 10px;
+  letter-spacing: 0.42em;
+  color: rgba(232, 230, 227, 0.42);
+  text-transform: uppercase;
+  white-space: nowrap;
+  opacity: 0;
+  transition: opacity 1.0s ease-out 0.4s;
+  pointer-events: none;
+  user-select: none;
+}
+
+.hero-marker--tl {
+  left: 64px;
+}
+
+.hero-marker--tr {
+  right: 64px;
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.hero-marker__dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 6px var(--accent-shadow);
+  animation: hero-prompt-pulse 2.2s ease-in-out infinite;
+}
+
+.hero-section--revealed .hero-marker {
+  opacity: 1;
+}
+
+/* Invitation prompt — pre-lock CTA telling the user the seal is interactive.
+   Sits centered just below the seal area, lighter than the inscription, with
+   a slow pulsing dot to indicate "live, awaiting input." Dissolves cleanly
+   once the engine locks (aria-hidden flips, opacity → 0). */
+.hero-prompt {
+  position: absolute;
+  left: 50%;
+  top: 67vh;
+  transform: translateX(-50%);
+  z-index: 9;
+  display: inline-flex;
+  align-items: center;
+  gap: 14px;
+  padding: 9px 18px;
+  font-family: 'Space Mono', ui-monospace, monospace;
+  font-weight: 400;
+  font-size: 11px;
+  letter-spacing: 0.38em;
+  color: rgba(232, 230, 227, 0.78);
+  text-shadow: 0 0 16px rgba(4, 7, 10, 0.85);
+  border: 1px solid rgba(232, 230, 227, 0.16);
+  border-radius: 999px;
+  background: rgba(4, 7, 10, 0.35);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  opacity: 0;
+  animation: hero-prompt-fade-in 1.6s cubic-bezier(0.2, 0.8, 0.2, 1) 1.2s forwards;
+  pointer-events: none;
+  user-select: none;
+  transition: opacity 0.6s ease-out;
+}
+
+.hero-prompt__action {
+  color: rgba(245, 244, 240, 0.95);
+  font-weight: 700;
+  letter-spacing: 0.32em;
+}
+
+.hero-prompt__dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 6px var(--accent-shadow);
+  animation: hero-prompt-pulse 1.6s ease-in-out infinite;
+}
+
+.hero-prompt__caption {
+  color: rgba(232, 230, 227, 0.55);
+}
+
+@keyframes hero-prompt-fade-in {
+  from { opacity: 0; transform: translateX(-50%) translateY(8px); }
+  to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+@keyframes hero-prompt-pulse {
+  0%, 100% { opacity: 1;   transform: scale(1); }
+  50%      { opacity: 0.35; transform: scale(0.7); }
+}
+
+/* Once the seal locks, the prompt is no longer relevant — fade it out fast.
+   Animation is overridden because forwards-state value (opacity: 1) is what
+   the transition starts from. */
+.hero-section--revealed .hero-prompt {
+  opacity: 0;
+  animation: none;
 }
 
 @media (max-width: 720px) {
