@@ -538,15 +538,18 @@ export function startHero(host: HTMLElement): HeroScene {
     mouseX = (e.clientX / viewW) * 2 - 1;
     mouseY = (e.clientY / viewH) * 2 - 1;
   };
+  // Pre-lock clicks should NOT emit sonar rings — they're a post-activation
+  // gesture (engine broadcasting), not a charge signal. The charge ring +
+  // HOLD prompt handle pre-lock feedback by themselves.
   const onMouseDown = () => {
     clickHeld = true;
-    triggerRing(clock.getElapsedTime());
+    if (locked) triggerRing(clock.getElapsedTime());
   };
   const onMouseUp   = () => { clickHeld = false; };
   const onBlur      = () => { clickHeld = false; };
   const onTouchStart = () => {
     clickHeld = true;
-    triggerRing(clock.getElapsedTime());
+    if (locked) triggerRing(clock.getElapsedTime());
   };
   const onTouchEnd   = () => { clickHeld = false; };
   window.addEventListener('mousemove', onMouseMove);
@@ -562,6 +565,11 @@ export function startHero(host: HTMLElement): HeroScene {
   const clock = new THREE.Clock();
   let lastT = clock.getElapsedTime();
   let raf = 0;
+  // Idle heartbeat — once locked, the engine emits a slow rhythmic ring on
+  // its own so the chamber doesn't fall completely silent between user
+  // interactions. Triggered after the post-lock announcement ring.
+  let nextIdleRingAt = Infinity;
+  const IDLE_RING_INTERVAL = 12.5;
 
   const loop = () => {
     const t = clock.getElapsedTime();
@@ -577,6 +585,13 @@ export function startHero(host: HTMLElement): HeroScene {
       fireLock();
       // Announce activation with one final ring — the engine just turned on.
       triggerRing(t);
+      nextIdleRingAt = t + IDLE_RING_INTERVAL;
+    }
+
+    // Idle heartbeat post-lock — slow rhythmic ring even without input.
+    if (locked && t >= nextIdleRingAt) {
+      triggerRing(t);
+      nextIdleRingAt = t + IDLE_RING_INTERVAL;
     }
 
     // Parallax — outerGroup deeper than tetraGroup
