@@ -70,25 +70,33 @@
   opacity: var(--t);
 }
 
-/* Per-line entrance keyed to scroll progress. Lines stagger across
+/* Per-line emergence keyed to scroll progress. Lines stagger across
    p ∈ [0.78, 0.96] — overlapping with the tail of particle fadeout so the
-   inscription emerges THROUGH the dissolving engine instead of after a void. */
+   inscription emerges THROUGH the dissolving engine. NO opacity fade:
+   each line is a mask (overflow: clip) and the copy translates up from
+   below into view. Reads as voice rising into the chamber. */
 .inscription__line {
   display: block;
   margin: 0;
   --p-start: 0.78;
   --p-end: 0.86;
   --t: clamp(0, calc((var(--p, 0) - var(--p-start)) / (var(--p-end) - var(--p-start))), 1);
-  opacity: var(--t);
+  overflow: clip;
+  /* slight padding so descenders (g, p, y) don't get truncated by the clip */
+  padding-bottom: 0.15em;
 }
 .inscription__line[data-line="1"] { --p-start: 0.83; --p-end: 0.91; }
 .inscription__line[data-line="2"] { --p-start: 0.88; --p-end: 0.96; }
 
 .inscription__copy {
+  display: inline-block;
   font-size: clamp(19px, 2.35vw, 27px);
   line-height: 1.55;
   letter-spacing: 0.005em;
   color: var(--fg);
+  /* Rise from below the mask into view. 110% guarantees fully hidden at t=0. */
+  translate: 0 calc((1 - var(--t)) * 110%);
+  will-change: translate;
 }
 
 /* Voice v2 — letter substitution. Char-by-char inline-block 1ch slots keep
