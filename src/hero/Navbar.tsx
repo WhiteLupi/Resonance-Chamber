@@ -78,10 +78,6 @@ export function Navbar() {
 
   return (
     <nav className={cls} aria-label="primary">
-      <div className="cockpit-navbar__left">
-        <Glyph kind="circle-half" />
-        <span>SYS.K_WALTER</span>
-      </div>
       <div className="cockpit-navbar__center">
         <a className="cockpit-navbar__link" href="#about">
           <Glyph kind="circle" />
