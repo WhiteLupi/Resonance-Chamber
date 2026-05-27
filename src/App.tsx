@@ -129,11 +129,11 @@ function App() {
       <div ref={stageRef} className="gl-stage" aria-hidden="true" />
       <Atmosphere />
       <ChargeIndicator locked={locked} />
-      <SectionHeader />
-      <Signature />
+      <SectionHeader locked={locked} />
+      <Signature locked={locked} />
       <Hero locked={locked} />
       <About />
-      <Navbar />
+      <Navbar locked={locked} />
       <Cursor />
     </>
   )

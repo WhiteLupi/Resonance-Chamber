@@ -1,8 +1,10 @@
 // Global fixed signature — sits at the bottom of the viewport across all
-// sections, same way SectionHeader sits at the top. Doesn't scroll out
-// or fade — it's the chamber's authorship plate, persistent.
-export function Signature() {
+// sections. Hidden pre-lock; appears post-lock as part of the chamber's
+// framing (top: section header, bottom: signature plate).
+type Props = { locked: boolean };
+
+export function Signature({ locked }: Props) {
   return (
-    <div className="signature" aria-hidden="true">— K · WALTER</div>
+    <div className={`signature${locked ? ' signature--in' : ''}`} aria-hidden="true">— K · WALTER</div>
   );
 }

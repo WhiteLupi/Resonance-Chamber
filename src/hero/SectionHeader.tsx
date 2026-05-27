@@ -4,12 +4,14 @@
 // window, the next one slides up into place. Drives off `--p`, so it
 // stays in lockstep with the rest of the scroll-driven animations.
 //
-// Replaces both the hero wall-relief ("§ 01 · INVOCATION" baked into
-// the chamber) and the about inscription header ("§ 02 · TRANSMISSION"
-// inside the inscription block) — one place, one truth.
-export function SectionHeader() {
+// Hidden pre-lock — appears only after the engine is activated, so the
+// initial encounter shows nothing but the seal, the charge ring and the
+// HOLD prompt.
+type Props = { locked: boolean };
+
+export function SectionHeader({ locked }: Props) {
   return (
-    <div className="section-header" aria-hidden="true">
+    <div className={`section-header${locked ? ' section-header--in' : ''}`} aria-hidden="true">
       <div className="section-header__inner">
         <div className="section-header__slot section-header__slot--first">§ 01 · INVOCATION</div>
         <div className="section-header__slot section-header__slot--second">§ 02 · TRANSMISSION</div>

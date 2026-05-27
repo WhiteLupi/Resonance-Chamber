@@ -97,10 +97,9 @@
   transition: opacity 0.6s ease-out;
 }
 
-/* Global section header — fixed at the top of the viewport. Acts as a
-   vertical text rotator: § 01 slides up out, § 02 slides up in as --p
-   crosses ~0.78 (when about inscription begins emerging). The window
-   itself is overflow:clip so slots outside it are invisible — no fade. */
+/* Global section header — fixed at the top of the viewport. Hidden
+   pre-lock; reveals only after the engine activates so the initial
+   encounter is "seal + ring + HOLD" with nothing else competing. */
 .section-header {
   position: fixed;
   top: 68px;
@@ -111,12 +110,10 @@
   justify-content: center;
   pointer-events: none;
   opacity: 0;
-  animation: section-header-arrive 1.4s ease-out 1.6s forwards;
+  transition: opacity 1.0s ease-out 0.4s;
 }
 
-@keyframes section-header-arrive {
-  to { opacity: 1; }
-}
+.section-header--in { opacity: 1; }
 
 .section-header__inner {
   position: relative;
@@ -360,12 +357,10 @@
   pointer-events: none;
   user-select: none;
   opacity: 0;
-  animation: signature-arrive 1.4s ease-out 2.0s forwards;
+  transition: opacity 1.0s ease-out 0.8s;
 }
 
-@keyframes signature-arrive {
-  to { opacity: 1; }
-}
+.signature--in { opacity: 1; }
 
 @media (max-width: 720px) {
   .hero-inscription {

@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
 import { ShapeSvg, type ShapeKind } from './Cursor';
 
-const INTRO_DELAY_MS = 3000;
+// Delay between lock and navbar reveal — gives the chamber a beat to
+// settle into its locked state before HUD elements arrive.
+const POST_LOCK_DELAY_MS = 600;
 // How close to the viewport top the pointer must be to force-reveal the navbar
 // from anywhere on the page.
 const REVEAL_TOP_PX = 100;
@@ -20,14 +22,18 @@ function Glyph({ kind }: { kind: ShapeKind }) {
   );
 }
 
-export function Navbar() {
+type NavbarProps = { locked: boolean };
+
+export function Navbar({ locked }: NavbarProps) {
   const [introDone, setIntroDone] = useState(false);
   const [hidden, setHidden] = useState(false);
 
+  // Reveal navbar only after the engine is locked — no HUD pre-lock.
   useEffect(() => {
-    const id = window.setTimeout(() => setIntroDone(true), INTRO_DELAY_MS);
+    if (!locked) return;
+    const id = window.setTimeout(() => setIntroDone(true), POST_LOCK_DELAY_MS);
     return () => window.clearTimeout(id);
-  }, []);
+  }, [locked]);
 
   // Smart visibility: scroll-down hides, scroll-up shows. Mouse near the
   // viewport top is an override that always reveals — regardless of section
