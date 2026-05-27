@@ -287,10 +287,10 @@
    doesn't fight them. */
 .hero-inscription__bottom {
   position: absolute;
-  left: 0;
-  right: 0;
+  left: 50%;
   bottom: 22vh;
-  text-align: center;
+  /* shrink-to-fit so clip-path circle has a sensible reference box
+     (text width, not viewport width). Centered via translate. */
   font-family: 'Boldonse', system-ui, sans-serif;
   font-weight: 400;
   font-size: clamp(40px, 5.8vw, 132px);
@@ -300,6 +300,8 @@
   text-shadow:
     0 0 28px rgba(4, 7, 10, 0.92),
     0 0 60px rgba(61, 110, 99, 0.18);
+  white-space: nowrap;
+  translate: -50% 0;
   opacity: 0;
   transition: opacity 1.2s cubic-bezier(0.2, 0.8, 0.2, 1) 0.18s;
   pointer-events: auto;
@@ -318,10 +320,10 @@
                     collapse, no escape — the seal eats it. */
   --lift:   clamp(0, calc(var(--p, 0) / 0.5), 1);
   --grow:   clamp(0, calc(var(--p, 0) / 0.5), 1);
-  --vanish: clamp(0, calc((var(--p, 0) - 0.78) / 0.08), 1);
-  translate: 0 calc(var(--lift) * -28vh);
+  --vanish: clamp(0, calc((var(--p, 0) - 0.62) / 0.16), 1);
+  translate: -50% calc(var(--lift) * -28vh);
   scale: calc(1 + var(--grow) * 0.3);
-  clip-path: circle(calc((1 - var(--vanish)) * 150%) at center);
+  clip-path: circle(calc((1 - var(--vanish)) * 100%) at center);
   animation:
     motion-breathe 8s ease-in-out infinite,
     motion-float 11s ease-in-out infinite;
