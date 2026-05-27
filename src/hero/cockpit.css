@@ -12,10 +12,12 @@
   pointer-events: none;
 }
 
-/* Outer parallax wrap. Mouse position sets --mx/--my on document root
-   (App.tsx), wrap translates opposite — engine has presence in 3D space. */
+/* Outer parallax wrap. Fixed to viewport so motion can travel toward the
+   seal (also fixed) without being clipped by hero-section's overflow:hidden.
+   Mouse position sets --mx/--my on document root (App.tsx); wrap drifts
+   opposite — engine has presence in 3D space. */
 .hero-inscription {
-  position: absolute;
+  position: fixed;
   inset: 0;
   z-index: 8;
   pointer-events: none;
@@ -242,14 +244,16 @@
 
 .hero-section--revealed .hero-inscription__bottom {
   opacity: 1;
-  /* Engine absorbs the manifest. Motion starts below the seal; as the user
-     scrolls, motion translates DOWNWARD (counter-balancing the viewport's
-     upward shift from scroll) so its viewport-position rises from 78vh
-     toward seal center (50vh). At the same time scale grows to a peak at
-     p=0.7, then collapses to 0 by p=1 — motion is consumed at the seal. */
-  --grow: clamp(0, calc(var(--p, 0) / 0.7), 1);
-  --decay: clamp(0, calc((var(--p, 0) - 0.7) / 0.3), 1);
-  translate: 0 calc(var(--p, 0) * 72vh);
+  /* Engine absorbs the manifest. Motion starts at viewport bottom 22vh
+     (below the seal at 50vh). As scroll progresses it lifts toward seal
+     center, grows to peak (scale 1.5) at p=0.55, then collapses to 0 by
+     p=0.78 — synchronized with the about inscription emerging (about
+     header reveals at p=0.72, first line at p=0.78). The handoff is
+     crisp: motion is fully gone exactly as the voice starts speaking. */
+  --lift: clamp(0, calc(var(--p, 0) / 0.78), 1);
+  --grow: clamp(0, calc(var(--p, 0) / 0.55), 1);
+  --decay: clamp(0, calc((var(--p, 0) - 0.55) / 0.23), 1);
+  translate: 0 calc(var(--lift) * -28vh);
   scale: calc((1 + var(--grow) * 0.5) * (1 - var(--decay)));
   animation:
     motion-breathe 8s ease-in-out infinite,
