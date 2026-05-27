@@ -24,11 +24,13 @@ const LOCK_THRESHOLD = 0.985;
 export type HeroScene = {
   setProgress: (p: number) => void;
   onLock: (cb: () => void) => () => void;
+  onCharge: (cb: (charge: number) => void) => () => void;
   dispose: () => void;
 };
 
 export function startHero(host: HTMLElement): HeroScene {
   const lockSubs = new Set<() => void>();
+  const chargeSubs = new Set<(charge: number) => void>();
   let locked = false;
   const fireLock = () => {
     if (locked) return;
@@ -569,6 +571,7 @@ export function startHero(host: HTMLElement): HeroScene {
     // Charge: 1 while clickHeld OR locked (locked pins at full), 0 otherwise.
     const target = (locked || clickHeld) ? 1 : 0;
     charge += (target - charge) * Math.min(1, dt * 2.2);
+    for (const cb of chargeSubs) cb(charge);
     if (!locked && charge >= LOCK_THRESHOLD) {
       charge = 1;
       fireLock();
@@ -748,6 +751,11 @@ export function startHero(host: HTMLElement): HeroScene {
       lockSubs.add(cb);
       if (locked) cb();
       return () => { lockSubs.delete(cb); };
+    },
+    onCharge(cb) {
+      chargeSubs.add(cb);
+      cb(charge);
+      return () => { chargeSubs.delete(cb); };
     },
     dispose() {
       cancelAnimationFrame(raf);

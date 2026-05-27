@@ -86,6 +86,62 @@
   .hero-wall-relief { display: none; }
 }
 
+/* === Charge indicator ===
+   Sits centered with the seal (gl-stage canvas centers seal in viewport).
+   Background ring is the always-on "engine outline" — a faint potential
+   circle hinting that the seal is interactive. The fill rises clockwise
+   as --charge climbs (0→1) during hold. Locked → both fade out.
+   Slow idle breath on the base ring so it reads as alive, not static. */
+.charge-indicator {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  z-index: 6;
+  pointer-events: none;
+  translate: -50% -50%;
+  opacity: 0;
+  animation: charge-indicator-arrive 1.6s cubic-bezier(0.2, 0.8, 0.2, 1) 1.4s forwards;
+}
+
+@keyframes charge-indicator-arrive {
+  from { opacity: 0; scale: 0.92; }
+  to   { opacity: 1; scale: 1;    }
+}
+
+.charge-indicator--locked {
+  opacity: 0;
+  transition: opacity 0.9s ease-out;
+  animation: none;
+}
+
+.charge-indicator svg {
+  display: block;
+  /* clockwise from top: SVG circles start at 3 o'clock; rotating -90deg
+     puts the start at 12 so the arc fills the natural way. */
+  rotate: -90deg;
+}
+
+.charge-indicator__base {
+  fill: none;
+  stroke: rgba(122, 196, 175, 0.16);
+  stroke-width: 1;
+  animation: charge-base-breath 4.4s ease-in-out infinite;
+}
+
+@keyframes charge-base-breath {
+  0%, 100% { stroke: rgba(122, 196, 175, 0.14); }
+  50%      { stroke: rgba(122, 196, 175, 0.30); }
+}
+
+.charge-indicator__fill {
+  fill: none;
+  stroke: rgba(122, 196, 175, 0.95);
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  filter: drop-shadow(0 0 5px rgba(122, 196, 175, 0.6));
+  transition: stroke-dashoffset 0.08s linear;
+}
+
 /* === Chamber atmosphere ===
    Fixed inset 0 below sections (z:0) — sits above the seal canvas (also z:0,
    later DOM order wins) but below hero/about content (z:1). Shafts read as

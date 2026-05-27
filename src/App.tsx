@@ -6,6 +6,7 @@ import { Navbar } from './hero/Navbar'
 import { About } from './about/About'
 import { Cursor } from './hero/Cursor'
 import { Atmosphere } from './hero/Atmosphere'
+import { ChargeIndicator } from './hero/ChargeIndicator'
 import { progressStore } from './about/dwellStore'
 
 function App() {
@@ -19,9 +20,17 @@ function App() {
     const scene = startHero(stage)
     sceneRef.current = scene
     const unsub = scene.onLock(() => setLocked(true))
+    // Charge feedback — write seal's accumulating energy to a CSS var so the
+    // ChargeIndicator's radial arc fills as the user holds the seal. Same
+    // mechanism could drive cursor or other UI hints later.
+    const root = document.documentElement
+    const unsubCharge = scene.onCharge((c) => {
+      root.style.setProperty('--charge', c.toFixed(4))
+    })
     return () => {
       sceneRef.current = null
       unsub()
+      unsubCharge()
       scene.dispose()
     }
   }, [])
@@ -108,6 +117,7 @@ function App() {
     <>
       <div ref={stageRef} className="gl-stage" aria-hidden="true" />
       <Atmosphere />
+      <ChargeIndicator locked={locked} />
       <Hero locked={locked} />
       <About />
       <Navbar />
