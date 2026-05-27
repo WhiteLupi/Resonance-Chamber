@@ -54,38 +54,47 @@
   opacity: 1;
 }
 
-/* Section header as a worn vertical relief on the left wall. Not a corner
-   label — a carved trace someone left on the chamber. Reveals slowly with
-   the rest of the inscription. */
-.hero-wall-relief {
-  position: absolute;
-  left: 36px;
-  top: 50%;
-  z-index: 8;
-  writing-mode: vertical-rl;
-  text-orientation: mixed;
+/* Pre-lock prompt — single carved word centered just below the seal area.
+   Color pulses (not opacity, so we can tie base opacity to --charge — as
+   the user starts holding, the prompt fades out). Hidden post-lock. */
+.hero-prompt {
+  position: fixed;
+  top: 66%;
+  left: 50%;
+  z-index: 7;
+  translate: -50% -50%;
   font-family: 'Space Mono', ui-monospace, monospace;
   font-weight: 400;
-  font-size: 9px;
-  letter-spacing: 0.42em;
+  font-size: 11px;
+  letter-spacing: 0.62em;
   text-transform: uppercase;
-  color: rgba(232, 230, 227, 0.24);
   text-shadow:
-    0 0 4px rgba(122, 196, 175, 0.10),
-    0 0 12px rgba(0, 0, 0, 0.55);
-  translate: 0 -50%;
-  opacity: 0;
-  transition: opacity 1.4s ease-out 0.6s;
+    0 0 12px rgba(0, 0, 0, 0.95),
+    0 0 22px rgba(0, 0, 0, 0.55);
+  /* As --charge climbs past ~0.05 the prompt fades — user has engaged. */
+  opacity: calc((1 - clamp(0, var(--charge, 0) * 20, 1)) * 0.9);
+  animation:
+    hero-prompt-arrive 1.4s ease-out 1.8s both,
+    hero-prompt-breathe 2.4s ease-in-out infinite 3.2s;
   pointer-events: none;
   user-select: none;
+  will-change: color, opacity;
 }
 
-.hero-section--revealed .hero-wall-relief {
-  opacity: 1;
+@keyframes hero-prompt-arrive {
+  from { color: rgba(122, 196, 175, 0); }
+  to   { color: rgba(122, 196, 175, 0.85); }
 }
 
-@media (max-width: 720px) {
-  .hero-wall-relief { display: none; }
+@keyframes hero-prompt-breathe {
+  0%, 100% { color: rgba(122, 196, 175, 0.85); }
+  50%      { color: rgba(122, 196, 175, 0.40); }
+}
+
+.hero-section--revealed .hero-prompt {
+  opacity: 0;
+  animation: none;
+  transition: opacity 0.6s ease-out;
 }
 
 /* === Charge indicator ===
@@ -125,14 +134,14 @@
 
 .charge-indicator__base {
   fill: none;
-  stroke: rgba(122, 196, 175, 0.10);
-  stroke-width: 0.8;
-  animation: charge-base-breath 4.4s ease-in-out infinite;
+  stroke: rgba(122, 196, 175, 0.32);
+  stroke-width: 1.2;
+  animation: charge-base-breath 3.0s ease-in-out infinite;
 }
 
 @keyframes charge-base-breath {
-  0%, 100% { stroke: rgba(122, 196, 175, 0.08); }
-  50%      { stroke: rgba(122, 196, 175, 0.18); }
+  0%, 100% { stroke: rgba(122, 196, 175, 0.28); stroke-width: 1; }
+  50%      { stroke: rgba(122, 196, 175, 0.55); stroke-width: 1.4; }
 }
 
 .charge-indicator__fill {

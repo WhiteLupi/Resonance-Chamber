@@ -14,15 +14,14 @@ function App() {
   const sceneRef = useRef<HeroScene | null>(null)
   const [locked, setLocked] = useState(false)
 
+  const lenisRef = useRef<Lenis | null>(null)
+
   useEffect(() => {
     const stage = stageRef.current
     if (!stage) return
     const scene = startHero(stage)
     sceneRef.current = scene
     const unsub = scene.onLock(() => setLocked(true))
-    // Charge feedback — write seal's accumulating energy to a CSS var so the
-    // ChargeIndicator's radial arc fills as the user holds the seal. Same
-    // mechanism could drive cursor or other UI hints later.
     const root = document.documentElement
     const unsubCharge = scene.onCharge((c) => {
       root.style.setProperty('--charge', c.toFixed(4))
@@ -35,13 +34,15 @@ function App() {
     }
   }, [])
 
-  // Lenis owns wheel/touch and lerps document scrollTop. Native scroll events
-  // still fire as Lenis animates, so the progress handler below stays correct.
-  // `anchors: true` routes navbar #about/#skills/#contact clicks through the
-  // same smoothing instead of jumping. Sticky positioning in about-stage keeps
-  // working because Lenis animates window scroll, not an internal container.
+  // Lock gate — scroll is disabled until the engine is activated. Once
+  // locked we resume Lenis smooth scroll and restore body overflow. This
+  // forces the user to engage with the seal before progressing — no
+  // silent walk-past of the central interaction.
   useEffect(() => {
+    document.body.style.overflow = 'hidden'
     const lenis = new Lenis({ anchors: true })
+    lenis.stop()
+    lenisRef.current = lenis
     let raf = 0
     const tick = (time: number) => {
       lenis.raf(time)
@@ -51,8 +52,16 @@ function App() {
     return () => {
       cancelAnimationFrame(raf)
       lenis.destroy()
+      lenisRef.current = null
+      document.body.style.overflow = ''
     }
   }, [])
+
+  useEffect(() => {
+    if (!locked) return
+    document.body.style.overflow = ''
+    lenisRef.current?.start()
+  }, [locked])
 
   // Mouse parallax — sets --mx / --my (-0.5 .. 0.5) on document root. The
   // inscription wrap reads these via CSS `translate` to drift opposite the
