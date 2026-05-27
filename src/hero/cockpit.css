@@ -337,33 +337,32 @@
   50%      { transform: translateY(-5px); }
 }
 
-.hero-signature {
-  position: absolute;
+/* Global signature — fixed bottom, persistent across all sections. No
+   scroll-driven fade or drift; it's a stamped plate on the chamber. */
+.signature {
+  position: fixed;
+  bottom: 26px;
   left: 50%;
-  bottom: 5.5vh;
-  transform: translateX(-50%) translateY(4px);
-  z-index: 8;
+  z-index: 9;
+  translate: -50% 0;
   font-family: 'Space Mono', ui-monospace, monospace;
   font-weight: 400;
-  font-size: 11px;
+  font-size: 10px;
   letter-spacing: 0.42em;
-  color: rgba(232, 230, 227, 0.42);
-  text-align: center;
+  text-transform: uppercase;
+  color: rgba(232, 230, 227, 0.45);
+  text-shadow:
+    0 0 12px rgba(0, 0, 0, 0.9),
+    0 0 22px rgba(0, 0, 0, 0.5);
   white-space: nowrap;
-  opacity: 0;
-  pointer-events: auto;
+  pointer-events: none;
   user-select: none;
+  opacity: 0;
+  animation: signature-arrive 1.4s ease-out 2.0s forwards;
 }
 
-/* Signature holds longest — fades only past p > 0.20, slow drift down (sinks
-   like the inscription tag falling into the engine's wake). The other
-   elements clear out first; this one watches them leave. */
-.hero-section--revealed .hero-signature {
-  opacity: calc(1 - max(0, (var(--p, 0) - 0.18)) * 2.0);
-  transform:
-    translateX(-50%)
-    translateY(calc(var(--p, 0) * 60px))
-    scale(calc(1 - var(--p, 0) * 0.15));
+@keyframes signature-arrive {
+  to { opacity: 1; }
 }
 
 @media (max-width: 720px) {

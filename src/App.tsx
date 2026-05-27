@@ -8,6 +8,7 @@ import { Cursor } from './hero/Cursor'
 import { Atmosphere } from './hero/Atmosphere'
 import { ChargeIndicator } from './hero/ChargeIndicator'
 import { SectionHeader } from './hero/SectionHeader'
+import { Signature } from './hero/Signature'
 import { progressStore } from './about/dwellStore'
 
 function App() {
@@ -129,6 +130,7 @@ function App() {
       <Atmosphere />
       <ChargeIndicator locked={locked} />
       <SectionHeader />
+      <Signature />
       <Hero locked={locked} />
       <About />
       <Navbar />

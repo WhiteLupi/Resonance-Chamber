@@ -16,7 +16,6 @@ export function Hero({ locked }: HeroProps) {
       <div className="hero-inscription">
         <div className="hero-inscription__bottom" aria-hidden={!locked}>motion</div>
       </div>
-      <div className="hero-signature" aria-hidden={!locked}>— K · WALTER</div>
     </section>
   );
 }
