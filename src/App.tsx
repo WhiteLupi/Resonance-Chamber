@@ -5,6 +5,7 @@ import { Hero } from './hero/Hero'
 import { Navbar } from './hero/Navbar'
 import { About } from './about/About'
 import { Cursor } from './hero/Cursor'
+import { Atmosphere } from './hero/Atmosphere'
 import { progressStore } from './about/dwellStore'
 
 function App() {
@@ -106,6 +107,7 @@ function App() {
   return (
     <>
       <div ref={stageRef} className="gl-stage" aria-hidden="true" />
+      <Atmosphere />
       <Hero locked={locked} />
       <About />
       <Navbar />

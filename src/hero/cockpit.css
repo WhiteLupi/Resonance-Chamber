@@ -86,6 +86,73 @@
   .hero-wall-relief { display: none; }
 }
 
+/* === Chamber atmosphere ===
+   Fixed inset 0 below sections (z:0) — sits above the seal canvas (also z:0,
+   later DOM order wins) but below hero/about content (z:1). Shafts read as
+   light cones in the room's haze; dust as motes in depth. Both CSS-only
+   for now — promote to Three.js if it reads flat. */
+.atmosphere {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.atmosphere__shaft {
+  position: absolute;
+  top: -10%;
+  height: 130%;
+  width: 96px;
+  pointer-events: none;
+  filter: blur(14px);
+  will-change: opacity;
+}
+
+.atmosphere__shaft--l {
+  left: 12%;
+  background: linear-gradient(15deg,
+    transparent 30%,
+    rgba(122, 196, 175, 0.18) 50%,
+    transparent 70%);
+  rotate: -6deg;
+  animation: shaft-breathe 14s ease-in-out infinite;
+}
+
+.atmosphere__shaft--r {
+  right: 12%;
+  background: linear-gradient(-15deg,
+    transparent 30%,
+    rgba(122, 196, 175, 0.14) 50%,
+    transparent 70%);
+  rotate: 6deg;
+  animation: shaft-breathe 11s ease-in-out infinite -3s;
+}
+
+@keyframes shaft-breathe {
+  0%, 100% { opacity: 0.28; }
+  50%      { opacity: 0.55; }
+}
+
+.atmosphere__dust {
+  position: absolute;
+  border-radius: 50%;
+  background: rgba(122, 196, 175, 0.75);
+  box-shadow: 0 0 5px rgba(122, 196, 175, 0.5);
+  pointer-events: none;
+  animation: dust-drift 14s ease-in-out infinite;
+  will-change: translate, opacity;
+}
+
+@keyframes dust-drift {
+  0%, 100% { translate: 0 0;        opacity: 0.35; }
+  50%      { translate: 8px -10px; opacity: 0.85; }
+}
+
+@media (max-width: 720px) {
+  .atmosphere__shaft { display: none; }
+}
+
 /* "motion" — the only inscription. Starts below the seal (bottom 22vh ≈
    lower quarter of the viewport), grows + lifts toward center as the user
    scrolls — engine "absorbs" the manifesto. Three independent layers of
