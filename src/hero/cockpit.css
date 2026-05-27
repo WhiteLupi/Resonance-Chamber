@@ -12,16 +12,16 @@
   pointer-events: none;
 }
 
+/* Outer parallax wrap. Mouse position sets --mx/--my on document root
+   (App.tsx), wrap translates opposite — engine has presence in 3D space. */
 .hero-inscription {
   position: absolute;
   inset: 0;
   z-index: 8;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: space-between;
-  padding: 9vh 0 11vh;
   pointer-events: none;
+  translate: calc(var(--mx, 0) * -22px) calc(var(--my, 0) * -14px);
+  transition: translate 0.16s cubic-bezier(0.2, 0.8, 0.2, 1);
+  will-change: translate;
 }
 
 /* Vertical axis hairline — suggests the inscription is engraved along the
@@ -52,64 +52,54 @@
   opacity: 1;
 }
 
+/* "motion" — the only inscription. Starts below the seal (bottom 22vh ≈
+   lower quarter of the viewport), grows + lifts toward center as the user
+   scrolls — engine "absorbs" the manifesto. Three independent layers of
+   movement compose:
+   1. `translate` (CSS prop, scroll-driven) lift on --p
+   2. `scale`     (CSS prop, scroll-driven) grow on --p
+   3. `transform` (animation) float — independent life
+   The CSS properties translate/scale apply BEFORE `transform` so animation
+   doesn't fight them. */
 .hero-inscription__bottom {
-  /* Boldonse — chunky italic-leaning modern display sans. Single weight,
-     each letter carries its own character; the italic axis gives the
-     inscription forward motion that pairs with the engine's broadcast. */
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 22vh;
+  text-align: center;
   font-family: 'Boldonse', system-ui, sans-serif;
   font-weight: 400;
-  text-align: center;
+  font-size: clamp(40px, 5.8vw, 132px);
+  letter-spacing: -0.012em;
+  text-transform: lowercase;
+  color: rgba(245, 244, 240, 0.94);
   text-shadow:
     0 0 28px rgba(4, 7, 10, 0.92),
     0 0 60px rgba(61, 110, 99, 0.18);
   opacity: 0;
-  transform: translateY(6px);
-  transition:
-    opacity 1.2s cubic-bezier(0.2, 0.8, 0.2, 1),
-    transform 1.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+  transition: opacity 1.2s cubic-bezier(0.2, 0.8, 0.2, 1) 0.18s;
   pointer-events: auto;
   user-select: none;
-  /* The named outcome — letters scatter in different directions as the user
-     scrolls down. The word "motion" literally moves: each letter takes a
-     unique trajectory driven by --i (centered index, -2.5..+2.5 for 6
-     letters of "motion"). True to the manifesto. */
-  font-size: clamp(40px, 5.8vw, 132px);
-  letter-spacing: -0.01em;
-  text-transform: lowercase;
-  color: rgba(245, 244, 240, 0.94);
-  transition-delay: 0.18s;
-  display: flex;
-  gap: 0;
-  white-space: nowrap;
-}
-
-.hero-inscription__letter {
-  display: inline-block;
-  /* Each letter scatters: vertical translate climbs with --p, horizontal
-     based on signed index --i, plus subtle per-letter rotation. Letters
-     at center barely move (i near 0); outer letters fling apart hard. */
-  transform:
-    translateY(calc(var(--p, 0) * -130px))
-    translateX(calc(var(--i, 0) * var(--p, 0) * 38px))
-    rotate(calc(var(--i, 0) * var(--p, 0) * 5deg))
-    scale(calc(1 - var(--p, 0) * 0.28));
-  opacity: calc(1 - max(0, (var(--p, 0) - 0.04)) * 1.9);
-  will-change: transform, opacity;
-}
-
-.hero-section--revealed .hero-inscription__bottom {
-  animation: motion-breathe 8s ease-in-out infinite 1.4s;
-}
-
-@keyframes motion-breathe {
-  /* Subtle letter-spacing breath — kinetic type, true to MOTION's name. */
-  0%, 100% { letter-spacing: -0.01em; }
-  50%      { letter-spacing: 0.012em; }
+  will-change: translate, scale, transform;
 }
 
 .hero-section--revealed .hero-inscription__bottom {
   opacity: 1;
-  transform: translateY(0);
+  translate: 0 calc(var(--p, 0) * -160px);
+  scale: calc(1 + var(--p, 0) * 0.5);
+  animation:
+    motion-breathe 8s ease-in-out infinite,
+    motion-float 11s ease-in-out infinite;
+}
+
+@keyframes motion-breathe {
+  0%, 100% { letter-spacing: -0.012em; }
+  50%      { letter-spacing: 0.014em; }
+}
+
+@keyframes motion-float {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-5px); }
 }
 
 .hero-signature {

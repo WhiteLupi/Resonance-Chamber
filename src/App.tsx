@@ -44,6 +44,29 @@ function App() {
     }
   }, [])
 
+  // Mouse parallax — sets --mx / --my (-0.5 .. 0.5) on document root. The
+  // inscription wrap reads these via CSS `translate` to drift opposite the
+  // cursor; CSS transition (0.16s) provides damping so no JS smoothing needed.
+  useEffect(() => {
+    const root = document.documentElement;
+    const onMove = (e: MouseEvent) => {
+      const mx = (e.clientX / window.innerWidth) - 0.5;
+      const my = (e.clientY / window.innerHeight) - 0.5;
+      root.style.setProperty('--mx', mx.toFixed(4));
+      root.style.setProperty('--my', my.toFixed(4));
+    };
+    const onLeave = () => {
+      root.style.setProperty('--mx', '0');
+      root.style.setProperty('--my', '0');
+    };
+    window.addEventListener('mousemove', onMove, { passive: true });
+    document.addEventListener('mouseleave', onLeave);
+    return () => {
+      window.removeEventListener('mousemove', onMove);
+      document.removeEventListener('mouseleave', onLeave);
+    };
+  }, []);
+
   useEffect(() => {
     const root = document.documentElement;
 
