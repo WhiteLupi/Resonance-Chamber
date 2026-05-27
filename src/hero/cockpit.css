@@ -309,17 +309,19 @@
 
 .hero-section--revealed .hero-inscription__bottom {
   opacity: 1;
-  /* Engine absorbs the manifest. Motion starts at viewport bottom 22vh
-     (below the seal at 50vh). As scroll progresses it lifts toward seal
-     center, grows to peak (scale 1.5) at p=0.55, then collapses to 0 by
-     p=0.78 — synchronized with the about inscription emerging (about
-     header reveals at p=0.72, first line at p=0.78). The handoff is
-     crisp: motion is fully gone exactly as the voice starts speaking. */
-  --lift: clamp(0, calc(var(--p, 0) / 0.78), 1);
-  --grow: clamp(0, calc(var(--p, 0) / 0.55), 1);
-  --decay: clamp(0, calc((var(--p, 0) - 0.55) / 0.23), 1);
+  /* Engine activation, three phases:
+     p=0..0.5  – motion lifts from bottom 22vh to seal center, grows 1→1.3
+     p=0.5..0.78 – motion holds at the seal, fully grown (engine has it)
+     p=0.78..0.86 – engine devours motion via a clip-path circle shrinking
+                    from outside-in, centered on motion's own midpoint
+                    (which sits exactly at the seal). No fade, no scale
+                    collapse, no escape — the seal eats it. */
+  --lift:   clamp(0, calc(var(--p, 0) / 0.5), 1);
+  --grow:   clamp(0, calc(var(--p, 0) / 0.5), 1);
+  --vanish: clamp(0, calc((var(--p, 0) - 0.78) / 0.08), 1);
   translate: 0 calc(var(--lift) * -28vh);
-  scale: calc((1 + var(--grow) * 0.5) * (1 - var(--decay)));
+  scale: calc(1 + var(--grow) * 0.3);
+  clip-path: circle(calc((1 - var(--vanish)) * 150%) at center);
   animation:
     motion-breathe 8s ease-in-out infinite,
     motion-float 11s ease-in-out infinite;
