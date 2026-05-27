@@ -52,6 +52,40 @@
   opacity: 1;
 }
 
+/* Section header as a worn vertical relief on the left wall. Not a corner
+   label — a carved trace someone left on the chamber. Reveals slowly with
+   the rest of the inscription. */
+.hero-wall-relief {
+  position: absolute;
+  left: 36px;
+  top: 50%;
+  z-index: 8;
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+  font-family: 'Space Mono', ui-monospace, monospace;
+  font-weight: 400;
+  font-size: 9px;
+  letter-spacing: 0.42em;
+  text-transform: uppercase;
+  color: rgba(232, 230, 227, 0.24);
+  text-shadow:
+    0 0 4px rgba(122, 196, 175, 0.10),
+    0 0 12px rgba(0, 0, 0, 0.55);
+  translate: 0 -50%;
+  opacity: 0;
+  transition: opacity 1.4s ease-out 0.6s;
+  pointer-events: none;
+  user-select: none;
+}
+
+.hero-section--revealed .hero-wall-relief {
+  opacity: 1;
+}
+
+@media (max-width: 720px) {
+  .hero-wall-relief { display: none; }
+}
+
 /* "motion" — the only inscription. Starts below the seal (bottom 22vh ≈
    lower quarter of the viewport), grows + lifts toward center as the user
    scrolls — engine "absorbs" the manifesto. Three independent layers of
