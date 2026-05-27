@@ -84,7 +84,7 @@ function App() {
     <>
       <div ref={stageRef} className="gl-stage" aria-hidden="true" />
       <Hero locked={locked} />
-      <About locked={locked} />
+      <About />
       <Navbar />
       <Cursor />
     </>

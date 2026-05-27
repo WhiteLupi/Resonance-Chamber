@@ -34,3 +34,4 @@ nav-*.png
 # local tooling state
 .claude/
 .playwright-mcp/
+.superpowers/

@@ -52,7 +52,6 @@
   opacity: 1;
 }
 
-.hero-inscription__top,
 .hero-inscription__bottom {
   /* Boldonse — chunky italic-leaning modern display sans. Single weight,
      each letter carries its own character; the italic axis gives the
@@ -60,8 +59,6 @@
   font-family: 'Boldonse', system-ui, sans-serif;
   font-weight: 400;
   text-align: center;
-  /* Inner accent glow (subtle, oxidized teal) layered with dark shadow —
-     reads as "carved by the engine's own light," not just black-on-dark text. */
   text-shadow:
     0 0 28px rgba(4, 7, 10, 0.92),
     0 0 60px rgba(61, 110, 99, 0.18);
@@ -72,40 +69,6 @@
     transform 1.2s cubic-bezier(0.2, 0.8, 0.2, 1);
   pointer-events: auto;
   user-select: none;
-}
-
-.hero-inscription__top {
-  /* The invitation — small inscription tag, not a billboard. Lets the seal
-     hold the visual weight; text is annotation, not headline.
-
-     Scroll behavior: drifts up + slightly left + scales down + rotates
-     subtly as --p climbs. Not "scrolls up linearly" — reads as departing
-     into the void instead of leaving the document. */
-  font-size: clamp(18px, 1.9vw, 38px);
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: rgba(232, 230, 227, 0.65);
-  transform:
-    translateY(calc(var(--p, 0) * -90px))
-    translateX(calc(var(--p, 0) * -22px))
-    rotate(calc(var(--p, 0) * -3deg))
-    scale(calc(1 - var(--p, 0) * 0.18));
-  /* Custom opacity overrides the reveal default — fades with scroll past
-     p > 0.05. */
-  opacity: 0;
-  will-change: transform, opacity;
-}
-
-.hero-section--revealed .hero-inscription__top {
-  opacity: calc(1 - max(0, (var(--p, 0) - 0.04)) * 1.8);
-  transform:
-    translateY(calc(var(--p, 0) * -90px))
-    translateX(calc(var(--p, 0) * -22px))
-    rotate(calc(var(--p, 0) * -3deg))
-    scale(calc(1 - var(--p, 0) * 0.18));
-}
-
-.hero-inscription__bottom {
   /* The named outcome — letters scatter in different directions as the user
      scrolls down. The word "motion" literally moves: each letter takes a
      unique trajectory driven by --i (centered index, -2.5..+2.5 for 6
@@ -144,7 +107,6 @@
   50%      { letter-spacing: 0.012em; }
 }
 
-.hero-section--revealed .hero-inscription__top,
 .hero-section--revealed .hero-inscription__bottom {
   opacity: 1;
   transform: translateY(0);
@@ -179,140 +141,9 @@
     scale(calc(1 - var(--p, 0) * 0.15));
 }
 
-/* Corner markers — chapter id top-left, byline top-right. They span the
-   horizontal corridor on wide screens so the centered inscription doesn't
-   read as lonely; they're the same instrument voice as the about hairline
-   ("§ 02 · TRANSMISSION") so the typographic system stays consistent. */
-.hero-marker {
-  position: absolute;
-  top: 88px;
-  z-index: 8;
-  font-family: 'Space Mono', ui-monospace, monospace;
-  font-weight: 400;
-  font-size: 10px;
-  letter-spacing: 0.42em;
-  color: rgba(232, 230, 227, 0.42);
-  text-transform: uppercase;
-  white-space: nowrap;
-  opacity: 0;
-  transition: opacity 1.0s ease-out 0.4s;
-  pointer-events: none;
-  user-select: none;
-}
-
-.hero-marker--tl {
-  left: 64px;
-  /* Drifts further left + up as scroll — pulled into the void in its own
-     direction instead of marching uniformly upward with the rest. */
-  transform:
-    translateY(calc(var(--p, 0) * -34px))
-    translateX(calc(var(--p, 0) * -48px));
-}
-
-.hero-marker--tr {
-  right: 64px;
-  display: inline-flex;
-  align-items: center;
-  gap: 9px;
-  /* Mirror — drifts right + up, balancing the asymmetric exit of __tl. */
-  transform:
-    translateY(calc(var(--p, 0) * -34px))
-    translateX(calc(var(--p, 0) * 48px));
-}
-
-.hero-section--revealed .hero-marker {
-  opacity: calc(1 - max(0, (var(--p, 0) - 0.04)) * 2.2);
-}
-
-.hero-marker__dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: var(--accent);
-  box-shadow: 0 0 6px var(--accent-shadow);
-  animation: hero-prompt-pulse 2.2s ease-in-out infinite;
-}
-
-.hero-section--revealed .hero-marker {
-  opacity: 1;
-}
-
-/* Invitation prompt — pre-lock CTA telling the user the seal is interactive.
-   Sits centered just below the seal area, lighter than the inscription, with
-   a slow pulsing dot to indicate "live, awaiting input." Dissolves cleanly
-   once the engine locks (aria-hidden flips, opacity → 0). */
-.hero-prompt {
-  position: absolute;
-  left: 50%;
-  top: 67vh;
-  transform: translateX(-50%);
-  z-index: 9;
-  display: inline-flex;
-  align-items: center;
-  gap: 14px;
-  padding: 9px 18px;
-  font-family: 'Space Mono', ui-monospace, monospace;
-  font-weight: 400;
-  font-size: 11px;
-  letter-spacing: 0.38em;
-  color: rgba(232, 230, 227, 0.78);
-  text-shadow: 0 0 16px rgba(4, 7, 10, 0.85);
-  border: 1px solid rgba(232, 230, 227, 0.16);
-  border-radius: 999px;
-  background: rgba(4, 7, 10, 0.35);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  opacity: 0;
-  animation: hero-prompt-fade-in 1.6s cubic-bezier(0.2, 0.8, 0.2, 1) 1.2s forwards;
-  pointer-events: none;
-  user-select: none;
-  transition: opacity 0.6s ease-out;
-}
-
-.hero-prompt__action {
-  color: rgba(245, 244, 240, 0.95);
-  font-weight: 700;
-  letter-spacing: 0.32em;
-}
-
-.hero-prompt__dot {
-  width: 5px;
-  height: 5px;
-  border-radius: 50%;
-  background: var(--accent);
-  box-shadow: 0 0 6px var(--accent-shadow);
-  animation: hero-prompt-pulse 1.6s ease-in-out infinite;
-}
-
-.hero-prompt__caption {
-  color: rgba(232, 230, 227, 0.55);
-}
-
-@keyframes hero-prompt-fade-in {
-  from { opacity: 0; transform: translateX(-50%) translateY(8px); }
-  to   { opacity: 1; transform: translateX(-50%) translateY(0); }
-}
-
-@keyframes hero-prompt-pulse {
-  0%, 100% { opacity: 1;   transform: scale(1); }
-  50%      { opacity: 0.35; transform: scale(0.7); }
-}
-
-/* Once the seal locks, the prompt is no longer relevant — fade it out fast.
-   Animation is overridden because forwards-state value (opacity: 1) is what
-   the transition starts from. */
-.hero-section--revealed .hero-prompt {
-  opacity: 0;
-  animation: none;
-}
-
 @media (max-width: 720px) {
   .hero-inscription {
     padding: 14vh 0 14vh;
-  }
-  .hero-inscription__top {
-    font-size: clamp(22px, 5.6vw, 44px);
-    letter-spacing: 0.14em;
   }
   .hero-inscription__bottom {
     font-size: clamp(44px, 14vw, 96px);
@@ -460,121 +291,6 @@
   letter-spacing: 0.22em;
 }
 
-
-/* telemetry card — left-side profile readout */
-
-.cockpit-telemetry {
-  /* Fixed to viewport so the slide-out can clear the screen — absolute inside
-     .hero-section was getting clipped by the section's overflow:hidden. */
-  position: fixed;
-  left: 64px;
-  bottom: 64px;
-  transform: translateY(12px);
-  z-index: 14;
-  min-width: 320px;
-  padding: 18px 22px 16px;
-
-  background: rgba(232, 230, 227, 0.18);
-  backdrop-filter: blur(20px) saturate(160%);
-  -webkit-backdrop-filter: blur(20px) saturate(160%);
-  border-top: 1px solid rgba(255, 255, 255, 0.28);
-  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
-
-  clip-path: polygon(
-    0 8px, 8px 0,
-    calc(100% - 8px) 0, 100% 8px,
-    100% calc(100% - 8px), calc(100% - 8px) 100%,
-    8px 100%, 0 calc(100% - 8px)
-  );
-
-  font-family: 'Space Mono', ui-monospace, monospace;
-  color: var(--fg-strong);
-  opacity: 0;
-  transition:
-    opacity 0.7s ease,
-    transform 0.75s cubic-bezier(0.2, 0.8, 0.2, 1);
-}
-
-.cockpit-telemetry--in {
-  opacity: 1;
-  transform: translateY(0);
-}
-
-/* Scroll-direction hide, decoupled from scroll velocity. Translate by enough
-   to fully clear the viewport — fixed positioning means no parent clip. */
-.cockpit-telemetry--hidden {
-  opacity: 0;
-  transform: translateY(calc(100% + 80px));
-  pointer-events: none;
-}
-
-
-.cockpit-telemetry__header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-size: 10px;
-  letter-spacing: 0.34em;
-  color: var(--fg-soft);
-  margin-bottom: 13px;
-  padding-bottom: 10px;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
-}
-
-.cockpit-telemetry__bracket {
-  color: rgba(143, 169, 163, 0.65);
-  font-size: 11px;
-}
-
-.cockpit-telemetry__body {
-  margin: 0;
-  padding: 0;
-  display: grid;
-  gap: 8px;
-}
-
-.cockpit-telemetry__row {
-  display: grid;
-  grid-template-columns: auto 1fr;
-  column-gap: 18px;
-  align-items: center;
-  font-size: 11px;
-  letter-spacing: 0.22em;
-}
-
-.cockpit-telemetry__row dt {
-  color: var(--fg-faint);
-}
-
-.cockpit-telemetry__row dd {
-  margin: 0;
-  color: var(--fg-strong);
-  display: flex;
-  align-items: center;
-}
-
-/* Live indicator next to STATUS · RECEIVING. Slow polyrhythmic pulse (2.2s)
-   distinct from the sigil-pulse (3.6s) so they never lock step. */
-.cockpit-telemetry__dot {
-  display: inline-block;
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: var(--accent);
-  box-shadow: 0 0 5px var(--accent-shadow);
-  margin-right: 10px;
-  flex-shrink: 0;
-  animation: cockpit-dot-pulse 2.2s ease-in-out infinite;
-}
-
-@keyframes cockpit-dot-pulse {
-  0%, 100% { opacity: 1;   transform: scale(1); }
-  50%      { opacity: 0.35; transform: scale(0.7); }
-}
-
-@media (max-width: 880px) {
-  .cockpit-telemetry { display: none; }
-}
 
 /* scroll CTA — bottom-center indicator */
 
