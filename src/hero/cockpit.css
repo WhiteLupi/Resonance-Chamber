@@ -123,22 +123,22 @@
 
 .charge-indicator__base {
   fill: none;
-  stroke: rgba(122, 196, 175, 0.16);
-  stroke-width: 1;
+  stroke: rgba(122, 196, 175, 0.10);
+  stroke-width: 0.8;
   animation: charge-base-breath 4.4s ease-in-out infinite;
 }
 
 @keyframes charge-base-breath {
-  0%, 100% { stroke: rgba(122, 196, 175, 0.14); }
-  50%      { stroke: rgba(122, 196, 175, 0.30); }
+  0%, 100% { stroke: rgba(122, 196, 175, 0.08); }
+  50%      { stroke: rgba(122, 196, 175, 0.18); }
 }
 
 .charge-indicator__fill {
   fill: none;
-  stroke: rgba(122, 196, 175, 0.95);
-  stroke-width: 1.8;
+  stroke: rgba(122, 196, 175, 1);
+  stroke-width: 2.6;
   stroke-linecap: round;
-  filter: drop-shadow(0 0 5px rgba(122, 196, 175, 0.6));
+  filter: drop-shadow(0 0 6px rgba(122, 196, 175, 0.8));
   transition: stroke-dashoffset 0.08s linear;
 }
 
