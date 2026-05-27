@@ -97,6 +97,62 @@
   transition: opacity 0.6s ease-out;
 }
 
+/* Global section header — fixed at the top of the viewport. Acts as a
+   vertical text rotator: § 01 slides up out, § 02 slides up in as --p
+   crosses ~0.78 (when about inscription begins emerging). The window
+   itself is overflow:clip so slots outside it are invisible — no fade. */
+.section-header {
+  position: fixed;
+  top: 68px;
+  left: 0;
+  right: 0;
+  z-index: 9;
+  display: flex;
+  justify-content: center;
+  pointer-events: none;
+  opacity: 0;
+  animation: section-header-arrive 1.4s ease-out 1.6s forwards;
+}
+
+@keyframes section-header-arrive {
+  to { opacity: 1; }
+}
+
+.section-header__inner {
+  position: relative;
+  width: 320px;
+  height: 14px;
+  overflow: clip;
+}
+
+.section-header__slot {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Space Mono', ui-monospace, monospace;
+  font-weight: 400;
+  font-size: 10px;
+  letter-spacing: 0.42em;
+  text-transform: uppercase;
+  color: rgba(232, 230, 227, 0.58);
+  text-shadow:
+    0 0 12px rgba(0, 0, 0, 0.9),
+    0 0 22px rgba(0, 0, 0, 0.5);
+  white-space: nowrap;
+  --t: clamp(0, calc((var(--p, 0) - 0.78) / 0.06), 1);
+  will-change: translate;
+}
+
+.section-header__slot--first {
+  translate: 0 calc(var(--t) * -100%);
+}
+
+.section-header__slot--second {
+  translate: 0 calc((1 - var(--t)) * 100%);
+}
+
 /* === Charge indicator ===
    Sits centered with the seal (gl-stage canvas centers seal in viewport).
    Background ring is the always-on "engine outline" — a faint potential

@@ -13,7 +13,6 @@ type Props = { phase: DwellPhase };
 export const Inscription = forwardRef<HTMLDivElement, Props>(function Inscription({ phase }, ref) {
   return (
     <div ref={ref} className="inscription">
-      <div className="inscription__header" aria-hidden="true">§ 02 · TRANSMISSION</div>
       {LINES.map((line, lineIdx) => (
         <p key={lineIdx} className="inscription__line" data-line={lineIdx}>
           <span className="inscription__copy">

@@ -58,18 +58,6 @@
   pointer-events: none;
 }
 
-.inscription__header {
-  font-family: 'Space Mono', ui-monospace, monospace;
-  font-size: 10px;
-  letter-spacing: 0.42em;
-  text-transform: uppercase;
-  color: rgba(232, 230, 227, 0.55);
-  margin: 0 0 4px;
-  /* Header reveals as the room darkens — overlap with particle fadeout, not gap. */
-  --t: clamp(0, calc((var(--p, 0) - 0.72) / 0.10), 1);
-  opacity: var(--t);
-}
-
 /* Per-line emergence keyed to scroll progress. Lines stagger across
    p ∈ [0.78, 0.96] — overlapping with the tail of particle fadeout so the
    inscription emerges THROUGH the dissolving engine. NO opacity fade:

@@ -7,6 +7,7 @@ import { About } from './about/About'
 import { Cursor } from './hero/Cursor'
 import { Atmosphere } from './hero/Atmosphere'
 import { ChargeIndicator } from './hero/ChargeIndicator'
+import { SectionHeader } from './hero/SectionHeader'
 import { progressStore } from './about/dwellStore'
 
 function App() {
@@ -127,6 +128,7 @@ function App() {
       <div ref={stageRef} className="gl-stage" aria-hidden="true" />
       <Atmosphere />
       <ChargeIndicator locked={locked} />
+      <SectionHeader />
       <Hero locked={locked} />
       <About />
       <Navbar />
