@@ -271,23 +271,48 @@ export function startHero(host: HTMLElement): HeroScene {
     return { line, endIdx, geom: g };
   };
 
+  // Centripetal Catmull-Rom avoids the overshoot, cusps and self-intersecting
+  // loops that uniform parameterisation produces on unevenly spaced control
+  // points — the prime source of the "angular wire" look on the tendrils.
+  const SPINE_TYPE = 'centripetal' as const;
+
   const buildTendril = (
     spinePoints: THREE.Vector3[],
     helix: Helix | null,
     layers: { mat: LineMaterial; ratio: number }[],
     samples: number,
   ) => {
-    const spine = new THREE.CatmullRomCurve3(spinePoints, false, 'catmullrom', 0.5);
+    const spine = new THREE.CatmullRomCurve3(spinePoints, false, SPINE_TYPE);
     const points: THREE.Vector3[] = [];
+    // Rotation-minimizing frame: carry the previous perpendicular across samples
+    // and re-project it onto the plane ⟂ tangent, instead of picking an "up"
+    // reference per-sample. The threshold pick flips the helix plane by ~90°
+    // when the tangent crosses near-vertical — the source of the remaining
+    // angular kinks on the upward tendrils. Parallel transport stays continuous.
+    let prevPerp: THREE.Vector3 | null = null;
     for (let i = 0; i <= samples; i++) {
       const t = i / samples;
       const p = spine.getPointAt(t).clone();
       if (helix && helix.amp > 0) {
         const tan = spine.getTangentAt(t).normalize();
-        const up = Math.abs(tan.y) > 0.85
-          ? new THREE.Vector3(1, 0, 0)
-          : new THREE.Vector3(0, 1, 0);
-        const perpA = new THREE.Vector3().crossVectors(tan, up).normalize();
+        let perpA: THREE.Vector3;
+        if (prevPerp) {
+          // Project previous frame onto the new tangent's normal plane.
+          perpA = prevPerp.clone().addScaledVector(tan, -prevPerp.dot(tan));
+          if (perpA.lengthSq() < 1e-6) {
+            const up = Math.abs(tan.y) > 0.9
+              ? new THREE.Vector3(1, 0, 0)
+              : new THREE.Vector3(0, 1, 0);
+            perpA = new THREE.Vector3().crossVectors(tan, up);
+          }
+          perpA.normalize();
+        } else {
+          const up = Math.abs(tan.y) > 0.9
+            ? new THREE.Vector3(1, 0, 0)
+            : new THREE.Vector3(0, 1, 0);
+          perpA = new THREE.Vector3().crossVectors(tan, up).normalize();
+        }
+        prevPerp = perpA;
         const perpB = new THREE.Vector3().crossVectors(tan, perpA).normalize();
         const envelope = t < 0.08
           ? t / 0.08
@@ -352,7 +377,7 @@ export function startHero(host: HTMLElement): HeroScene {
     lengthMul: number,
     helix: Helix | null,
   ) => {
-    const spineCurve = new THREE.CatmullRomCurve3(parentSpine, false, 'catmullrom', 0.5);
+    const spineCurve = new THREE.CatmullRomCurve3(parentSpine, false, SPINE_TYPE);
     const origin = spineCurve.getPointAt(t).clone();
     const tangent = spineCurve.getTangentAt(t).normalize();
     const upRef = Math.abs(tangent.y) > 0.85
@@ -366,7 +391,7 @@ export function startHero(host: HTMLElement): HeroScene {
       .add(new THREE.Vector3(0, -branchLen * 0.5, 0));
     const mid = new THREE.Vector3().lerpVectors(origin, end, 0.5)
       .add(perp.clone().multiplyScalar(sideSign * 0.08));
-    const built = buildTendril([origin, mid, end], helix, branchLayers, 28);
+    const built = buildTendril([origin, mid, end], helix, branchLayers, 48);
     tendrils.push({
       lines: built.lines,
       samples: built.samplesCount,
@@ -385,7 +410,7 @@ export function startHero(host: HTMLElement): HeroScene {
     const dir = dirFromSeed(opts.dirSeed);
     const spine = buildSpine(dir, opts.length, opts.swayBias);
     const jitter = Math.sin(opts.swayBias * 5.1);
-    const built = buildTendril(spine, opts.helix, layersForTendril(jitter), 64);
+    const built = buildTendril(spine, opts.helix, layersForTendril(jitter), 112);
     const mainTendril: Tendril = {
       lines: built.lines,
       samples: built.samplesCount,
@@ -415,8 +440,8 @@ export function startHero(host: HTMLElement): HeroScene {
     const spine = buildSpine(dir, opts.length, opts.swayBias);
     const jitterA = Math.sin(opts.swayBias * 5.1);
     const jitterB = Math.cos(opts.swayBias * 5.1);
-    const builtA = buildTendril(spine, { amp: opts.helixAmp, freq: opts.helixFreq, phase: 0 }, layersForTendril(jitterA), 64);
-    const builtB = buildTendril(spine, { amp: opts.helixAmp, freq: opts.helixFreq, phase: Math.PI }, layersForTendril(jitterB), 64);
+    const builtA = buildTendril(spine, { amp: opts.helixAmp, freq: opts.helixFreq, phase: 0 }, layersForTendril(jitterA), 112);
+    const builtB = buildTendril(spine, { amp: opts.helixAmp, freq: opts.helixFreq, phase: Math.PI }, layersForTendril(jitterB), 112);
     const tA: Tendril = { lines: builtA.lines, samples: builtA.samplesCount, type: 'main', growthStart: opts.growthStart, growthDuration: opts.growthDuration, growth: 0 };
     const tB: Tendril = { lines: builtB.lines, samples: builtB.samplesCount, type: 'main', growthStart: opts.growthStart + 0.02, growthDuration: opts.growthDuration, growth: 0 };
     tendrils.push(tA, tB);
