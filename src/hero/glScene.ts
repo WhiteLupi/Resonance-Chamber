@@ -410,15 +410,20 @@ export function startHero(host: HTMLElement): HeroScene {
 
   const addBranch = (
     parentTendril: Tendril,
-    parentSpine: THREE.Vector3[],
+    parentPoints: THREE.Vector3[],
     t: number,
     sideSign: number,
     lengthMul: number,
     helix: Helix | null,
   ) => {
-    const spineCurve = new THREE.CatmullRomCurve3(parentSpine, false, SPINE_TYPE);
-    const origin = spineCurve.getPointAt(t).clone();
-    const tangent = spineCurve.getTangentAt(t).normalize();
+    // Attach to the parent's ACTUAL rendered point (spine + helix displacement),
+    // not the bare spine — otherwise the branch base sits on the centerline while
+    // the parent's bright strand is offset by the helix coil, leaving a gap that
+    // reads as "connected from one angle, floating from another".
+    const n = parentPoints.length;
+    const idx = Math.max(1, Math.min(n - 2, Math.round(t * (n - 1))));
+    const origin = parentPoints[idx].clone();
+    const tangent = parentPoints[idx + 1].clone().sub(parentPoints[idx - 1]).normalize();
     const upRef = Math.abs(tangent.y) > 0.85
       ? new THREE.Vector3(1, 0, 0)
       : new THREE.Vector3(0, 1, 0);
@@ -470,7 +475,7 @@ export function startHero(host: HTMLElement): HeroScene {
       const bHelix: Helix | null = opts.helix
         ? { amp: opts.helix.amp * 0.5, freq: opts.helix.freq * 1.3, phase: opts.helix.phase + 1.5 }
         : null;
-      addBranch(mainTendril, spine, bt, sideSign, opts.length * 0.9, bHelix);
+      addBranch(mainTendril, built.points, bt, sideSign, opts.length * 0.9, bHelix);
     }
   };
 
@@ -494,11 +499,11 @@ export function startHero(host: HTMLElement): HeroScene {
     tendrils.push(tA, tB);
     for (let b = 0; b < opts.branches[0]; b++) {
       const bt = 0.35 + b * 0.20;
-      addBranch(tA, spine, bt,  1, opts.length * 0.85, { amp: opts.helixAmp * 0.4, freq: opts.helixFreq * 1.2, phase: 0.8 });
+      addBranch(tA, builtA.points, bt,  1, opts.length * 0.85, { amp: opts.helixAmp * 0.4, freq: opts.helixFreq * 1.2, phase: 0.8 });
     }
     for (let b = 0; b < opts.branches[1]; b++) {
       const bt = 0.40 + b * 0.18;
-      addBranch(tB, spine, bt, -1, opts.length * 0.85, { amp: opts.helixAmp * 0.4, freq: opts.helixFreq * 1.2, phase: Math.PI + 0.8 });
+      addBranch(tB, builtB.points, bt, -1, opts.length * 0.85, { amp: opts.helixAmp * 0.4, freq: opts.helixFreq * 1.2, phase: Math.PI + 0.8 });
     }
   };
 
