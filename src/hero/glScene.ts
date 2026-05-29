@@ -205,6 +205,7 @@ export function startHero(host: HTMLElement): HeroScene {
   };
 
   // Roots
+  type Sway = { speed: number; amp: number; phase: number; axis: THREE.Vector3 };
   type Tendril = {
     lines: { line: Line2; endIdx: number; geom: LineGeometry }[];
     samples: number;
@@ -214,7 +215,23 @@ export function startHero(host: HTMLElement): HeroScene {
     growthStart?: number;
     growthDuration?: number;
     growth: number;
+    group: THREE.Group;   // pivot at the core — main: own group, branch: parent's
+    sway?: Sway;          // independent idle motion (main only)
   };
+
+  // Each main tendril sways on its own axis/phase/speed so they drift
+  // independently — like a root system stirred by a slow current, not one rigid
+  // body rotating. Derived deterministically from the tendril's seed.
+  const makeSway = (seed: number): Sway => ({
+    speed: 0.16 + Math.abs(Math.sin(seed * 2.3)) * 0.26,
+    amp: 0.022 + Math.abs(Math.cos(seed * 3.7)) * 0.030,
+    phase: seed * 1.97,
+    axis: new THREE.Vector3(
+      Math.sin(seed * 4.1),
+      Math.cos(seed * 2.9) * 0.5,
+      Math.sin(seed * 5.6),
+    ).normalize(),
+  });
 
   const rootsGroup = new THREE.Group();
   const BASE_COLOR = 0xdcd5cb;
@@ -257,7 +274,7 @@ export function startHero(host: HTMLElement): HeroScene {
   type Helix = { amp: number; freq: number; phase: number };
 
   // Build a Line2 with hidden state (instanceCount = 0) — growth animation reveals segments.
-  const makeLine = (points: THREE.Vector3[], endIdx: number, mat: LineMaterial) => {
+  const makeLine = (points: THREE.Vector3[], endIdx: number, mat: LineMaterial, container: THREE.Object3D) => {
     const flat: number[] = [];
     for (let i = 0; i < endIdx; i++) {
       flat.push(points[i].x, points[i].y, points[i].z);
@@ -267,7 +284,7 @@ export function startHero(host: HTMLElement): HeroScene {
     const line = new Line2(g, mat);
     line.computeLineDistances();
     g.instanceCount = 0;
-    rootsGroup.add(line);
+    container.add(line);
     return { line, endIdx, geom: g };
   };
 
@@ -281,6 +298,7 @@ export function startHero(host: HTMLElement): HeroScene {
     helix: Helix | null,
     layers: { mat: LineMaterial; ratio: number }[],
     samples: number,
+    container: THREE.Object3D,
   ) => {
     const spine = new THREE.CatmullRomCurve3(spinePoints, false, SPINE_TYPE);
     const points: THREE.Vector3[] = [];
@@ -327,7 +345,7 @@ export function startHero(host: HTMLElement): HeroScene {
     const lines: { line: Line2; endIdx: number; geom: LineGeometry }[] = [];
     for (const layer of layers) {
       const endIdx = Math.max(2, Math.floor(points.length * layer.ratio));
-      lines.push(makeLine(points, endIdx, layer.mat));
+      lines.push(makeLine(points, endIdx, layer.mat, container));
     }
     return { lines, points, spine, samplesCount: points.length };
   };
@@ -408,7 +426,7 @@ export function startHero(host: HTMLElement): HeroScene {
       .add(new THREE.Vector3(0, -branchLen * 0.5, 0));
     const mid = new THREE.Vector3().lerpVectors(origin, end, 0.5)
       .add(perp.clone().multiplyScalar(sideSign * 0.08));
-    const built = buildTendril([origin, mid, end], helix, branchLayers, 48);
+    const built = buildTendril([origin, mid, end], helix, branchLayers, 48, parentTendril.group);
     tendrils.push({
       lines: built.lines,
       samples: built.samplesCount,
@@ -416,6 +434,7 @@ export function startHero(host: HTMLElement): HeroScene {
       parent: parentTendril,
       branchT: t,
       growth: 0,
+      group: parentTendril.group,
     });
   };
 
@@ -427,7 +446,9 @@ export function startHero(host: HTMLElement): HeroScene {
     const dir = dirFromSeed(opts.dirSeed);
     const spine = buildSpine(dir, opts.length, opts.swayBias);
     const jitter = Math.sin(opts.swayBias * 5.1);
-    const built = buildTendril(spine, opts.helix, layersForTendril(jitter), 112);
+    const group = new THREE.Group();
+    rootsGroup.add(group);
+    const built = buildTendril(spine, opts.helix, layersForTendril(jitter), 112, group);
     const mainTendril: Tendril = {
       lines: built.lines,
       samples: built.samplesCount,
@@ -435,6 +456,8 @@ export function startHero(host: HTMLElement): HeroScene {
       growthStart: opts.growthStart,
       growthDuration: opts.growthDuration,
       growth: 0,
+      group,
+      sway: makeSway(opts.swayBias),
     };
     tendrils.push(mainTendril);
     for (let b = 0; b < opts.branches; b++) {
@@ -457,10 +480,13 @@ export function startHero(host: HTMLElement): HeroScene {
     const spine = buildSpine(dir, opts.length, opts.swayBias);
     const jitterA = Math.sin(opts.swayBias * 5.1);
     const jitterB = Math.cos(opts.swayBias * 5.1);
-    const builtA = buildTendril(spine, { amp: opts.helixAmp, freq: opts.helixFreq, phase: 0 }, layersForTendril(jitterA), 112);
-    const builtB = buildTendril(spine, { amp: opts.helixAmp, freq: opts.helixFreq, phase: Math.PI }, layersForTendril(jitterB), 112);
-    const tA: Tendril = { lines: builtA.lines, samples: builtA.samplesCount, type: 'main', growthStart: opts.growthStart, growthDuration: opts.growthDuration, growth: 0 };
-    const tB: Tendril = { lines: builtB.lines, samples: builtB.samplesCount, type: 'main', growthStart: opts.growthStart + 0.02, growthDuration: opts.growthDuration, growth: 0 };
+    const groupA = new THREE.Group();
+    const groupB = new THREE.Group();
+    rootsGroup.add(groupA, groupB);
+    const builtA = buildTendril(spine, { amp: opts.helixAmp, freq: opts.helixFreq, phase: 0 }, layersForTendril(jitterA), 112, groupA);
+    const builtB = buildTendril(spine, { amp: opts.helixAmp, freq: opts.helixFreq, phase: Math.PI }, layersForTendril(jitterB), 112, groupB);
+    const tA: Tendril = { lines: builtA.lines, samples: builtA.samplesCount, type: 'main', growthStart: opts.growthStart, growthDuration: opts.growthDuration, growth: 0, group: groupA, sway: makeSway(opts.swayBias) };
+    const tB: Tendril = { lines: builtB.lines, samples: builtB.samplesCount, type: 'main', growthStart: opts.growthStart + 0.02, growthDuration: opts.growthDuration, growth: 0, group: groupB, sway: makeSway(opts.swayBias + 7.0) };
     tendrils.push(tA, tB);
     for (let b = 0; b < opts.branches[0]; b++) {
       const bt = 0.35 + b * 0.20;
@@ -474,18 +500,21 @@ export function startHero(host: HTMLElement): HeroScene {
 
   // Composition (15 main tendrils + branches), staggered growthStart 0–0.20 for
   // organic emergence — each spine charts an independent path through the field.
-  addRootPair({ dirSeed: 1.1, length: 1.30, swayBias: 1.1, helixAmp: 0.10, helixFreq: 2.6, branches: [1, 0], growthStart: 0.00, growthDuration: 0.85 });
-  addRootPair({ dirSeed: 2.4, length: 1.20, swayBias: 2.4, helixAmp: 0.09, helixFreq: 3.0, branches: [0, 1], growthStart: 0.05, growthDuration: 0.82 });
-  addRootPair({ dirSeed: 5.7, length: 1.15, swayBias: 5.7, helixAmp: 0.08, helixFreq: 2.4, branches: [0, 0], growthStart: 0.10, growthDuration: 0.80 });
-  addRootPair({ dirSeed: 8.3, length: 1.25, swayBias: 8.3, helixAmp: 0.10, helixFreq: 2.2, branches: [1, 0], growthStart: 0.07, growthDuration: 0.83 });
+  // Length varies widely — short tendrils cluster near the core, the long ones
+  // reach out toward the screen edges, giving the field depth instead of an
+  // evenly-sized burst.
+  addRootPair({ dirSeed: 1.1, length: 2.60, swayBias: 1.1, helixAmp: 0.10, helixFreq: 2.6, branches: [1, 0], growthStart: 0.00, growthDuration: 0.85 });
+  addRootPair({ dirSeed: 2.4, length: 1.05, swayBias: 2.4, helixAmp: 0.09, helixFreq: 3.0, branches: [0, 1], growthStart: 0.05, growthDuration: 0.82 });
+  addRootPair({ dirSeed: 5.7, length: 1.45, swayBias: 5.7, helixAmp: 0.08, helixFreq: 2.4, branches: [0, 0], growthStart: 0.10, growthDuration: 0.80 });
+  addRootPair({ dirSeed: 8.3, length: 2.25, swayBias: 8.3, helixAmp: 0.10, helixFreq: 2.2, branches: [1, 0], growthStart: 0.07, growthDuration: 0.83 });
 
   addRoot({ dirSeed: 3.1,  length: 0.55, swayBias: 3.1,  branches: 0, helix: { amp: 0.06, freq: 2.0, phase: 1.2 }, growthStart: 0.14, growthDuration: 0.70 });
-  addRoot({ dirSeed: 4.0,  length: 1.05, swayBias: 4.0,  branches: 0, helix: { amp: 0.07, freq: 2.5, phase: 0.6 }, growthStart: 0.08, growthDuration: 0.80 });
-  addRoot({ dirSeed: 6.2,  length: 1.10, swayBias: 6.2,  branches: 1, helix: { amp: 0.08, freq: 2.7, phase: 4.2 }, growthStart: 0.04, growthDuration: 0.82 });
-  addRoot({ dirSeed: 7.0,  length: 0.75, swayBias: 7.0,  branches: 0, helix: { amp: 0.05, freq: 3.0, phase: 2.4 }, growthStart: 0.16, growthDuration: 0.72 });
-  addRoot({ dirSeed: 9.1,  length: 1.20, swayBias: 9.1,  branches: 0, helix: { amp: 0.09, freq: 2.4, phase: 5.0 }, growthStart: 0.02, growthDuration: 0.84 });
-  addRoot({ dirSeed: 10.4, length: 0.90, swayBias: 10.4, branches: 0, helix: { amp: 0.06, freq: 2.2, phase: 3.6 }, growthStart: 0.18, growthDuration: 0.72 });
-  addRoot({ dirSeed: 11.6, length: 1.15, swayBias: 11.6, branches: 1, helix: { amp: 0.08, freq: 2.8, phase: 1.5 }, growthStart: 0.06, growthDuration: 0.82 });
+  addRoot({ dirSeed: 4.0,  length: 2.40, swayBias: 4.0,  branches: 1, helix: { amp: 0.07, freq: 2.5, phase: 0.6 }, growthStart: 0.08, growthDuration: 0.80 });
+  addRoot({ dirSeed: 6.2,  length: 1.30, swayBias: 6.2,  branches: 1, helix: { amp: 0.08, freq: 2.7, phase: 4.2 }, growthStart: 0.04, growthDuration: 0.82 });
+  addRoot({ dirSeed: 7.0,  length: 0.70, swayBias: 7.0,  branches: 0, helix: { amp: 0.05, freq: 3.0, phase: 2.4 }, growthStart: 0.16, growthDuration: 0.72 });
+  addRoot({ dirSeed: 9.1,  length: 2.65, swayBias: 9.1,  branches: 0, helix: { amp: 0.09, freq: 2.4, phase: 5.0 }, growthStart: 0.02, growthDuration: 0.84 });
+  addRoot({ dirSeed: 10.4, length: 0.95, swayBias: 10.4, branches: 0, helix: { amp: 0.06, freq: 2.2, phase: 3.6 }, growthStart: 0.18, growthDuration: 0.72 });
+  addRoot({ dirSeed: 11.6, length: 1.85, swayBias: 11.6, branches: 1, helix: { amp: 0.08, freq: 2.8, phase: 1.5 }, growthStart: 0.06, growthDuration: 0.82 });
 
   rootsGroup.scale.setScalar(ROOTS_SCALE);
   tetraGroup.add(rootsGroup);
@@ -654,6 +683,12 @@ export function startHero(host: HTMLElement): HeroScene {
         const localRaw = (charge - (tend.growthStart ?? 0)) / (tend.growthDuration ?? 0.85);
         const local = Math.max(0, Math.min(1, localRaw));
         tend.growth = easeOutCubic(local);
+        // Independent idle sway — pivot the whole tendril about the core on its
+        // own axis/phase so each root drifts on its own, not as one rigid body.
+        if (tend.sway) {
+          const ang = Math.sin(t * tend.sway.speed + tend.sway.phase) * tend.sway.amp;
+          tend.group.quaternion.setFromAxisAngle(tend.sway.axis, ang);
+        }
       } else {
         const parentG = tend.parent!.growth;
         const span = 1 - (tend.branchT ?? 0);
