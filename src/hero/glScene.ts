@@ -346,27 +346,44 @@ export function startHero(host: HTMLElement): HeroScene {
   // Origin uses CORE_R / ROOTS_SCALE so roots stay anchored on the core surface
   // in world space (rootsGroup scales by ROOTS_SCALE; the origin scales with it,
   // but the core sits in tetraGroup at unscaled CORE_R).
+  // A tendril spine is grown as a heading walk rather than a radial spoke: each
+  // segment turns the growth direction by a per-tendril, per-step angle in both
+  // perpendicular axes, so the path wanders in continuously changing directions
+  // along its whole length — not "straight, then a hook at the tip". A mild
+  // outward bias keeps net growth away from the core; a faint downward bias lets
+  // some settle without every tip curling the same way.
   const buildSpine = (dir: THREE.Vector3, lengthMul: number, swayBias: number): THREE.Vector3[] => {
     const origin = dir.clone().multiplyScalar(CORE_R / ROOTS_SCALE);
-    const endDir = new THREE.Vector3(
-      dir.x + Math.sin(swayBias * 7.13) * 0.30,
-      dir.y + Math.sin(swayBias * 5.27) * 0.30,
-      dir.z + Math.cos(swayBias * 9.31) * 0.30,
-    ).normalize();
-    const end = endDir.multiplyScalar(lengthMul);
-    const upRef = Math.abs(dir.y) > 0.9
-      ? new THREE.Vector3(1, 0, 0)
-      : new THREE.Vector3(0, 1, 0);
-    const perp = new THREE.Vector3().crossVectors(dir, upRef).normalize();
-    const sway1 = Math.sin(swayBias * 11.7) * 0.45;
-    const sway2 = Math.cos(swayBias * 13.3) * 0.30;
-    const p1 = new THREE.Vector3().lerpVectors(origin, end, 0.28)
-      .add(perp.clone().multiplyScalar(sway1));
-    const p2 = new THREE.Vector3().lerpVectors(origin, end, 0.55)
-      .add(perp.clone().multiplyScalar(-sway2));
-    const p3 = new THREE.Vector3().lerpVectors(origin, end, 0.80)
-      .add(perp.clone().multiplyScalar(sway1 * 0.35));
-    return [origin, p1, p2, p3, end];
+    const STEPS = 6;
+    const segLen = lengthMul / STEPS;
+    const OUTWARD = 0.40;   // pull each new heading back toward radial — net growth out
+    const TURN1 = 0.62;     // max turn per step, axis 1
+    const TURN2 = 0.50;     // max turn per step, axis 2
+    const GRAVITY = 0.07;   // faint downward drift per step
+
+    const heading = dir.clone();
+    let pos = origin.clone();
+    const pts: THREE.Vector3[] = [origin];
+    for (let i = 1; i <= STEPS; i++) {
+      const upRef = Math.abs(heading.y) > 0.9
+        ? new THREE.Vector3(1, 0, 0)
+        : new THREE.Vector3(0, 1, 0);
+      const p1 = new THREE.Vector3().crossVectors(heading, upRef).normalize();
+      const p2 = new THREE.Vector3().crossVectors(heading, p1).normalize();
+      // Turns flip sign across steps (the i term) and vary per tendril (swayBias)
+      // → genuine meander, each root taking its own changing course.
+      const a1 = Math.sin(swayBias * 3.1 + i * 1.7) * TURN1;
+      const a2 = Math.cos(swayBias * 5.3 + i * 2.3) * TURN2;
+      heading
+        .addScaledVector(p1, a1)
+        .addScaledVector(p2, a2)
+        .addScaledVector(dir, OUTWARD)
+        .add(new THREE.Vector3(0, -GRAVITY, 0))
+        .normalize();
+      pos = pos.clone().addScaledVector(heading, segLen);
+      pts.push(pos.clone());
+    }
+    return pts;
   };
 
   const addBranch = (
