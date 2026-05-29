@@ -205,7 +205,11 @@ export function startHero(host: HTMLElement): HeroScene {
   };
 
   // Roots
-  type Sway = { speed: number; amp: number; phase: number; axis: THREE.Vector3 };
+  type Flex = {
+    amp1: number; amp2: number;   // bend magnitude on each lateral axis
+    dir1: THREE.Vector3; dir2: THREE.Vector3;  // lateral axes ⟂ to the tendril
+    speed: number; phase: number; waveK: number;  // travelling-wave params
+  };
   type Tendril = {
     lines: { line: Line2; endIdx: number; geom: LineGeometry }[];
     samples: number;
@@ -215,23 +219,33 @@ export function startHero(host: HTMLElement): HeroScene {
     growthStart?: number;
     growthDuration?: number;
     growth: number;
-    group: THREE.Group;   // pivot at the core — main: own group, branch: parent's
-    sway?: Sway;          // independent idle motion (main only)
+    group: THREE.Group;          // scene container — main: own, branch: parent's
+    basePts: THREE.Vector3[];    // rest-pose points (built.points)
+    flexed: THREE.Vector3[];     // scratch: per-frame flexed points (reused)
+    flex: Flex;                  // travelling-wave bend
+    attachIndex?: number;        // branch: index into parent.basePts of its base
   };
 
-  // Each main tendril sways on its own axis/phase/speed so they drift
-  // independently — like a root system stirred by a slow current, not one rigid
-  // body rotating. Derived deterministically from the tendril's seed.
-  const makeSway = (seed: number): Sway => ({
-    speed: 0.35 + Math.abs(Math.sin(seed * 2.3)) * 0.30,
-    amp: 0.040 + Math.abs(Math.cos(seed * 3.7)) * 0.050,
-    phase: seed * 1.97,
-    axis: new THREE.Vector3(
-      Math.sin(seed * 4.1),
-      Math.cos(seed * 2.9) * 0.5,
-      Math.sin(seed * 5.6),
-    ).normalize(),
-  });
+  // Each tendril bends with a travelling wave running base→tip: the offset grows
+  // with arc fraction (^1.5) so the base stays anchored at the core while the tip
+  // whips, and the per-tendril phase/axes make each one flex on its own. Lateral
+  // axes are taken ⟂ to the tendril's overall direction so the bend sweeps
+  // sideways rather than stretching the length.
+  const makeFlex = (seed: number, dir: THREE.Vector3): Flex => {
+    const up = Math.abs(dir.y) > 0.9
+      ? new THREE.Vector3(1, 0, 0)
+      : new THREE.Vector3(0, 1, 0);
+    const dir1 = new THREE.Vector3().crossVectors(dir, up).normalize();
+    const dir2 = new THREE.Vector3().crossVectors(dir, dir1).normalize();
+    return {
+      amp1: 0.11 + Math.abs(Math.sin(seed * 2.3)) * 0.06,
+      amp2: 0.05 + Math.abs(Math.cos(seed * 3.7)) * 0.04,
+      dir1, dir2,
+      speed: 0.7 + Math.abs(Math.sin(seed * 1.7)) * 0.6,
+      phase: seed * 1.97,
+      waveK: 2.4 + Math.abs(Math.cos(seed * 2.1)) * 1.6,
+    };
+  };
 
   const rootsGroup = new THREE.Group();
   const BASE_COLOR = 0xdcd5cb;
@@ -283,6 +297,7 @@ export function startHero(host: HTMLElement): HeroScene {
     g.setPositions(flat);
     const line = new Line2(g, mat);
     line.computeLineDistances();
+    line.frustumCulled = false;   // positions change each frame via flex
     g.instanceCount = 0;
     container.add(line);
     return { line, endIdx, geom: g };
@@ -449,6 +464,10 @@ export function startHero(host: HTMLElement): HeroScene {
       branchT: t,
       growth: 0,
       group: parentTendril.group,
+      basePts: built.points,
+      flexed: built.points.map((p) => p.clone()),
+      flex: makeFlex(t * 11.3 + sideSign * 2.0 + lengthMul, branchDir.clone().normalize()),
+      attachIndex: idx,
     });
   };
 
@@ -471,7 +490,9 @@ export function startHero(host: HTMLElement): HeroScene {
       growthDuration: opts.growthDuration,
       growth: 0,
       group,
-      sway: makeSway(opts.swayBias),
+      basePts: built.points,
+      flexed: built.points.map((p) => p.clone()),
+      flex: makeFlex(opts.swayBias, dir),
     };
     tendrils.push(mainTendril);
     for (let b = 0; b < opts.branches; b++) {
@@ -499,8 +520,8 @@ export function startHero(host: HTMLElement): HeroScene {
     rootsGroup.add(groupA, groupB);
     const builtA = buildTendril(spine, { amp: opts.helixAmp, freq: opts.helixFreq, phase: 0 }, layersForTendril(jitterA), 112, groupA);
     const builtB = buildTendril(spine, { amp: opts.helixAmp, freq: opts.helixFreq, phase: Math.PI }, layersForTendril(jitterB), 112, groupB);
-    const tA: Tendril = { lines: builtA.lines, samples: builtA.samplesCount, type: 'main', growthStart: opts.growthStart, growthDuration: opts.growthDuration, growth: 0, group: groupA, sway: makeSway(opts.swayBias) };
-    const tB: Tendril = { lines: builtB.lines, samples: builtB.samplesCount, type: 'main', growthStart: opts.growthStart + 0.02, growthDuration: opts.growthDuration, growth: 0, group: groupB, sway: makeSway(opts.swayBias + 7.0) };
+    const tA: Tendril = { lines: builtA.lines, samples: builtA.samplesCount, type: 'main', growthStart: opts.growthStart, growthDuration: opts.growthDuration, growth: 0, group: groupA, basePts: builtA.points, flexed: builtA.points.map((p) => p.clone()), flex: makeFlex(opts.swayBias, dir) };
+    const tB: Tendril = { lines: builtB.lines, samples: builtB.samplesCount, type: 'main', growthStart: opts.growthStart + 0.02, growthDuration: opts.growthDuration, growth: 0, group: groupB, basePts: builtB.points, flexed: builtB.points.map((p) => p.clone()), flex: makeFlex(opts.swayBias + 7.0, dir) };
     tendrils.push(tA, tB);
     for (let b = 0; b < opts.branches[0]; b++) {
       const bt = 0.35 + b * 0.20;
@@ -695,18 +716,13 @@ export function startHero(host: HTMLElement): HeroScene {
     rootsGroup.rotation.x = Math.sin(t * 0.06) * 0.05;
     rootsGroup.position.y = Math.sin(t * 0.4) * 0.015;
 
-    // Growth — main: staggered by growthStart/Duration; branch: gated on parent.
+    // Growth + flex. Tendrils are ordered parent-before-branch, so a branch can
+    // read its parent's already-flexed attach point this same frame and ride it.
     for (const tend of tendrils) {
       if (tend.type === 'main') {
         const localRaw = (charge - (tend.growthStart ?? 0)) / (tend.growthDuration ?? 0.85);
         const local = Math.max(0, Math.min(1, localRaw));
         tend.growth = easeOutCubic(local);
-        // Independent idle sway — pivot the whole tendril about the core on its
-        // own axis/phase so each root drifts on its own, not as one rigid body.
-        if (tend.sway) {
-          const ang = Math.sin(t * tend.sway.speed + tend.sway.phase) * tend.sway.amp;
-          tend.group.quaternion.setFromAxisAngle(tend.sway.axis, ang);
-        }
       } else {
         const parentG = tend.parent!.growth;
         const span = 1 - (tend.branchT ?? 0);
@@ -715,10 +731,49 @@ export function startHero(host: HTMLElement): HeroScene {
           : 0;
         tend.growth = easeOutCubic(local);
       }
+
+      // Travelling-wave bend. Offset grows with arc fraction (^1.5) so the base
+      // stays put and the tip whips. A branch's base inherits its parent's flex
+      // displacement at the attach point, keeping the join seamless under motion.
+      const { basePts, flexed, flex } = tend;
+      const N = basePts.length;
+      let bx = 0, by = 0, bz = 0;
+      if (tend.type === 'branch' && tend.parent && tend.attachIndex != null) {
+        const ai = tend.attachIndex;
+        const pf = tend.parent.flexed[ai], pb = tend.parent.basePts[ai];
+        bx = pf.x - pb.x; by = pf.y - pb.y; bz = pf.z - pb.z;
+      }
+      const d1 = flex.dir1, d2 = flex.dir2;
+      for (let i = 0; i < N; i++) {
+        const f = N > 1 ? i / (N - 1) : 0;
+        const w = Math.pow(f, 1.5);
+        const ang = t * flex.speed + flex.phase - f * flex.waveK;
+        const o1 = flex.amp1 * w * Math.sin(ang);
+        const o2 = flex.amp2 * w * Math.cos(ang);
+        const bp = basePts[i];
+        flexed[i].set(
+          bp.x + d1.x * o1 + d2.x * o2 + bx,
+          bp.y + d1.y * o1 + d2.y * o2 + by,
+          bp.z + d1.z * o1 + d2.z * o2 + bz,
+        );
+      }
+
       const targetIdx = Math.floor(tend.growth * tend.samples);
       for (const { line, endIdx } of tend.lines) {
+        const geom = line.geometry as LineGeometry;
         const segs = Math.max(0, Math.min(targetIdx, endIdx) - 1);
-        (line.geometry as LineGeometry).instanceCount = segs;
+        // Write flexed points straight into the interleaved segment buffer
+        // (no realloc): segment s holds point s as start, point s+1 as end.
+        const buf = (geom.getAttribute('instanceStart') as THREE.InterleavedBufferAttribute).data;
+        const arr = buf.array as Float32Array;
+        for (let s = 0; s < segs; s++) {
+          const a = flexed[s], b = flexed[s + 1];
+          const o = s * 6;
+          arr[o] = a.x; arr[o + 1] = a.y; arr[o + 2] = a.z;
+          arr[o + 3] = b.x; arr[o + 4] = b.y; arr[o + 5] = b.z;
+        }
+        if (segs > 0) buf.needsUpdate = true;
+        geom.instanceCount = segs;
       }
     }
 
