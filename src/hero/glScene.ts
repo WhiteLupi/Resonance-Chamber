@@ -223,8 +223,8 @@ export function startHero(host: HTMLElement): HeroScene {
   // independently — like a root system stirred by a slow current, not one rigid
   // body rotating. Derived deterministically from the tendril's seed.
   const makeSway = (seed: number): Sway => ({
-    speed: 0.16 + Math.abs(Math.sin(seed * 2.3)) * 0.26,
-    amp: 0.022 + Math.abs(Math.cos(seed * 3.7)) * 0.030,
+    speed: 0.35 + Math.abs(Math.sin(seed * 2.3)) * 0.30,
+    amp: 0.040 + Math.abs(Math.cos(seed * 3.7)) * 0.050,
     phase: seed * 1.97,
     axis: new THREE.Vector3(
       Math.sin(seed * 4.1),
@@ -350,14 +350,18 @@ export function startHero(host: HTMLElement): HeroScene {
     return { lines, points, spine, samplesCount: points.length };
   };
 
-  // Spherical direction distribution — tendrils radiate in all directions equally.
+  // Direction distribution biased toward the screen plane — the Z (toward-camera)
+  // component is squashed so tendrils lie roughly in-plane and visibly radiate
+  // from the core across the screen, instead of stubby foreshortened spokes
+  // pointing at the camera that read as disconnected floaters.
+  const Z_SQUASH = 0.42;
   const dirFromSeed = (seed: number): THREE.Vector3 => {
     const a1 = seed * 2.71;
     const a2 = seed * 4.53;
     return new THREE.Vector3(
       Math.cos(a1) * Math.cos(a2 * 0.5),
       Math.sin(a2 * 0.5),
-      Math.sin(a1) * Math.cos(a2 * 0.5),
+      Math.sin(a1) * Math.cos(a2 * 0.5) * Z_SQUASH,
     ).normalize();
   };
 
@@ -503,18 +507,18 @@ export function startHero(host: HTMLElement): HeroScene {
   // Length varies widely — short tendrils cluster near the core, the long ones
   // reach out toward the screen edges, giving the field depth instead of an
   // evenly-sized burst.
-  addRootPair({ dirSeed: 1.1, length: 2.60, swayBias: 1.1, helixAmp: 0.10, helixFreq: 2.6, branches: [1, 0], growthStart: 0.00, growthDuration: 0.85 });
-  addRootPair({ dirSeed: 2.4, length: 1.05, swayBias: 2.4, helixAmp: 0.09, helixFreq: 3.0, branches: [0, 1], growthStart: 0.05, growthDuration: 0.82 });
-  addRootPair({ dirSeed: 5.7, length: 1.45, swayBias: 5.7, helixAmp: 0.08, helixFreq: 2.4, branches: [0, 0], growthStart: 0.10, growthDuration: 0.80 });
-  addRootPair({ dirSeed: 8.3, length: 2.25, swayBias: 8.3, helixAmp: 0.10, helixFreq: 2.2, branches: [1, 0], growthStart: 0.07, growthDuration: 0.83 });
+  addRootPair({ dirSeed: 1.1, length: 2.60, swayBias: 1.1, helixAmp: 0.10, helixFreq: 2.6, branches: [2, 1], growthStart: 0.00, growthDuration: 0.85 });
+  addRootPair({ dirSeed: 2.4, length: 1.05, swayBias: 2.4, helixAmp: 0.09, helixFreq: 3.0, branches: [1, 1], growthStart: 0.05, growthDuration: 0.82 });
+  addRootPair({ dirSeed: 5.7, length: 1.45, swayBias: 5.7, helixAmp: 0.08, helixFreq: 2.4, branches: [1, 1], growthStart: 0.10, growthDuration: 0.80 });
+  addRootPair({ dirSeed: 8.3, length: 2.25, swayBias: 8.3, helixAmp: 0.10, helixFreq: 2.2, branches: [2, 1], growthStart: 0.07, growthDuration: 0.83 });
 
   addRoot({ dirSeed: 3.1,  length: 0.55, swayBias: 3.1,  branches: 0, helix: { amp: 0.06, freq: 2.0, phase: 1.2 }, growthStart: 0.14, growthDuration: 0.70 });
-  addRoot({ dirSeed: 4.0,  length: 2.40, swayBias: 4.0,  branches: 1, helix: { amp: 0.07, freq: 2.5, phase: 0.6 }, growthStart: 0.08, growthDuration: 0.80 });
-  addRoot({ dirSeed: 6.2,  length: 1.30, swayBias: 6.2,  branches: 1, helix: { amp: 0.08, freq: 2.7, phase: 4.2 }, growthStart: 0.04, growthDuration: 0.82 });
+  addRoot({ dirSeed: 4.0,  length: 2.40, swayBias: 4.0,  branches: 2, helix: { amp: 0.07, freq: 2.5, phase: 0.6 }, growthStart: 0.08, growthDuration: 0.80 });
+  addRoot({ dirSeed: 6.2,  length: 1.30, swayBias: 6.2,  branches: 2, helix: { amp: 0.08, freq: 2.7, phase: 4.2 }, growthStart: 0.04, growthDuration: 0.82 });
   addRoot({ dirSeed: 7.0,  length: 0.70, swayBias: 7.0,  branches: 0, helix: { amp: 0.05, freq: 3.0, phase: 2.4 }, growthStart: 0.16, growthDuration: 0.72 });
-  addRoot({ dirSeed: 9.1,  length: 2.65, swayBias: 9.1,  branches: 0, helix: { amp: 0.09, freq: 2.4, phase: 5.0 }, growthStart: 0.02, growthDuration: 0.84 });
-  addRoot({ dirSeed: 10.4, length: 0.95, swayBias: 10.4, branches: 0, helix: { amp: 0.06, freq: 2.2, phase: 3.6 }, growthStart: 0.18, growthDuration: 0.72 });
-  addRoot({ dirSeed: 11.6, length: 1.85, swayBias: 11.6, branches: 1, helix: { amp: 0.08, freq: 2.8, phase: 1.5 }, growthStart: 0.06, growthDuration: 0.82 });
+  addRoot({ dirSeed: 9.1,  length: 2.65, swayBias: 9.1,  branches: 2, helix: { amp: 0.09, freq: 2.4, phase: 5.0 }, growthStart: 0.02, growthDuration: 0.84 });
+  addRoot({ dirSeed: 10.4, length: 0.95, swayBias: 10.4, branches: 1, helix: { amp: 0.06, freq: 2.2, phase: 3.6 }, growthStart: 0.18, growthDuration: 0.72 });
+  addRoot({ dirSeed: 11.6, length: 1.85, swayBias: 11.6, branches: 2, helix: { amp: 0.08, freq: 2.8, phase: 1.5 }, growthStart: 0.06, growthDuration: 0.82 });
 
   rootsGroup.scale.setScalar(ROOTS_SCALE);
   tetraGroup.add(rootsGroup);
