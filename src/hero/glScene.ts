@@ -429,12 +429,17 @@ export function startHero(host: HTMLElement): HeroScene {
       : new THREE.Vector3(0, 1, 0);
     const perp = new THREE.Vector3().crossVectors(tangent, upRef).normalize();
     const branchLen = 0.40 * lengthMul;
-    const end = origin.clone()
-      .add(tangent.clone().multiplyScalar(branchLen * 0.4))
-      .add(perp.clone().multiplyScalar(sideSign * branchLen * 0.75))
-      .add(new THREE.Vector3(0, -branchLen * 0.5, 0));
-    const mid = new THREE.Vector3().lerpVectors(origin, end, 0.5)
-      .add(perp.clone().multiplyScalar(sideSign * 0.08));
+    // Leave the parent at an acute angle (~25°), biased FORWARD along the parent's
+    // growth — like a real fork — rather than the near-perpendicular splay before.
+    // Forward (tangent) dominates the side offset; only a faint downward settle.
+    const branchDir = tangent.clone().multiplyScalar(branchLen * 0.95)
+      .add(perp.clone().multiplyScalar(sideSign * branchLen * 0.42))
+      .add(new THREE.Vector3(0, -branchLen * 0.15, 0));
+    const end = origin.clone().add(branchDir);
+    // Mid sits along the same acute direction so the base doesn't kink sideways;
+    // a small perp curl keeps the limb organic rather than dead-straight.
+    const mid = origin.clone().addScaledVector(branchDir, 0.5)
+      .add(perp.clone().multiplyScalar(sideSign * branchLen * 0.10));
     const built = buildTendril([origin, mid, end], helix, branchLayers, 48, parentTendril.group);
     tendrils.push({
       lines: built.lines,
@@ -674,15 +679,19 @@ export function startHero(host: HTMLElement): HeroScene {
       nextIdleRingAt = t + IDLE_RING_INTERVAL;
     }
 
-    // Parallax — outerGroup deeper than tetraGroup
+    // Parallax — outerGroup deeper than tetraGroup. Kept subtle: mouse should
+    // nudge the view, not swing the whole figure into unflattering edge-on angles.
     parallaxX += (mouseX - parallaxX) * 0.08;
     parallaxY += (mouseY - parallaxY) * 0.08;
-    outerGroup.rotation.y =  parallaxX * 0.5;
-    outerGroup.rotation.x = -parallaxY * 0.38;
-    tetraGroup.rotation.y =  parallaxX * 0.12;
-    tetraGroup.rotation.x = -parallaxY * 0.10;
+    outerGroup.rotation.y =  parallaxX * 0.16;
+    outerGroup.rotation.x = -parallaxY * 0.12;
+    tetraGroup.rotation.y =  parallaxX * 0.05;
+    tetraGroup.rotation.x = -parallaxY * 0.04;
 
-    rootsGroup.rotation.y = t * 0.04;
+    // Roots breathe with a slow BOUNDED turn (±~9°) instead of a continuous spin —
+    // a full rotation would swing the in-plane tendrils edge-on, where they pile
+    // into a tangled mess. Oscillating keeps the figure in its good-looking range.
+    rootsGroup.rotation.y = Math.sin(t * 0.045) * 0.16;
     rootsGroup.rotation.x = Math.sin(t * 0.06) * 0.05;
     rootsGroup.position.y = Math.sin(t * 0.4) * 0.015;
 
