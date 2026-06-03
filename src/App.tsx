@@ -127,6 +127,7 @@ function App() {
   return (
     <>
       <div ref={stageRef} className="gl-stage" aria-hidden="true" />
+      <div className={`edge-void${locked ? ' edge-void--in' : ''}`} aria-hidden="true" />
       <Atmosphere />
       <ChargeIndicator locked={locked} />
       <SectionHeader locked={locked} />

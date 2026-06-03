@@ -82,19 +82,7 @@ export function Navbar({ locked }: NavbarProps) {
     hidden ? 'cockpit-navbar--hidden' : '',
   ].filter(Boolean).join(' ');
 
-  // Blur scrim lives OUTSIDE the nav so the nav's opacity reveal can't suppress
-  // its backdrop-filter (a child of an opacity<1 element gets its backdrop-filter
-  // disabled, which made the blur snap in). Here we animate the blur radius
-  // itself, with the element pinned at opacity:1, so it eases in smoothly.
-  const scrimCls = [
-    'navbar-scrim',
-    introDone ? 'navbar-scrim--in' : '',
-    hidden ? 'navbar-scrim--hidden' : '',
-  ].filter(Boolean).join(' ');
-
   return (
-    <>
-    <div className={scrimCls} aria-hidden="true" />
     <nav className={cls} aria-label="primary">
       <div className="cockpit-navbar__center">
         <a className="cockpit-navbar__link" href="#about">
@@ -115,6 +103,5 @@ export function Navbar({ locked }: NavbarProps) {
         <span>2026.05</span>
       </div>
     </nav>
-    </>
   );
 }

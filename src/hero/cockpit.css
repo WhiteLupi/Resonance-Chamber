@@ -405,10 +405,9 @@
 }
 
 
-/* Soft feathered blur sits behind the text (as a separate .navbar-scrim element,
-   not a child here — see Navbar.tsx) so the bright tendrils sweeping past the top
-   read as a diffuse smudge instead of slicing through the links. The hairline
-   below suggests an engraved seam in the wall. */
+/* Carved/etched. Legibility over the tendrils comes from the global .edge-void
+   frame (see App.tsx) darkening the screen perimeter; here just a faint teal
+   hairline below, suggesting an engraved seam in the wall. */
 .cockpit-navbar {
   position: fixed;
   top: 22px;
@@ -433,45 +432,6 @@
   transition:
     transform 0.75s cubic-bezier(0.2, 0.8, 0.2, 1),
     opacity 0.6s ease;
-}
-
-/* Feathered blur scrim — a standalone fixed element (NOT a navbar child, so the
-   navbar's opacity reveal can't disable its backdrop-filter). It samples the
-   canvas behind the bar and blurs it; the radial mask feathers every edge so
-   it's a soft band, not a glass rectangle. Pinned at opacity:1 — we animate the
-   blur RADIUS so it eases in smoothly instead of snapping. */
-.navbar-scrim {
-  position: fixed;
-  top: 0;
-  left: 50%;
-  translate: -50% 0;
-  width: calc(100% - 60px);
-  max-width: 1240px;
-  height: 86px;
-  z-index: 49;
-  pointer-events: none;
-  backdrop-filter: blur(0px);
-  -webkit-backdrop-filter: blur(0px);
-  background: rgba(0, 0, 0, 0);
-  -webkit-mask-image: radial-gradient(120% 155% at 50% 30%, #000 46%, transparent 100%);
-          mask-image: radial-gradient(120% 155% at 50% 30%, #000 46%, transparent 100%);
-  transition:
-    backdrop-filter 0.8s ease,
-    -webkit-backdrop-filter 0.8s ease,
-    background 0.8s ease;
-}
-
-.navbar-scrim--in {
-  backdrop-filter: blur(15px);
-  -webkit-backdrop-filter: blur(15px);
-  background: rgba(0, 0, 0, 0.15);
-}
-
-/* hides with the nav on scroll-down — blur eases back to nothing */
-.navbar-scrim--hidden {
-  backdrop-filter: blur(0px);
-  -webkit-backdrop-filter: blur(0px);
-  background: rgba(0, 0, 0, 0);
 }
 
 .cockpit-navbar::after {
@@ -743,4 +703,32 @@
     font-size: 10px;
     letter-spacing: 0.2em;
   }
+}
+
+/* === The void — darkness swallows the tendril tips on every edge, so the
+   organism dissolves into black at the perimeter while the lit core holds the
+   centre. A compositional device (not blur/glass) that also lets the chrome —
+   navbar, signature, left section marker — read over the bright tendrils. Sits
+   above the canvas, below all chrome (z 4). No blur. The tint eases in on lock
+   (opacity pinned at 1) rather than snapping. */
+.edge-void {
+  position: fixed;
+  inset: 0;
+  z-index: 4;
+  pointer-events: none;
+  background: transparent;
+  transition: background 0.9s ease;
+  -webkit-mask-image:
+    linear-gradient(to bottom, #000, transparent 18%),
+    linear-gradient(to top, #000, transparent 19%),
+    linear-gradient(to right, #000, transparent 14%),
+    linear-gradient(to left, #000, transparent 14%);
+  mask-image:
+    linear-gradient(to bottom, #000, transparent 18%),
+    linear-gradient(to top, #000, transparent 19%),
+    linear-gradient(to right, #000, transparent 14%),
+    linear-gradient(to left, #000, transparent 14%);
+}
+.edge-void--in {
+  background: rgba(0, 0, 0, 0.82);
 }
