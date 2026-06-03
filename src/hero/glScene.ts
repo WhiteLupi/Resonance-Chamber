@@ -642,6 +642,9 @@ export function startHero(host: HTMLElement): HeroScene {
   // opacities so the seal dims via shader (not opacity fade on the host) and
   // becomes a faint ambient backdrop for the about inscription.
   let sceneVis = 1.0;
+  // Roots dim far less than the core/bloom — they stay alive behind the about
+  // text rather than fading to a ghost (driven alongside sceneVis in setProgress).
+  let rootsVis = 1.0;
 
   const onMouseMove = (e: MouseEvent) => {
     mouseX = (e.clientX / viewW) * 2 - 1;
@@ -896,7 +899,10 @@ export function startHero(host: HTMLElement): HeroScene {
       : BASE_COLOR;
     for (const m of rootMats) {
       m.color.setHex(tintTarget);
-      m.opacity = (rootBaseOpacity.get(m) ?? 0.8) * sceneVis;
+      // Roots use rootsVis (high floor) not sceneVis — the tendrils stay alive
+      // behind the about text instead of fading to a pale ghost. Only the core /
+      // bloom / halo dim hard (they're what washes the text out).
+      m.opacity = (rootBaseOpacity.get(m) ?? 0.8) * rootsVis;
     }
 
     composer.render();
@@ -926,9 +932,12 @@ export function startHero(host: HTMLElement): HeroScene {
       const fadeStart = 0.15;
       const fadeEnd = 0.75;
       const local = Math.max(0, Math.min(1, (p - fadeStart) / (fadeEnd - fadeStart)));
-      // Min 0.08 so the seal stays as a faint ghost behind the inscription
-      // — the engine is still there even when you've entered it.
-      sceneVis = 1 - local * 0.92;
+      // The organism stays ALIVE in about — neither the core light nor the roots
+      // extinguish on scroll. They only settle a little (core/bloom floor 0.65,
+      // roots floor 0.8); legibility comes entirely from a local dark box behind
+      // the text, not from killing the engine. (.inscription::after in about.css)
+      sceneVis = 1 - local * 0.35;
+      rootsVis = 1 - local * 0.2;
     },
     onLock(cb) {
       lockSubs.add(cb);

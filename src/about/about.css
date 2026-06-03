@@ -58,6 +58,22 @@
   pointer-events: none;
 }
 
+/* Shadow box — a soft dark pool behind the text so white words stay readable
+   over the now-ALIVE roots (we no longer kill the roots; this is the local
+   legibility instead). Blurred dark rounded slab; fades in with the inscription
+   so it arrives as the words rise, and reverses cleanly on scroll-up (pure --p). */
+.inscription::after {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  inset: -16% -7%;
+  border-radius: 28px;
+  background: rgba(0, 0, 0, 0.82);
+  filter: blur(36px);
+  opacity: clamp(0, calc((var(--p, 0) - 0.72) / 0.14), 1);
+  pointer-events: none;
+}
+
 /* Per-line emergence keyed to scroll progress. Lines stagger across
    p ∈ [0.78, 0.96] — overlapping with the tail of particle fadeout so the
    inscription emerges THROUGH the dissolving engine. NO opacity fade:
@@ -82,6 +98,9 @@
   line-height: 1.55;
   letter-spacing: 0.005em;
   color: var(--fg);
+  /* Light crisping shadow; the dark box (.inscription::after) does the heavy
+     lifting for legibility over the live roots. */
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.7);
   /* Rise from below the mask into view. 110% guarantees fully hidden at t=0. */
   translate: 0 calc((1 - var(--t)) * 110%);
   will-change: translate;
