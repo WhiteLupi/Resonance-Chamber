@@ -672,6 +672,9 @@ export function startHero(host: HTMLElement): HeroScene {
   // ease-IN for root growth: barely moves at first, accelerates toward the lock.
   // Exponent is the tuning knob — higher = deader start + sharper end rush.
   const GROWTH_EASE = 2.4;
+  // ...but a started tendril POPS to a small stub instantly so the press gives
+  // immediate feedback (roots clear the core glow at once, then ease in).
+  const POP_GROWTH = 0.1;
   const easeInGrow = (x: number) => Math.pow(x, GROWTH_EASE);
 
   // Loop
@@ -739,7 +742,7 @@ export function startHero(host: HTMLElement): HeroScene {
         const local = span > 0.001
           ? Math.max(0, Math.min(1, (charge - (tend.growthStart ?? 0)) / span))
           : 0;
-        tend.growth = easeInGrow(local);
+        tend.growth = local > 0 ? POP_GROWTH + (1 - POP_GROWTH) * easeInGrow(local) : 0;
       } else {
         const parentG = tend.parent!.growth;
         const span = 1 - (tend.branchT ?? 0);
