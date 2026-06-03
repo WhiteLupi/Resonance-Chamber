@@ -341,28 +341,14 @@
 
 .hero-section--revealed .hero-inscription__bottom {
   opacity: 1;
-  /* "motion" is drawn UP into the void: it travels up, GROWS and its letters
-     SPREAD apart as it goes — expanding as it's pulled in — then darkness eats
-     it from the top via a mask that sweeps down the word itself (so it's fully
-     consumed, never re-emerging past an edge). #void-warp ruffles the whole
-     thing so that eaten edge reads as a ragged, organic boundary, not a cut.
-     Pure --p → scrolling back down it descends, contracts and reforms. */
+  /* "motion" travels UP intact, growing and spreading its letters as it goes,
+     and slides up into the darkness at the top (.void-ceiling) where it's
+     occluded — it disappears INTO the dark, it does not fall apart. Pure --p, so
+     scrolling back down it descends, contracts and reforms. */
   --rise: clamp(0, calc(var(--p, 0) / 0.85), 1);
-  --eat:  clamp(0, calc((var(--p, 0) - 0.45) / 0.4), 1);
   translate: -50% calc(var(--rise) * -78vh);
   scale: calc(1 + var(--rise) * 0.42);
   letter-spacing: calc(-0.012em + var(--rise) * 0.2em);
-  filter: url(#void-warp);
-  -webkit-mask-image: linear-gradient(
-    to bottom,
-    transparent calc(var(--eat) * 134% - 26%),
-    #000 calc(var(--eat) * 134% - 2%)
-  );
-  mask-image: linear-gradient(
-    to bottom,
-    transparent calc(var(--eat) * 134% - 26%),
-    #000 calc(var(--eat) * 134% - 2%)
-  );
   animation: motion-float 11s ease-in-out infinite;
 }
 
@@ -749,4 +735,24 @@
   height: 0;
   overflow: hidden;
 }
+
+/* Darkness at the top of the void — the space above (and behind) the navbar is
+   solid black so "motion" slides up INTO it and disappears, never visible
+   passing through the top. Extends beyond the viewport edges so #void-warp can
+   ragged the lower boundary without ever exposing the very top/side edges. Sits
+   above the rising word (z 9), below the navbar. Eases in on lock. */
+.void-ceiling {
+  position: fixed;
+  top: -6vh;
+  left: -6vw;
+  right: -6vw;
+  height: 34vh;
+  z-index: 9;
+  pointer-events: none;
+  background: linear-gradient(to bottom, #000 46%, transparent 100%);
+  filter: url(#void-warp);
+  opacity: 0;
+  transition: opacity 0.9s ease;
+}
+.void-ceiling--in { opacity: 1; }
 

@@ -154,6 +154,9 @@ function App() {
         </defs>
       </svg>
       <div className={`edge-void${locked ? ' edge-void--in' : ''}`} aria-hidden="true" />
+      {/* Darkness over the space above the navbar — "motion" slides up into it
+          and vanishes (occlusion, intact), instead of passing through visibly. */}
+      <div className={`void-ceiling${locked ? ' void-ceiling--in' : ''}`} aria-hidden="true" />
       <Atmosphere />
       <ChargeIndicator locked={locked} />
       <SectionHeader locked={locked} />
