@@ -86,7 +86,11 @@ body {
 .hero-section {
   position: relative;
   width: 100%;
-  height: 100vh;
+  /* Tall scroll track: the seal + motion are fixed, so this height is pure
+     scroll distance over which the hero→about transition (--p) unfolds. ~2.4
+     screens gives the absorption + inscription room to breathe instead of
+     firing off in a third of a screen. Keep in sync with HERO_SPAN in App.tsx. */
+  height: 240vh;
   z-index: 1;
   overflow: hidden;
 }

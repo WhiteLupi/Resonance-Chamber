@@ -42,7 +42,14 @@ function App() {
   // silent walk-past of the central interaction.
   useEffect(() => {
     document.body.style.overflow = 'hidden'
-    const lenis = new Lenis({ anchors: true })
+    // Glide: longer duration + a touch less wheel travel per notch so the
+    // transition reads as a flowing scrub, not a couple of jumpy notches.
+    const lenis = new Lenis({
+      anchors: true,
+      duration: 1.5,
+      wheelMultiplier: 0.85,
+      easing: (t: number) => 1 - Math.pow(1 - t, 3),
+    })
     lenis.stop()
     lenisRef.current = lenis
     let raf = 0
@@ -104,13 +111,16 @@ function App() {
       root.style.setProperty('--dim', '1');
     };
 
+    // Transition spans HERO_SPAN screens of scroll (the .hero-section height in
+    // index.css must match). p = 0 when about top is HERO_SPAN viewports below;
+    // p = 1 when about top hits scroll top. Longer span = slower, flowing reveal.
+    const HERO_SPAN = 2.4;
     const onScroll = () => {
       const about = document.getElementById('about');
       if (!about) return;
       const vh = window.innerHeight;
-      // p = 0 when about top is one viewport below scroll top; p = 1 when about top hits scroll top.
       const rect = about.getBoundingClientRect();
-      const p = 1 - rect.top / vh;
+      const p = 1 - rect.top / (HERO_SPAN * vh);
       setProgress(p);
     };
 
