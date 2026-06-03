@@ -405,11 +405,10 @@
 }
 
 
-/* Carved/etched, not a glass panel. A soft FEATHERED blur sits behind the
-   text (::before) so the bright tendrils that sweep past the top read as a
-   diffuse smudge instead of slicing through the links — legibility without a
-   hard glass bar (the radial mask fades the blur out at every edge).
-   A faint teal hairline below suggests an engraved seam in the wall. */
+/* Soft feathered blur sits behind the text (as a separate .navbar-scrim element,
+   not a child here — see Navbar.tsx) so the bright tendrils sweeping past the top
+   read as a diffuse smudge instead of slicing through the links. The hairline
+   below suggests an engraved seam in the wall. */
 .cockpit-navbar {
   position: fixed;
   top: 22px;
@@ -436,20 +435,43 @@
     opacity 0.6s ease;
 }
 
-/* Feathered blur scrim — sits behind the links, samples the canvas behind the
-   navbar and blurs it. Radial mask feathers all edges so it's a soft luminous
-   band, not a glass rectangle. */
-.cockpit-navbar::before {
-  content: '';
-  position: absolute;
-  inset: -10px -8px -14px;
-  z-index: -1;
+/* Feathered blur scrim — a standalone fixed element (NOT a navbar child, so the
+   navbar's opacity reveal can't disable its backdrop-filter). It samples the
+   canvas behind the bar and blurs it; the radial mask feathers every edge so
+   it's a soft band, not a glass rectangle. Pinned at opacity:1 — we animate the
+   blur RADIUS so it eases in smoothly instead of snapping. */
+.navbar-scrim {
+  position: fixed;
+  top: 0;
+  left: 50%;
+  translate: -50% 0;
+  width: calc(100% - 60px);
+  max-width: 1240px;
+  height: 86px;
+  z-index: 49;
+  pointer-events: none;
+  backdrop-filter: blur(0px);
+  -webkit-backdrop-filter: blur(0px);
+  background: rgba(0, 0, 0, 0);
+  -webkit-mask-image: radial-gradient(120% 155% at 50% 30%, #000 46%, transparent 100%);
+          mask-image: radial-gradient(120% 155% at 50% 30%, #000 46%, transparent 100%);
+  transition:
+    backdrop-filter 0.8s ease,
+    -webkit-backdrop-filter 0.8s ease,
+    background 0.8s ease;
+}
+
+.navbar-scrim--in {
   backdrop-filter: blur(15px);
   -webkit-backdrop-filter: blur(15px);
   background: rgba(0, 0, 0, 0.15);
-  -webkit-mask-image: radial-gradient(125% 155% at 50% 42%, #000 50%, transparent 100%);
-          mask-image: radial-gradient(125% 155% at 50% 42%, #000 50%, transparent 100%);
-  pointer-events: none;
+}
+
+/* hides with the nav on scroll-down — blur eases back to nothing */
+.navbar-scrim--hidden {
+  backdrop-filter: blur(0px);
+  -webkit-backdrop-filter: blur(0px);
+  background: rgba(0, 0, 0, 0);
 }
 
 .cockpit-navbar::after {
