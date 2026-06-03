@@ -97,17 +97,18 @@
   transition: opacity 0.6s ease-out;
 }
 
-/* Global section header — fixed at the top of the viewport. Hidden
-   pre-lock; reveals only after the engine activates so the initial
-   encounter is "seal + ring + HOLD" with nothing else competing. */
+/* Section marker — a faint living-light inscription running UP the left
+   margin (vertical spine), not a top HUD tape. Hidden pre-lock; reveals only
+   after the engine activates so the initial encounter is "seal + ring + HOLD"
+   with nothing else competing. The hairline beside it is the same phosphor
+   teal as the glyph swaps — a trace of light in living tissue, not chiselled
+   stone. */
 .section-header {
   position: fixed;
-  top: 68px;
-  left: 0;
-  right: 0;
+  top: 50%;
+  left: 38px;
   z-index: 9;
-  display: flex;
-  justify-content: center;
+  translate: 0 -50%;
   pointer-events: none;
   opacity: 0;
   transition: opacity 1.0s ease-out 0.4s;
@@ -115,16 +116,39 @@
 
 .section-header--in { opacity: 1; }
 
+/* Living-light hairline — sits to the left of the vertical text, fading out
+   at both ends so it reads as a soft filament, not a ruled border. */
+.section-header::before {
+  content: '';
+  position: absolute;
+  left: -15px;
+  top: 50%;
+  translate: 0 -50%;
+  width: 1px;
+  height: 168px;
+  background: linear-gradient(
+    to bottom,
+    transparent,
+    rgba(122, 196, 175, 0.26) 16%,
+    rgba(122, 196, 175, 0.26) 84%,
+    transparent
+  );
+  animation: sh-breathe 7s ease-in-out infinite;
+}
+
 .section-header__inner {
   position: relative;
-  width: 320px;
-  height: 14px;
+  width: 16px;
+  height: 176px;     /* reading length of the vertical title */
   overflow: clip;
 }
 
 .section-header__slot {
   position: absolute;
   inset: 0;
+  /* read bottom-to-top along the spine */
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -133,21 +157,27 @@
   font-size: 10px;
   letter-spacing: 0.42em;
   text-transform: uppercase;
-  color: rgba(232, 230, 227, 0.58);
-  text-shadow:
-    0 0 12px rgba(0, 0, 0, 0.9),
-    0 0 22px rgba(0, 0, 0, 0.5);
+  color: rgba(232, 230, 227, 0.46);
+  /* phosphor halo, not a black drop-shadow */
+  text-shadow: 0 0 9px rgba(122, 196, 175, 0.28);
   white-space: nowrap;
   --t: clamp(0, calc((var(--p, 0) - 0.78) / 0.06), 1);
-  will-change: translate;
+  animation: sh-breathe 7s ease-in-out infinite;
+  will-change: translate, opacity;
 }
 
+/* slide along the on-screen vertical axis (Y) for the tape swap */
 .section-header__slot--first {
   translate: 0 calc(var(--t) * -100%);
 }
 
 .section-header__slot--second {
   translate: 0 calc((1 - var(--t)) * 100%);
+}
+
+@keyframes sh-breathe {
+  0%, 100% { opacity: 0.74; }
+  50%      { opacity: 1; }
 }
 
 /* === Charge indicator ===
