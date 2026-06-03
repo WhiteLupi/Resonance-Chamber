@@ -109,11 +109,6 @@ function App() {
       sceneRef.current?.setProgress(clamped);
       root.style.setProperty('--p', clamped.toFixed(4));
       root.style.setProperty('--dim', '1');
-      // Ramp the turbulence warp with scroll: "motion" is clean at rest and only
-      // ruffles into a ragged edge as the void consumes it (still driven by p, so
-      // it reverses on scroll-up).
-      const warp = Math.max(0, Math.min(1, (clamped - 0.4) / 0.4)) * 26;
-      document.getElementById('void-disp')?.setAttribute('scale', warp.toFixed(1));
     };
 
     // Transition spans HERO_SPAN screens of scroll (the .hero-section height in
@@ -148,8 +143,8 @@ function App() {
       <svg className="defs-only" width="0" height="0" aria-hidden="true">
         <defs>
           <filter id="void-warp" x="-30%" y="-30%" width="160%" height="160%">
-            <feTurbulence type="fractalNoise" baseFrequency="0.012 0.022" numOctaves="3" seed="11" result="noise" />
-            <feDisplacementMap id="void-disp" in="SourceGraphic" in2="noise" scale="0" xChannelSelector="R" yChannelSelector="G" />
+            <feTurbulence type="fractalNoise" baseFrequency="0.009 0.015" numOctaves="3" seed="11" result="noise" />
+            <feDisplacementMap in="SourceGraphic" in2="noise" scale="34" xChannelSelector="R" yChannelSelector="G" />
           </filter>
         </defs>
       </svg>

@@ -708,24 +708,27 @@
    (opacity pinned at 1) rather than snapping. */
 .edge-void {
   position: fixed;
-  inset: 0;
+  /* extends past the viewport so #void-warp can rag the INNER edge without ever
+     exposing the screen perimeter */
+  top: -6vh;
+  left: -6vw;
+  right: -6vw;
+  bottom: -6vh;
   z-index: 4;
   pointer-events: none;
-  background: transparent;
-  transition: background 0.9s ease;
-  -webkit-mask-image:
-    linear-gradient(to bottom, #000, transparent 18%),
-    linear-gradient(to top, #000, transparent 19%),
-    linear-gradient(to right, #000, transparent 14%),
-    linear-gradient(to left, #000, transparent 14%);
-  mask-image:
-    linear-gradient(to bottom, #000, transparent 18%),
-    linear-gradient(to top, #000, transparent 19%),
-    linear-gradient(to right, #000, transparent 14%),
-    linear-gradient(to left, #000, transparent 14%);
+  /* hard-ish black bands (not a long soft fade) so the turbulence displacement
+     reads as a torn, ragged boundary instead of a smear */
+  background:
+    linear-gradient(to bottom, #000 14%, transparent 22%),
+    linear-gradient(to top,    #000 15%, transparent 23%),
+    linear-gradient(to right,  #000 11%, transparent 18%),
+    linear-gradient(to left,   #000 11%, transparent 18%);
+  filter: url(#void-warp);
+  opacity: 0;
+  transition: opacity 0.9s ease;
 }
 .edge-void--in {
-  background: rgba(0, 0, 0, 0.82);
+  opacity: 1;
 }
 
 /* SVG filter holder — no layout. */
@@ -749,7 +752,8 @@
   height: 34vh;
   z-index: 9;
   pointer-events: none;
-  background: linear-gradient(to bottom, #000 46%, transparent 100%);
+  /* tighter fade band so the warped lower edge reads as torn, not a smear */
+  background: linear-gradient(to bottom, #000 52%, transparent 74%);
   filter: url(#void-warp);
   opacity: 0;
   transition: opacity 0.9s ease;
