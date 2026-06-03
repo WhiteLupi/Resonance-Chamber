@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="pl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Supporting MONO picker — the voice under motion</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Boldonse&family=Space+Mono:wght@400;700&family=Martian+Mono:wght@300;400;600&family=DM+Mono:wght@400;500&family=Syne+Mono&family=Spline+Sans+Mono:wght@400;500&family=Fragment+Mono&family=IBM+Plex+Mono:wght@400;500&family=Nova+Mono&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --bg: #000000;
+        --fg: #e8e6e3;
+        --muted: rgba(232, 230, 227, 0.45);
+        --faint: rgba(232, 230, 227, 0.4);
+        --accent: rgb(122, 196, 175);
+        --hairline: rgba(232, 230, 227, 0.09);
+      }
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+      html, body { background: var(--bg); color: var(--fg); min-height: 100vh; }
+      body {
+        font-family: 'Space Mono', ui-monospace, monospace;
+        padding: 48px clamp(24px, 4vw, 80px) 100px;
+      }
+      h1 {
+        font-weight: 400; font-size: 11px; letter-spacing: 0.4em;
+        text-transform: uppercase; color: var(--muted); margin-bottom: 8px;
+      }
+      h1 .acc { color: var(--accent); }
+      .sub {
+        font-size: 11px; letter-spacing: 0.06em; color: var(--faint);
+        margin-bottom: 52px; max-width: 64ch; line-height: 1.6;
+      }
+      .grid { display: grid; grid-template-columns: 1fr; gap: 40px; }
+      @media (min-width: 1100px) {
+        .grid { grid-template-columns: 1fr 1fr; gap: 40px 48px; }
+      }
+      .card {
+        padding: 30px 34px 34px; border: 1px solid var(--hairline);
+        border-radius: 4px; background: rgba(255, 255, 255, 0.01); position: relative;
+      }
+      .card__label {
+        font-family: 'Space Mono', monospace; font-size: 10px; letter-spacing: 0.34em;
+        text-transform: uppercase; color: var(--muted); margin-bottom: 26px;
+        display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap;
+      }
+      .card__label .num { color: rgba(232, 230, 227, 0.25); }
+      .card__label .acc { color: var(--accent); }
+
+      .nav {
+        text-transform: uppercase; font-size: 11px; letter-spacing: 0.3em;
+        color: rgba(232, 230, 227, 0.7); display: flex; gap: 22px; margin-bottom: 24px;
+      }
+      .nav .dot { color: var(--accent); }
+
+      .secrow { display: flex; gap: 30px; margin-bottom: 26px; }
+      .sechead {
+        text-transform: uppercase; font-size: 11px; letter-spacing: 0.42em;
+        color: rgba(232, 230, 227, 0.46);
+      }
+
+      .manifest { max-width: 52ch; margin-bottom: 26px; }
+      .manifest p {
+        font-size: 16px; line-height: 1.62; color: rgba(245, 244, 240, 0.92); margin-bottom: 12px;
+      }
+      .manifest p:first-child { font-size: 19px; color: #fff; }
+      .manifest .caret { color: var(--accent); }
+
+      .footrow {
+        display: flex; align-items: flex-end; justify-content: space-between; gap: 24px;
+        border-top: 1px solid var(--hairline); padding-top: 22px;
+      }
+      .sig { text-transform: uppercase; font-size: 11px; letter-spacing: 0.3em; color: rgba(232, 230, 227, 0.55); }
+      .sig .dot { color: var(--accent); }
+      .hold { text-transform: uppercase; font-size: 12px; letter-spacing: 0.5em; color: rgba(232, 230, 227, 0.6); }
+      .motion {
+        font-family: 'Boldonse', system-ui, sans-serif !important;
+        font-size: 40px; line-height: 0.9; letter-spacing: 0;
+        color: rgba(245, 244, 240, 0.96); text-transform: lowercase;
+      }
+
+      /* === candidate MONO voices (applies to everything except .motion) === */
+      .v-mono    { font-family: 'Space Mono', monospace; }
+      .v-martian { font-family: 'Martian Mono', monospace; }
+      .v-martian .manifest p { font-weight: 300; }
+      .v-martian .nav, .v-martian .sechead, .v-martian .sig, .v-martian .hold { font-weight: 400; }
+      .v-dmmono  { font-family: 'DM Mono', monospace; }
+      .v-syne    { font-family: 'Syne Mono', monospace; }
+      .v-spline  { font-family: 'Spline Sans Mono', monospace; }
+      .v-fragment{ font-family: 'Fragment Mono', monospace; }
+      .v-ibm     { font-family: 'IBM Plex Mono', monospace; }
+      .v-nova    { font-family: 'Nova Mono', monospace; }
+
+      footer {
+        margin-top: 64px; font-size: 10px; letter-spacing: 0.4em;
+        text-transform: uppercase; color: var(--muted);
+      }
+    </style>
+  </head>
+  <body>
+    <h1><span class="acc">SUPPORTING MONO</span> · the voice under motion</h1>
+    <p class="sub">
+      Wszystkie kandydatki to MONOSPACE — animacja glifów w About zostaje nietknięta.
+      Boldonse trzyma „motion" (anchor). Szukamy jednego mono na całą resztę:
+      nav · THE ENGINE / THE SIGNAL · manifest · sygnatura · HOLD. 01 = obecny Space Mono.
+      Patrz: czy ucieka od „starego typewritera" i czy gra z Boldonse.
+    </p>
+
+    <div class="grid" id="grid"></div>
+    <footer>Wybierz numer — podmienię w hero + about.</footer>
+
+    <script>
+      const CANDS = [
+        { cls: 'v-mono',    name: 'Space Mono', note: '· OBECNY' },
+        { cls: 'v-martian', name: 'Martian Mono', note: '· geometryczny, sci-fi/alien' },
+        { cls: 'v-dmmono',  name: 'DM Mono', note: '· niski kontrast, edytorski' },
+        { cls: 'v-syne',    name: 'Syne Mono', note: '· artystyczny, dziwny/alien' },
+        { cls: 'v-spline',  name: 'Spline Sans Mono', note: '· humanist, ciepły, miękki' },
+        { cls: 'v-fragment',name: 'Fragment Mono', note: '· neutralny, czysty IBM-ish' },
+        { cls: 'v-ibm',     name: 'IBM Plex Mono', note: '· nowoczesny, bardzo czytelny' },
+        { cls: 'v-nova',    name: 'Nova Mono', note: '· geometryczny roman, antyczny rys' },
+      ];
+      const card = (c, i) => `
+        <div class="card ${c.cls}">
+          <div class="card__label"><span class="num">0${i + 1}</span> ${c.name.toUpperCase()} <span class="acc">${c.note}</span></div>
+          <div class="nav">WORK <span class="dot">·</span> ABOUT <span class="dot">·</span> CONTACT</div>
+          <div class="secrow">
+            <span class="sechead">THE ENGINE</span>
+            <span class="sechead">THE SIGNAL</span>
+          </div>
+          <div class="manifest">
+            <p>I hear motion.</p>
+            <p>Most days I tune browser animation until the sound in my head resolves. The rest is React apps, when the brief is quieter.</p>
+            <p>I work a layer above the code — AI does the typing, the taste is mine.<span class="caret">▌</span></p>
+          </div>
+          <div class="footrow">
+            <span class="sig">— K <span class="dot">·</span> WALTER</span>
+            <span class="motion">motion</span>
+            <span class="hold">HOLD</span>
+          </div>
+        </div>`;
+      document.getElementById('grid').innerHTML = CANDS.map(card).join('');
+    </script>
+  </body>
+</html>

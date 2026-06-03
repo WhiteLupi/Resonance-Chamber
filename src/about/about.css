@@ -12,7 +12,7 @@
      glScene.ts) stays as a faint ambient backdrop behind the about
      inscription. About is "inside the engine," not behind a wall. */
   background: transparent;
-  font-family: 'Space Mono', ui-monospace, monospace;
+  font-family: 'Syne Mono', ui-monospace, monospace;
   color: var(--fg);
 }
 

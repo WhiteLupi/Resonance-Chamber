@@ -118,7 +118,7 @@ body {
     radial-gradient(ellipse at 70% 80%, rgba(40, 40, 50, 0.3), transparent 60%),
     #14141a;
   color: rgba(220, 220, 220, 0.55);
-  font-family: 'Space Mono', ui-monospace, monospace;
+  font-family: 'Syne Mono', ui-monospace, monospace;
   letter-spacing: 0.4em;
   font-size: 13px;
 }
