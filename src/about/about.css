@@ -103,6 +103,9 @@
   text-shadow: 0 1px 3px rgba(0, 0, 0, 0.7);
   /* Rise from below the mask into view. 110% guarantees fully hidden at t=0. */
   translate: 0 calc((1 - var(--t)) * 110%);
+  /* Emerge from the ragged void: #emerge-warp ruffles the words only while they
+     rise (its scale is scroll-driven in App.tsx), settling to clean when read. */
+  filter: url(#emerge-warp);
   will-change: translate;
 }
 

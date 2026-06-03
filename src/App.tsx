@@ -109,6 +109,11 @@ function App() {
       sceneRef.current?.setProgress(clamped);
       root.style.setProperty('--p', clamped.toFixed(4));
       root.style.setProperty('--dim', '1');
+      // Ragged emergence: the about text warps only while it rises out of the
+      // void (a bump over p≈0.78–0.96), then settles to scale 0 = clean/readable.
+      const up = Math.max(0, Math.min(1, (clamped - 0.76) / 0.08));
+      const down = Math.max(0, Math.min(1, (0.97 - clamped) / 0.07));
+      document.getElementById('emerge-disp')?.setAttribute('scale', (Math.min(up, down) * 16).toFixed(1));
     };
 
     // Transition spans HERO_SPAN screens of scroll (the .hero-section height in
@@ -145,6 +150,12 @@ function App() {
           <filter id="void-warp" x="-30%" y="-30%" width="160%" height="160%">
             <feTurbulence type="fractalNoise" baseFrequency="0.009 0.015" numOctaves="3" seed="11" result="noise" />
             <feDisplacementMap in="SourceGraphic" in2="noise" scale="34" xChannelSelector="R" yChannelSelector="G" />
+          </filter>
+          {/* gentler warp for the about text — its scale is driven by scroll so it
+              ruffles only WHILE the words emerge from the void, then settles clean */}
+          <filter id="emerge-warp" x="-20%" y="-25%" width="140%" height="150%">
+            <feTurbulence type="fractalNoise" baseFrequency="0.011 0.02" numOctaves="2" seed="4" result="enoise" />
+            <feDisplacementMap id="emerge-disp" in="SourceGraphic" in2="enoise" scale="0" xChannelSelector="R" yChannelSelector="G" />
           </filter>
         </defs>
       </svg>
