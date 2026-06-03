@@ -16,10 +16,13 @@ const CORE_R = 0.18;
 // off-canvas, the engine feels bigger than the frame can contain. Text sits
 // over the upper/lower edges with strong text-shadow for legibility.
 const ROOTS_SCALE = 1.6;
-// charge crosses this and we lock — the seal stays in the charged state forever
-// and comets decouple back to idle drift speed. Slightly below 1 to avoid the
-// asymptote of the exp-lerp never quite reaching 1.
-const LOCK_THRESHOLD = 0.985;
+// charge reaches this and we lock — the seal stays charged forever and comets
+// decouple back to idle drift speed. Charge now ramps LINEARLY in time so it
+// hits 1 cleanly; lock just shy of 1 to avoid a one-frame growth pop at the snap.
+const LOCK_THRESHOLD = 0.999;
+// Hold timing: seconds to fully charge while held, and a faster drain on release.
+const HOLD_FILL_S = 2.0;
+const RELEASE_FALL_S = 0.9;
 
 export type HeroScene = {
   setProgress: (p: number) => void;
@@ -666,6 +669,10 @@ export function startHero(host: HTMLElement): HeroScene {
   window.addEventListener('touchend',   onTouchEnd);
 
   const easeOutCubic = (x: number) => 1 - Math.pow(1 - x, 3);
+  // ease-IN for root growth: barely moves at first, accelerates toward the lock.
+  // Exponent is the tuning knob — higher = deader start + sharper end rush.
+  const GROWTH_EASE = 2.4;
+  const easeInGrow = (x: number) => Math.pow(x, GROWTH_EASE);
 
   // Loop
   const clock = new THREE.Clock();
@@ -682,9 +689,15 @@ export function startHero(host: HTMLElement): HeroScene {
     const dt = Math.min(0.05, t - lastT);
     lastT = t;
 
-    // Charge: 1 while clickHeld OR locked (locked pins at full), 0 otherwise.
-    const target = (locked || clickHeld) ? 1 : 0;
-    charge += (target - charge) * Math.min(1, dt * 2.2);
+    // Charge ramps LINEARLY in time while held — the ring fills at a steady
+    // rate with no asymptotic crawl at the end. Releasing early drains it faster.
+    if (locked) {
+      charge = 1;
+    } else if (clickHeld) {
+      charge = Math.min(1, charge + dt / HOLD_FILL_S);
+    } else {
+      charge = Math.max(0, charge - dt / RELEASE_FALL_S);
+    }
     for (const cb of chargeSubs) cb(charge);
     if (!locked && charge >= LOCK_THRESHOLD) {
       charge = 1;
@@ -720,9 +733,13 @@ export function startHero(host: HTMLElement): HeroScene {
     // read its parent's already-flexed attach point this same frame and ride it.
     for (const tend of tendrils) {
       if (tend.type === 'main') {
-        const localRaw = (charge - (tend.growthStart ?? 0)) / (tend.growthDuration ?? 0.85);
-        const local = Math.max(0, Math.min(1, localRaw));
-        tend.growth = easeOutCubic(local);
+        // Start at the staggered growthStart, reach full exactly at charge=1 so
+        // every tendril finishes together with the closing ring. ease-IN shape.
+        const span = 1 - (tend.growthStart ?? 0);
+        const local = span > 0.001
+          ? Math.max(0, Math.min(1, (charge - (tend.growthStart ?? 0)) / span))
+          : 0;
+        tend.growth = easeInGrow(local);
       } else {
         const parentG = tend.parent!.growth;
         const span = 1 - (tend.branchT ?? 0);
