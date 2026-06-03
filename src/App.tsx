@@ -109,6 +109,11 @@ function App() {
       sceneRef.current?.setProgress(clamped);
       root.style.setProperty('--p', clamped.toFixed(4));
       root.style.setProperty('--dim', '1');
+      // Ramp the turbulence warp with scroll: "motion" is clean at rest and only
+      // ruffles into a ragged edge as the void consumes it (still driven by p, so
+      // it reverses on scroll-up).
+      const warp = Math.max(0, Math.min(1, (clamped - 0.4) / 0.4)) * 26;
+      document.getElementById('void-disp')?.setAttribute('scale', warp.toFixed(1));
     };
 
     // Transition spans HERO_SPAN screens of scroll (the .hero-section height in
@@ -137,20 +142,18 @@ function App() {
   return (
     <>
       <div ref={stageRef} className="gl-stage" aria-hidden="true" />
-      {/* Organic warp for the void's edges — feTurbulence displaces a straight
-          edge into a ragged, alive boundary (used by .void-ceiling et al). */}
+      {/* Organic warp — feTurbulence displaces the rising "motion" so its edges
+          (and the darkness eating it) read as a ragged, alive boundary, not a
+          straight cut. */}
       <svg className="defs-only" width="0" height="0" aria-hidden="true">
         <defs>
-          <filter id="void-warp" x="-25%" y="-25%" width="150%" height="150%">
-            <feTurbulence type="fractalNoise" baseFrequency="0.009 0.02" numOctaves="3" seed="11" result="noise" />
-            <feDisplacementMap in="SourceGraphic" in2="noise" scale="72" xChannelSelector="R" yChannelSelector="G" />
+          <filter id="void-warp" x="-30%" y="-30%" width="160%" height="160%">
+            <feTurbulence type="fractalNoise" baseFrequency="0.012 0.022" numOctaves="3" seed="11" result="noise" />
+            <feDisplacementMap id="void-disp" in="SourceGraphic" in2="noise" scale="0" xChannelSelector="R" yChannelSelector="G" />
           </filter>
         </defs>
       </svg>
       <div className={`edge-void${locked ? ' edge-void--in' : ''}`} aria-hidden="true" />
-      {/* Irregular darkness at the top — eats "motion" with a ragged edge as it
-          scrolls up into the void. Above the word (z), below the navbar. */}
-      <div className={`void-ceiling${locked ? ' void-ceiling--in' : ''}`} aria-hidden="true" />
       <Atmosphere />
       <ChargeIndicator locked={locked} />
       <SectionHeader locked={locked} />

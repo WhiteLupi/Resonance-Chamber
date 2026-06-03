@@ -342,14 +342,27 @@
 .hero-section--revealed .hero-inscription__bottom {
   opacity: 1;
   /* "motion" is drawn UP into the void: it travels up, GROWS and its letters
-     SPREAD apart as it goes — expanding as it's pulled in — then the ragged
-     darkness of .void-ceiling eats it. Pure --p, so scrolling back down it
-     descends, contracts and reforms. (Consumption is the ceiling occluding it,
-     not a fade — and its torn edge gives the irregular void boundary.) */
+     SPREAD apart as it goes — expanding as it's pulled in — then darkness eats
+     it from the top via a mask that sweeps down the word itself (so it's fully
+     consumed, never re-emerging past an edge). #void-warp ruffles the whole
+     thing so that eaten edge reads as a ragged, organic boundary, not a cut.
+     Pure --p → scrolling back down it descends, contracts and reforms. */
   --rise: clamp(0, calc(var(--p, 0) / 0.85), 1);
+  --eat:  clamp(0, calc((var(--p, 0) - 0.45) / 0.4), 1);
   translate: -50% calc(var(--rise) * -78vh);
   scale: calc(1 + var(--rise) * 0.42);
   letter-spacing: calc(-0.012em + var(--rise) * 0.2em);
+  filter: url(#void-warp);
+  -webkit-mask-image: linear-gradient(
+    to bottom,
+    transparent calc(var(--eat) * 134% - 26%),
+    #000 calc(var(--eat) * 134% - 2%)
+  );
+  mask-image: linear-gradient(
+    to bottom,
+    transparent calc(var(--eat) * 134% - 26%),
+    #000 calc(var(--eat) * 134% - 2%)
+  );
   animation: motion-float 11s ease-in-out infinite;
 }
 
@@ -737,22 +750,3 @@
   overflow: hidden;
 }
 
-/* Irregular darkness at the top of the void. A dark gradient whose straight
-   bottom edge is warped into a ragged, organic boundary by #void-warp (SVG
-   turbulence). Sits ABOVE the rising "motion" (z 9) but below the navbar, so
-   the word is eaten by a torn edge of darkness as it scrolls up into the void.
-   Eases in on lock. */
-.void-ceiling {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 30vh;
-  z-index: 9;
-  pointer-events: none;
-  background: linear-gradient(to bottom, #000 32%, transparent 100%);
-  filter: url(#void-warp);
-  opacity: 0;
-  transition: opacity 0.9s ease;
-}
-.void-ceiling--in { opacity: 1; }
