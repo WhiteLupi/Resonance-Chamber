@@ -341,61 +341,27 @@
 
 .hero-section--revealed .hero-inscription__bottom {
   opacity: 1;
-  /* Consumed by the void — light vs darkness. Every value is a pure function of
-     --p, so the whole struggle scrubs cleanly BOTH ways (no one-shot events):
-       p 0    .. 0.5  – motion rises a little and holds LOW (below the seal), no shrink
-       p 0.6  .. 0.84 – the void's circle closes over it and it blurs; a few
-                        letters corrupt into the organism's glyphs; the light
-                        flares teal mid-struggle, then the dark wins.
-     Scroll back up: the dark recedes, the glyphs revert and the word reforms. */
-  --lift:   clamp(0, calc(var(--p, 0) / 0.5), 1);
-  --absorb: clamp(0, calc((var(--p, 0) - 0.6) / 0.24), 1);
-  /* corruption of letters → glyphs, mid-struggle (before fully eaten) */
-  --swap:   clamp(0, calc((var(--absorb) - 0.12) / 0.42), 1);
-  /* teal resistance — flares then dies (peaks at absorb 0.5) */
-  --glow:   calc(var(--absorb) * (1 - var(--absorb)) * 4);
-  /* hold LOW, below the seal — no scale change, the word keeps its size */
-  translate: -50% calc(var(--lift) * -12vh);
-  /* the void's mouth closes from outside-in + the word blurs as it's eaten */
-  clip-path: circle(calc((1 - var(--absorb)) * 100%) at center);
-  filter: blur(calc(var(--absorb) * 5px));
-  text-shadow:
-    0 0 calc(10px + var(--glow) * 42px) rgba(122, 196, 175, calc(var(--glow) * 0.75)),
-    0 0 28px rgba(4, 7, 10, 0.95);
+  /* One clean idea: "motion" travels UP like scrolling content, and as it nears
+     the top the void eats it — a soft mask edge sweeps down the word so it
+     dissolves into black (occlusion, NOT an opacity fade) as it rises into the
+     darkness. Both values are pure functions of --p, so scrolling back down it
+     descends out of the dark and reforms. */
+  --rise: clamp(0, calc(var(--p, 0) / 0.85), 1);
+  --eat:  clamp(0, calc((var(--p, 0) - 0.42) / 0.42), 1);
+  translate: -50% calc(var(--rise) * -82vh);
+  -webkit-mask-image: linear-gradient(
+    to bottom,
+    transparent calc(var(--eat) * 128% - 22%),
+    #000 calc(var(--eat) * 128% - 4%)
+  );
+  mask-image: linear-gradient(
+    to bottom,
+    transparent calc(var(--eat) * 128% - 22%),
+    #000 calc(var(--eat) * 128% - 4%)
+  );
   animation:
     motion-breathe 8s ease-in-out infinite,
     motion-float 11s ease-in-out infinite;
-}
-
-/* Per-letter "motion": some letters corrupt into glyphs as the void consumes
-   the word. Letter and glyph cross-fade on --swap (inherited from above); both
-   ride the parent's blur, so the glyphs read as blurred too. */
-.mo-ch {
-  position: relative;
-  display: inline-block;
-}
-.mo-ch--glyph .mo-ch__letter {
-  opacity: calc(1 - var(--swap, 0));
-}
-.mo-ch__glyph {
-  position: absolute;
-  left: 50%;
-  top: 52%;
-  translate: -50% -50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  opacity: 0;
-  pointer-events: none;
-}
-.mo-ch--glyph .mo-ch__glyph {
-  opacity: var(--swap, 0);
-}
-.mo-ch__svg {
-  width: 0.6em;
-  height: 0.6em;
-  color: rgb(122, 196, 175);
-  filter: drop-shadow(0 0 7px rgba(122, 196, 175, 0.55));
 }
 
 @keyframes motion-breathe {
