@@ -137,7 +137,20 @@ function App() {
   return (
     <>
       <div ref={stageRef} className="gl-stage" aria-hidden="true" />
+      {/* Organic warp for the void's edges — feTurbulence displaces a straight
+          edge into a ragged, alive boundary (used by .void-ceiling et al). */}
+      <svg className="defs-only" width="0" height="0" aria-hidden="true">
+        <defs>
+          <filter id="void-warp" x="-25%" y="-25%" width="150%" height="150%">
+            <feTurbulence type="fractalNoise" baseFrequency="0.009 0.02" numOctaves="3" seed="11" result="noise" />
+            <feDisplacementMap in="SourceGraphic" in2="noise" scale="72" xChannelSelector="R" yChannelSelector="G" />
+          </filter>
+        </defs>
+      </svg>
       <div className={`edge-void${locked ? ' edge-void--in' : ''}`} aria-hidden="true" />
+      {/* Irregular darkness at the top — eats "motion" with a ragged edge as it
+          scrolls up into the void. Above the word (z), below the navbar. */}
+      <div className={`void-ceiling${locked ? ' void-ceiling--in' : ''}`} aria-hidden="true" />
       <Atmosphere />
       <ChargeIndicator locked={locked} />
       <SectionHeader locked={locked} />

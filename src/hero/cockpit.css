@@ -341,27 +341,16 @@
 
 .hero-section--revealed .hero-inscription__bottom {
   opacity: 1;
-  /* One clean idea: "motion" travels UP like scrolling content, and as it nears
-     the top the void eats it — a soft mask edge sweeps down the word so it
-     dissolves into black (occlusion, NOT an opacity fade) as it rises into the
-     darkness. Both values are pure functions of --p, so scrolling back down it
-     descends out of the dark and reforms. */
+  /* "motion" is drawn UP into the void: it travels up, GROWS and its letters
+     SPREAD apart as it goes — expanding as it's pulled in — then the ragged
+     darkness of .void-ceiling eats it. Pure --p, so scrolling back down it
+     descends, contracts and reforms. (Consumption is the ceiling occluding it,
+     not a fade — and its torn edge gives the irregular void boundary.) */
   --rise: clamp(0, calc(var(--p, 0) / 0.85), 1);
-  --eat:  clamp(0, calc((var(--p, 0) - 0.42) / 0.42), 1);
-  translate: -50% calc(var(--rise) * -82vh);
-  -webkit-mask-image: linear-gradient(
-    to bottom,
-    transparent calc(var(--eat) * 128% - 22%),
-    #000 calc(var(--eat) * 128% - 4%)
-  );
-  mask-image: linear-gradient(
-    to bottom,
-    transparent calc(var(--eat) * 128% - 22%),
-    #000 calc(var(--eat) * 128% - 4%)
-  );
-  animation:
-    motion-breathe 8s ease-in-out infinite,
-    motion-float 11s ease-in-out infinite;
+  translate: -50% calc(var(--rise) * -78vh);
+  scale: calc(1 + var(--rise) * 0.42);
+  letter-spacing: calc(-0.012em + var(--rise) * 0.2em);
+  animation: motion-float 11s ease-in-out infinite;
 }
 
 @keyframes motion-breathe {
@@ -739,3 +728,31 @@
 .edge-void--in {
   background: rgba(0, 0, 0, 0.82);
 }
+
+/* SVG filter holder — no layout. */
+.defs-only {
+  position: absolute;
+  width: 0;
+  height: 0;
+  overflow: hidden;
+}
+
+/* Irregular darkness at the top of the void. A dark gradient whose straight
+   bottom edge is warped into a ragged, organic boundary by #void-warp (SVG
+   turbulence). Sits ABOVE the rising "motion" (z 9) but below the navbar, so
+   the word is eaten by a torn edge of darkness as it scrolls up into the void.
+   Eases in on lock. */
+.void-ceiling {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 30vh;
+  z-index: 9;
+  pointer-events: none;
+  background: linear-gradient(to bottom, #000 32%, transparent 100%);
+  filter: url(#void-warp);
+  opacity: 0;
+  transition: opacity 0.9s ease;
+}
+.void-ceiling--in { opacity: 1; }
