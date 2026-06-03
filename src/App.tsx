@@ -147,9 +147,9 @@ function App() {
           straight cut. */}
       <svg className="defs-only" width="0" height="0" aria-hidden="true">
         <defs>
-          <filter id="void-warp" x="-30%" y="-30%" width="160%" height="160%">
-            <feTurbulence type="fractalNoise" baseFrequency="0.009 0.015" numOctaves="3" seed="11" result="noise" />
-            <feDisplacementMap in="SourceGraphic" in2="noise" scale="34" xChannelSelector="R" yChannelSelector="G" />
+          <filter id="void-warp" x="-40%" y="-40%" width="180%" height="180%">
+            <feTurbulence type="fractalNoise" baseFrequency="0.011 0.018" numOctaves="4" seed="11" result="noise" />
+            <feDisplacementMap in="SourceGraphic" in2="noise" scale="56" xChannelSelector="R" yChannelSelector="G" />
           </filter>
           {/* gentler warp for the about text — its scale is driven by scroll so it
               ruffles only WHILE the words emerge from the void, then settles clean */}

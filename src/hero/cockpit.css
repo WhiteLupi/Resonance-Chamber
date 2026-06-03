@@ -708,12 +708,12 @@
    (opacity pinned at 1) rather than snapping. */
 .edge-void {
   position: fixed;
-  /* extends past the viewport so #void-warp can rag the INNER edge without ever
-     exposing the screen perimeter */
-  top: -6vh;
-  left: -6vw;
-  right: -6vw;
-  bottom: -6vh;
+  /* extends well past the viewport so #void-warp (big scale) can rag the INNER
+     edge without ever exposing the screen perimeter */
+  top: -10vh;
+  left: -10vw;
+  right: -10vw;
+  bottom: -10vh;
   z-index: 4;
   pointer-events: none;
   /* hard-ish black bands (not a long soft fade) so the turbulence displacement
@@ -746,14 +746,14 @@
    above the rising word (z 9), below the navbar. Eases in on lock. */
 .void-ceiling {
   position: fixed;
-  top: -6vh;
-  left: -6vw;
-  right: -6vw;
-  height: 34vh;
+  top: -10vh;
+  left: -10vw;
+  right: -10vw;
+  height: 42vh;
   z-index: 9;
   pointer-events: none;
   /* tighter fade band so the warped lower edge reads as torn, not a smear */
-  background: linear-gradient(to bottom, #000 52%, transparent 74%);
+  background: linear-gradient(to bottom, #000 56%, transparent 76%);
   filter: url(#void-warp);
   opacity: 0;
   transition: opacity 0.9s ease;
