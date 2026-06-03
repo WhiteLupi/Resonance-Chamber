@@ -129,8 +129,8 @@
   background: linear-gradient(
     to bottom,
     transparent,
-    rgba(122, 196, 175, 0.26) 16%,
-    rgba(122, 196, 175, 0.26) 84%,
+    rgba(122, 196, 175, 0.55) 14%,
+    rgba(122, 196, 175, 0.55) 86%,
     transparent
   );
   animation: sh-breathe 7s ease-in-out infinite;
@@ -157,9 +157,9 @@
   font-size: 10px;
   letter-spacing: 0.42em;
   text-transform: uppercase;
-  color: rgba(232, 230, 227, 0.46);
-  /* phosphor halo, not a black drop-shadow */
-  text-shadow: 0 0 9px rgba(122, 196, 175, 0.28);
+  /* teal light, not grey label — reads as a filament of the organism's glow */
+  color: rgba(170, 222, 205, 0.82);
+  text-shadow: 0 0 14px rgba(122, 196, 175, 0.6);
   white-space: nowrap;
   --t: clamp(0, calc((var(--p, 0) - 0.78) / 0.06), 1);
   animation: sh-breathe 7s ease-in-out infinite;
