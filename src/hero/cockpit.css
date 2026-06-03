@@ -140,7 +140,7 @@
 .section-header__inner {
   position: relative;
   width: 16px;
-  height: 176px;     /* reading length of the vertical title */
+  height: 192px;     /* reading length of the longest vertical title */
   overflow: clip;
 }
 
@@ -162,18 +162,15 @@
   color: rgba(170, 222, 205, 0.82);
   text-shadow: 0 0 14px rgba(122, 196, 175, 0.6);
   white-space: nowrap;
-  --t: clamp(0, calc((var(--p, 0) - 0.78) / 0.06), 1);
-  animation: sh-breathe 7s ease-in-out infinite;
+  /* Remounted (key=active) on each section change → slides up into place. The
+     hairline carries the steady breath; the label just arrives. */
+  animation: sh-enter 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
   will-change: translate, opacity;
 }
 
-/* slide along the on-screen vertical axis (Y) for the tape swap */
-.section-header__slot--first {
-  translate: 0 calc(var(--t) * -100%);
-}
-
-.section-header__slot--second {
-  translate: 0 calc((1 - var(--t)) * 100%);
+@keyframes sh-enter {
+  from { translate: 0 16px; opacity: 0; }
+  to   { translate: 0 0;    opacity: 1; }
 }
 
 @keyframes sh-breathe {

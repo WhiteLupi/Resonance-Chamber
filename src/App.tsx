@@ -4,6 +4,8 @@ import { startHero, type HeroScene } from './hero/glScene'
 import { Hero } from './hero/Hero'
 import { Navbar } from './hero/Navbar'
 import { About } from './about/About'
+import { Skills } from './sections/Skills'
+import { Contact } from './sections/Contact'
 import { Cursor } from './hero/Cursor'
 import { Atmosphere } from './hero/Atmosphere'
 import { ChargeIndicator } from './hero/ChargeIndicator'
@@ -109,11 +111,10 @@ function App() {
       sceneRef.current?.setProgress(clamped);
       root.style.setProperty('--p', clamped.toFixed(4));
       root.style.setProperty('--dim', '1');
-      // Ragged emergence: the about text warps only while it rises out of the
-      // void (a bump over p≈0.78–0.96), then settles to scale 0 = clean/readable.
-      const up = Math.max(0, Math.min(1, (clamped - 0.76) / 0.08));
-      const down = Math.max(0, Math.min(1, (0.97 - clamped) / 0.07));
-      document.getElementById('emerge-disp')?.setAttribute('scale', (Math.min(up, down) * 16).toFixed(1));
+      // About text emerges by OCCLUSION, not distortion: each line is clipped and
+      // its copy rises up from below the mask (see .inscription__copy in
+      // about.css). The letters stay whole — the dark simply uncovers them — so
+      // there is no scroll-driven warp to drive here anymore.
     };
 
     // Transition spans HERO_SPAN screens of scroll (the .hero-section height in
@@ -142,20 +143,15 @@ function App() {
   return (
     <>
       <div ref={stageRef} className="gl-stage" aria-hidden="true" />
-      {/* Organic warp — feTurbulence displaces the rising "motion" so its edges
-          (and the darkness eating it) read as a ragged, alive boundary, not a
-          straight cut. */}
+      {/* Organic warp — feTurbulence displaces the void edges (edge frame +
+          ceiling) so the darkness eating the chamber reads as a ragged, alive
+          boundary, not a straight cut. The about text is NOT warped: it emerges
+          whole, by occlusion (mask + rise), never distorted. */}
       <svg className="defs-only" width="0" height="0" aria-hidden="true">
         <defs>
           <filter id="void-warp" x="-40%" y="-40%" width="180%" height="180%">
             <feTurbulence type="fractalNoise" baseFrequency="0.011 0.018" numOctaves="4" seed="11" result="noise" />
             <feDisplacementMap in="SourceGraphic" in2="noise" scale="56" xChannelSelector="R" yChannelSelector="G" />
-          </filter>
-          {/* gentler warp for the about text — its scale is driven by scroll so it
-              ruffles only WHILE the words emerge from the void, then settles clean */}
-          <filter id="emerge-warp" x="-20%" y="-25%" width="140%" height="150%">
-            <feTurbulence type="fractalNoise" baseFrequency="0.011 0.02" numOctaves="2" seed="4" result="enoise" />
-            <feDisplacementMap id="emerge-disp" in="SourceGraphic" in2="enoise" scale="0" xChannelSelector="R" yChannelSelector="G" />
           </filter>
         </defs>
       </svg>
@@ -169,6 +165,8 @@ function App() {
       <Signature locked={locked} />
       <Hero locked={locked} />
       <About />
+      <Skills />
+      <Contact />
       <Navbar locked={locked} />
       <Cursor />
     </>

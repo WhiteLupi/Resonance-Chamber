@@ -10,7 +10,7 @@ type HeroProps = {
 // from the cursor's scroll-state hint.
 export function Hero({ locked }: HeroProps) {
   return (
-    <section className={`hero-section ${locked ? 'hero-section--revealed' : ''}`}>
+    <section id="hero" className={`hero-section ${locked ? 'hero-section--revealed' : ''}`}>
       <div className="hero-prompt" aria-hidden={locked}>HOLD</div>
       <div className="hero-inscription">
         <div className="hero-inscription__bottom" aria-hidden={!locked}>motion</div>
