@@ -669,12 +669,10 @@ export function startHero(host: HTMLElement): HeroScene {
   window.addEventListener('touchend',   onTouchEnd);
 
   const easeOutCubic = (x: number) => 1 - Math.pow(1 - x, 3);
-  // ease-IN for root growth: barely moves at first, accelerates toward the lock.
-  // Exponent is the tuning knob — higher = deader start + sharper end rush.
-  const GROWTH_EASE = 2.4;
-  // ...but a started tendril POPS to a small stub instantly so the press gives
-  // immediate feedback (roots clear the core glow at once, then ease in).
-  const POP_GROWTH = 0.1;
+  // ease-IN for root growth, but GENTLE: starts at zero the instant you press
+  // (no jump) and grows visibly from the very first frames, accelerating toward
+  // the lock. Exponent is the knob — higher = slower/deader start. 1.0 = linear.
+  const GROWTH_EASE = 1.5;
   const easeInGrow = (x: number) => Math.pow(x, GROWTH_EASE);
 
   // Loop
@@ -742,7 +740,7 @@ export function startHero(host: HTMLElement): HeroScene {
         const local = span > 0.001
           ? Math.max(0, Math.min(1, (charge - (tend.growthStart ?? 0)) / span))
           : 0;
-        tend.growth = local > 0 ? POP_GROWTH + (1 - POP_GROWTH) * easeInGrow(local) : 0;
+        tend.growth = easeInGrow(local);
       } else {
         const parentG = tend.parent!.growth;
         const span = 1 - (tend.branchT ?? 0);
