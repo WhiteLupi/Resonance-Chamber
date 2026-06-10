@@ -141,6 +141,59 @@ function App() {
     };
   }, []);
 
+  // Travelling seal (spec 2026-06-10): the route moves through the empty
+  // spaces in each section. App interpolates section keyframes from scroll
+  // position; glScene smooths the target per frame.
+  useEffect(() => {
+    type Key = { id: string; x: number; y: number; s: number; o: number; r: number };
+    const KEYS: Key[] = [
+      { id: 'hero', x: 50, y: 50, s: 1.00, o: 1.00, r: 0 },
+      { id: 'about', x: 47, y: 38, s: 0.62, o: 0.50, r: 40 },
+      { id: 'skills', x: 60, y: 52, s: 0.85, o: 0.38, r: 85 },
+      { id: 'work', x: 30, y: 50, s: 1.05, o: 0.95, r: 130 },
+      { id: 'contact', x: 52, y: 72, s: 0.52, o: 0.80, r: 170 },
+    ];
+    const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
+    const ease = (t: number) => (t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2);
+
+    const onScroll = () => {
+      const scene = sceneRef.current;
+      if (!scene) return;
+      const mid = window.innerHeight * 0.5;
+      const secs = KEYS
+        .map((k) => ({ k, el: document.getElementById(k.id) }))
+        .filter((s): s is { k: Key; el: HTMLElement } => s.el !== null);
+      for (let i = 0; i < secs.length; i++) {
+        const r = secs[i].el.getBoundingClientRect();
+        const next = secs[i + 1];
+        if (!next) {
+          scene.setJourney(secs[i].k);
+          return;
+        }
+        const nr = next.el.getBoundingClientRect();
+        if (r.top <= mid && nr.top > mid) {
+          const t = ease(Math.min(1, Math.max(0, (mid - r.top) / (nr.top - r.top))));
+          scene.setJourney({
+            x: lerp(secs[i].k.x, next.k.x, t),
+            y: lerp(secs[i].k.y, next.k.y, t),
+            s: lerp(secs[i].k.s, next.k.s, t),
+            o: lerp(secs[i].k.o, next.k.o, t),
+            r: lerp(secs[i].k.r, next.k.r, t),
+          });
+          return;
+        }
+      }
+    };
+
+    onScroll();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', onScroll);
+    return () => {
+      window.removeEventListener('scroll', onScroll);
+      window.removeEventListener('resize', onScroll);
+    };
+  }, []);
+
   return (
     <>
       <div ref={stageRef} className="gl-stage" aria-hidden="true" />
