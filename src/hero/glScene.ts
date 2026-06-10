@@ -23,6 +23,8 @@ const LOCK_THRESHOLD = 0.999;
 // Hold timing: seconds to fully charge while held, and a faster drain on release.
 const HOLD_FILL_S = 2.0;
 const RELEASE_FALL_S = 0.9;
+const STARTUP_QUALITY_S = 1.2;
+const QUALITY_RAMP_S = 0.8;
 
 const HERO_PERF_DEFAULTS = {
   enableBloom: true,
@@ -755,16 +757,31 @@ export function startHero(host: HTMLElement): HeroScene {
   const clock = new THREE.Clock();
   let lastT = clock.getElapsedTime();
   let raf = 0;
+  let perfPhase: 'startup' | 'steady' | 'locked' = 'startup';
+  let qualityRamp = 0;
   // Idle heartbeat — once locked, the engine emits a slow rhythmic ring on
   // its own so the chamber doesn't fall completely silent between user
   // interactions. Triggered after the post-lock announcement ring.
   let nextIdleRingAt = Infinity;
   const IDLE_RING_INTERVAL = 12.5;
+  const settleRenderQuality = () => {
+    setRenderPixelRatio(HERO_PERF.settledPixelRatioCap);
+    const px = renderer.getPixelRatio();
+    for (const m of rootMats) m.resolution.set(viewW * px, viewH * px);
+  };
 
   const loop = () => {
     const t = clock.getElapsedTime();
     const dt = Math.min(0.05, t - lastT);
     lastT = t;
+
+    if (perfPhase === 'startup' && t >= STARTUP_QUALITY_S) {
+      perfPhase = 'steady';
+      settleRenderQuality();
+    }
+    if (perfPhase !== 'startup') {
+      qualityRamp = Math.min(1, qualityRamp + dt / QUALITY_RAMP_S);
+    }
 
     // Journey: lerp toward the App target, then apply camera orbit/dolly and
     // frame offset. The world stays at origin; the camera decides where the
@@ -800,6 +817,8 @@ export function startHero(host: HTMLElement): HeroScene {
     if (!locked && charge >= LOCK_THRESHOLD) {
       charge = 1;
       fireLock();
+      settleRenderQuality();
+      perfPhase = 'locked';
       // Announce activation with one final ring — the engine just turned on.
       triggerRing(t);
       nextIdleRingAt = t + IDLE_RING_INTERVAL;
@@ -989,7 +1008,8 @@ export function startHero(host: HTMLElement): HeroScene {
       r.mat.opacity = rise * fall * 0.55 * sceneVis * jVis;
     }
 
-    if (bloom) bloom.strength = (0.32 + chargeFx * 0.20) * sceneVis * jVis;
+    const startupBloomMul = 0.65 + qualityRamp * 0.35;
+    if (bloom) bloom.strength = (0.32 + chargeFx * 0.20) * startupBloomMul * sceneVis * jVis;
 
     if (cMat) cMat.opacity = 0.95 * sceneVis * jVis;
 
