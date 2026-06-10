@@ -698,29 +698,37 @@
 
 /* === The void — darkness swallows the tendril tips on every edge, so the
    organism dissolves into black at the perimeter while the lit core holds the
-   centre. A compositional device (not blur/glass) that also lets the chrome —
-   navbar, signature, left section marker — read over the bright tendrils. Sits
-   above the canvas, below all chrome (z 4). No blur. The tint eases in on lock
-   (opacity pinned at 1) rather than snapping. */
+   centre. The ragged boundaries are baked alpha textures captured from the
+   original SVG turbulence/displacement filter, so runtime only composites
+   static PNGs and opacity. */
 .edge-void {
   position: fixed;
-  /* Extends only a little past the viewport: enough for the warped perimeter
-     to stay sealed, but narrow enough that side darkness ends around the
-     section-spine/label alignment instead of invading the content field. */
   top: -8vh;
   left: -3vw;
   right: -3vw;
   bottom: -8vh;
   z-index: 4;
   pointer-events: none;
-  /* hard-ish black bands (not a long soft fade) so the turbulence displacement
-     reads as a torn, ragged boundary instead of a smear */
-  background:
-    linear-gradient(to bottom, #000 14%, transparent 22%),
-    linear-gradient(to top,    #000 15%, transparent 23%),
-    linear-gradient(to right,  #000 5.5%, transparent 9%),
-    linear-gradient(to left,   #000 5.5%, transparent 9%);
-  filter: url(#void-warp);
+  background-image:
+    linear-gradient(to bottom, #000 0 8vh, transparent 15vh),
+    linear-gradient(to top, #000 0 8vh, transparent 15vh),
+    linear-gradient(to right, #000 0 3vw, transparent 6vw),
+    linear-gradient(to left, #000 0 3vw, transparent 6vw);
+  background-position:
+    top left,
+    bottom left,
+    top left,
+    top right;
+  background-repeat:
+    no-repeat,
+    no-repeat,
+    no-repeat,
+    no-repeat;
+  background-size:
+    100% 15vh,
+    100% 15vh,
+    6vw 100%,
+    6vw 100%;
   opacity: 0;
   transition: opacity 0.9s ease;
 }
@@ -728,31 +736,90 @@
   opacity: 1;
 }
 
-/* SVG filter holder — no layout. */
-.defs-only {
+.edge-void__edge {
   position: absolute;
-  width: 0;
-  height: 0;
-  overflow: hidden;
+  display: block;
+  pointer-events: none;
+}
+
+.edge-void__edge--top,
+.edge-void__edge--bottom {
+  left: 0;
+  right: 0;
+  height: 220px;
+  background: url('/void-edge-h.png') left top / 1408px 220px repeat-x;
+}
+
+.edge-void__edge--top {
+  top: 0;
+}
+
+.edge-void__edge--bottom {
+  bottom: 0;
+  transform: scaleY(-1);
+}
+
+.edge-void__edge--left,
+.edge-void__edge--right {
+  top: 0;
+  bottom: 0;
+  width: 220px;
+  background: url('/void-edge-v.png') left top / 220px 1408px repeat-y;
+}
+
+.edge-void__edge--left {
+  left: 0;
+}
+
+.edge-void__edge--right {
+  right: 0;
+  transform: scaleX(-1);
 }
 
 /* Darkness at the top of the void — the space above (and behind) the navbar is
    solid black so "motion" slides up INTO it and disappears, never visible
-   passing through the top. Extends beyond the viewport edges so #void-warp can
-   ragged the lower boundary without ever exposing the very top/side edges. Sits
-   above the rising word (z 9), below the navbar. Eases in on lock. */
+   passing through the top. The lower boundary is the baked horizontal void
+   edge; no live filter. */
 .void-ceiling {
   position: fixed;
-  top: -10vh;
+  top: -8vh;
   left: -10vw;
   right: -10vw;
-  height: 42vh;
+  height: 34vh;
   z-index: 9;
   pointer-events: none;
-  /* tighter fade band so the warped lower edge reads as torn, not a smear */
-  background: linear-gradient(to bottom, #000 56%, transparent 76%);
-  filter: url(#void-warp);
+  background-image:
+    linear-gradient(to bottom, #000 0 44%, transparent 70%),
+    url('/void-edge-h.png');
+  background-position:
+    top left,
+    bottom left;
+  background-repeat:
+    no-repeat,
+    repeat-x;
+  background-size:
+    100% 100%,
+    1408px 220px;
   opacity: 0;
   transition: opacity 0.9s ease;
 }
 .void-ceiling--in { opacity: 1; }
+
+@media (max-width: 720px) {
+  .edge-void {
+    display: none;
+  }
+
+  .void-ceiling {
+    top: -6vh;
+    left: -8vw;
+    right: -8vw;
+    height: 20vh;
+    background-image:
+      linear-gradient(to bottom, #000 0 34%, rgba(0, 0, 0, 0.72) 50%, transparent 76%),
+      url('/void-edge-h.png');
+    background-size:
+      100% 100%,
+      1024px 160px;
+  }
+}

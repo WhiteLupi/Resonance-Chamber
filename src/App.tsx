@@ -230,21 +230,15 @@ function App() {
   return (
     <>
       <div ref={stageRef} className="gl-stage" aria-hidden="true" />
-      {/* Organic warp — feTurbulence displaces the void edges (edge frame +
-          ceiling) so the darkness eating the chamber reads as a ragged, alive
-          boundary, not a straight cut. The about text is NOT warped: it emerges
-          whole, by occlusion (mask + rise), never distorted. */}
-      <svg className="defs-only" width="0" height="0" aria-hidden="true">
-        <defs>
-          <filter id="void-warp" x="-40%" y="-40%" width="180%" height="180%">
-            <feTurbulence type="fractalNoise" baseFrequency="0.011 0.018" numOctaves="4" seed="11" result="noise" />
-            <feDisplacementMap in="SourceGraphic" in2="noise" scale="56" xChannelSelector="R" yChannelSelector="G" />
-          </filter>
-        </defs>
-      </svg>
-      <div className={`edge-void${locked ? ' edge-void--in' : ''}`} aria-hidden="true" />
+      <div className={`edge-void${locked ? ' edge-void--in' : ''}`} aria-hidden="true">
+        <span className="edge-void__edge edge-void__edge--top" />
+        <span className="edge-void__edge edge-void__edge--bottom" />
+        <span className="edge-void__edge edge-void__edge--left" />
+        <span className="edge-void__edge edge-void__edge--right" />
+      </div>
       {/* Darkness over the space above the navbar — "motion" slides up into it
-          and vanishes (occlusion, intact), instead of passing through visibly. */}
+          and vanishes by occlusion, intact. The ragged lower edge is a baked
+          alpha texture, not a live SVG filter. */}
       <div className={`void-ceiling${locked ? ' void-ceiling--in' : ''}`} aria-hidden="true" />
       <Atmosphere />
       <ChargeIndicator locked={locked} />

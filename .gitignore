@@ -58,6 +58,8 @@ seals-*.png
 sh-*.png
 transition-*.png
 void-*.png
+!public/void-edge-h.png
+!public/void-edge-v.png
 wide-*.png
 
 # local tooling state
