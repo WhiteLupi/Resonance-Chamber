@@ -45,8 +45,8 @@
    left section spine. */
 .section-eyebrow {
   margin: 0 0 22px;
-  font-size: 10px;
-  letter-spacing: 0.42em;
+  font-size: var(--fs-small);
+  letter-spacing: 0.32em;
   text-transform: uppercase;
   color: rgba(170, 222, 205, 0.82);
   text-shadow: 0 0 14px rgba(122, 196, 175, 0.5);
@@ -62,155 +62,84 @@
   text-shadow: 0 1px 3px rgba(0, 0, 0, 0.7);
 }
 
-/* ============================ THE CRAFT ============================ */
+/* ===== THE CRAFT — band register (spec 2026-06-10) =====
+   Full-bleed: the section has no side padding, rows carry their own padding,
+   and hairlines run edge to edge across the viewport. */
+.craft-section {
+  display: block;
+  padding: var(--sec-pad) 0;
+}
 
-.craft-list {
+.craft-eyebrow {
+  padding: 0 var(--pad);
+}
+
+.craft-register {
   list-style: none;
+  width: 100%;
   margin: 0;
   padding: 0;
 }
 
-.craft-row {
-  position: relative;
-  display: grid;
-  grid-template-columns: auto 1fr auto;
-  align-items: center;
-  gap: 28px;
-  padding: 24px 4px 26px;
-}
-
-/* Ledger hairline above each row — phosphor filament, brightens on hover. */
-.craft-row::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  right: 0;
-  top: 0;
-  height: 1px;
-  background: linear-gradient(
-    to right,
-    transparent,
-    rgba(122, 196, 175, 0.16) 12%,
-    rgba(122, 196, 175, 0.16) 88%,
-    transparent
-  );
+.craft-band {
+  display: flex;
+  align-items: baseline;
+  gap: clamp(14px, 1.8vw, 40px);
+  padding: clamp(14px, 2.6vh, 36px) var(--pad);
+  border-top: 1px solid var(--teal-dim);
   transition: background 0.3s ease;
 }
 
-.craft-row:last-child::after {
-  content: '';
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  height: 1px;
-  background: linear-gradient(
-    to right,
-    transparent,
-    rgba(122, 196, 175, 0.16) 12%,
-    rgba(122, 196, 175, 0.16) 88%,
-    transparent
-  );
+.craft-band:last-child {
+  border-bottom: 1px solid var(--teal-dim);
 }
 
-.craft-row:hover::before {
-  background: linear-gradient(
-    to right,
-    transparent,
-    rgba(122, 196, 175, 0.5) 8%,
-    rgba(122, 196, 175, 0.5) 92%,
-    transparent
-  );
+.craft-band:hover {
+  background: rgba(61, 110, 99, 0.07);
 }
 
-.craft-row__idx {
-  align-self: start;
-  padding-top: 5px;
-  font-size: 11px;
-  letter-spacing: 0.1em;
-  color: var(--fg-faint);
-  transition: color 0.25s ease, text-shadow 0.25s ease;
-}
-
-.craft-row:hover .craft-row__idx {
-  color: var(--accent);
-  text-shadow: 0 0 10px var(--accent-shadow);
-}
-
-.craft-row__name {
-  margin: 0 0 9px;
-  font-weight: 400;
-  font-size: clamp(18px, 2.2vw, 26px);
-  letter-spacing: 0.08em;
-  color: var(--fg-strong);
-  transition: color 0.25s ease, text-shadow 0.25s ease;
-}
-
-.craft-row:hover .craft-row__name {
-  color: var(--accent);
-  text-shadow: 0 0 18px var(--accent-shadow);
-}
-
-.craft-row__desc {
-  margin: 0 0 9px;
-  max-width: 48ch;
-  font-size: 14px;
-  line-height: 1.55;
-  color: var(--fg-soft);
-  transition: color 0.25s ease;
-}
-
-.craft-row:hover .craft-row__desc {
-  color: var(--fg);
-}
-
-.craft-row__tags {
+.craft-band__name {
   margin: 0;
-  font-size: 10.5px;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  color: var(--fg-faint);
+  flex: 0 0 clamp(120px, 17vw, 400px);
+  font-size: var(--fs-band);
+  font-weight: 400;
+  letter-spacing: 0.04em;
+  color: var(--fg-vault);
 }
 
-/* Live spectrum — the band "reading". Surges (grows + brightens) on hover. */
-.craft-eq {
-  display: flex;
-  align-items: flex-end;
-  gap: 3px;
-  width: 124px;
-  height: 40px;
-  opacity: 0.5;
-  transform-origin: bottom;
-  transition: opacity 0.3s ease, transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+.craft-band__desc {
+  margin: 0;
+  max-width: 48ch;
+  font-size: var(--fs-body);
+  line-height: 1.55;
+  color: var(--teal-soft);
 }
 
-.craft-row:hover .craft-eq {
+/* Tags are distant metadata: dimmed to hairline color and pushed right. */
+.craft-band__tags {
+  margin: 0 0 0 auto;
+  font-size: var(--fs-small);
+  letter-spacing: 0.14em;
+  white-space: nowrap;
+  color: var(--teal-dim);
+  transition: color 0.3s ease;
+}
+
+.craft-band:hover .craft-band__tags {
+  color: var(--teal);
+}
+
+/* Placeholder reveal for the later animation pass. */
+.craft-register .craft-band {
+  opacity: 0;
+  translate: 0 14px;
+  transition: opacity 0.5s ease, translate 0.5s ease, background 0.3s ease;
+  transition-delay: calc(var(--i) * 90ms);
+}
+
+.craft-register.is-in .craft-band {
   opacity: 1;
-  transform: scaleY(1.28);
-}
-
-.craft-eq__bar {
-  flex: 1;
-  height: 100%;
-  transform-origin: bottom;
-  transform: scaleY(var(--h, 0.5));
-  border-radius: 1px;
-  background: linear-gradient(
-    to top,
-    rgba(122, 196, 175, 0.22),
-    rgba(122, 196, 175, 0.9)
-  );
-  box-shadow: 0 0 4px rgba(122, 196, 175, 0.22);
-  animation-name: eq-pulse;
-  animation-timing-function: ease-in-out;
-  animation-iteration-count: infinite;
-  animation-direction: alternate;
-  will-change: transform;
-}
-
-@keyframes eq-pulse {
-  from { transform: scaleY(calc(var(--h, 0.5) * 0.26)); }
-  to   { transform: scaleY(var(--h, 0.5)); }
+  translate: 0 0;
 }
 
 /* ============================ THE CHANNEL ============================ */
@@ -341,24 +270,6 @@
 
 /* ============================ reveal on scroll ============================ */
 
-.craft-inner .section-eyebrow,
-.craft-inner .section-heading,
-.craft-inner .craft-row {
-  opacity: 0;
-  transform: translateY(18px);
-  transition:
-    opacity 0.8s ease,
-    transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
-}
-
-.craft-inner.is-in .section-eyebrow { opacity: 1; transform: none; transition-delay: 0s; }
-.craft-inner.is-in .section-heading { opacity: 1; transform: none; transition-delay: 0.08s; }
-.craft-inner.is-in .craft-row {
-  opacity: 1;
-  transform: none;
-  transition-delay: calc(0.18s + var(--i) * 0.09s);
-}
-
 .channel-inner > * {
   opacity: 0;
   transform: translateY(20px);
@@ -379,19 +290,29 @@
 @media (max-width: 720px) {
   .section { padding: 96px 24px; }
   .section-heading { margin-bottom: 40px; }
-  .craft-row { grid-template-columns: auto 1fr; gap: 16px; }
-  .craft-eq { display: none; }
   .channel-nodes { gap: 18px; }
 }
 
+@media (max-width: 760px) {
+  .craft-band {
+    flex-wrap: wrap;
+    row-gap: 6px;
+  }
+  .craft-band__name {
+    flex: 0 0 100%;
+  }
+  .craft-band__tags {
+    margin-left: 0;
+    white-space: normal;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .craft-eq__bar { animation: none; transform: scaleY(var(--h, 0.5)); }
   .channel-status__dot { animation: none; }
-  .craft-inner .section-eyebrow,
-  .craft-inner .section-heading,
-  .craft-inner .craft-row,
+  .craft-register .craft-band,
   .channel-inner > * {
     transition: opacity 0.4s ease;
     transform: none;
+    translate: 0 0;
   }
 }
