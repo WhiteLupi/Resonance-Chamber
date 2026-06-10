@@ -36,6 +36,25 @@
   --accent-high: rgb(122, 196, 175);
   --accent: color-mix(in srgb, var(--accent-low), var(--accent-high) calc(var(--dim, 0) * 100%));
   --accent-shadow: color-mix(in srgb, rgba(61, 110, 99, 0.5), rgba(122, 196, 175, 0.7) calc(var(--dim, 0) * 100%));
+
+  /* ===== Fluid world tokens (spec 2026-06-10) =====
+     Wszystko płynne przez clamp(); sufity rosną aż do ~2000px szerokości
+     okna. Miara wiersza prozy ograniczona globalnie — szerokość wypełnia
+     kompozycja (kolumny, seal), nigdy rozciągnięty tekst. */
+  --pad: clamp(14px, 2vw, 56px);          /* boczny padding — małe przestrzenie */
+  --fs-hero: clamp(56px, 10vw, 224px);    /* TYLKO słowo "motion" (Boldonse);
+                                             hero zostaje jak jest — token czeka
+                                             na kalibrację w cockpit.css */
+  --fs-title: clamp(26px, 3.4vw, 74px);   /* tytuły sekcji */
+  --fs-band: clamp(20px, 2.8vw, 58px);    /* nazwy pasm THE CRAFT, tytuł Work */
+  --fs-body: clamp(15px, 0.6vw + 10px, 23px);
+  --fs-small: clamp(11px, 0.4vw + 7px, 15px);
+  --gap-fluid: clamp(18px, 3vw, 72px);
+  --sec-pad: clamp(56px, 9vh, 150px);
+  --measure: 56ch;
+  --teal: #3d6e63;
+  --teal-soft: #7da99e;
+  --teal-dim: #28463f;
 }
 
 * {
