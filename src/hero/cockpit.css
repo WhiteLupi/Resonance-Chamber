@@ -709,26 +709,6 @@
   bottom: -8vh;
   z-index: 4;
   pointer-events: none;
-  background-image:
-    linear-gradient(to bottom, #000 0 8vh, transparent 15vh),
-    linear-gradient(to top, #000 0 8vh, transparent 15vh),
-    linear-gradient(to right, #000 0 3vw, transparent 6vw),
-    linear-gradient(to left, #000 0 3vw, transparent 6vw);
-  background-position:
-    top left,
-    bottom left,
-    top left,
-    top right;
-  background-repeat:
-    no-repeat,
-    no-repeat,
-    no-repeat,
-    no-repeat;
-  background-size:
-    100% 15vh,
-    100% 15vh,
-    6vw 100%,
-    6vw 100%;
   opacity: 0;
   transition: opacity 0.9s ease;
 }
@@ -742,12 +722,17 @@
   pointer-events: none;
 }
 
+/* Baked tile: 2048×240, solid black for the first ~100px, torn over the next
+   ~110px. A plain solid strip backs the overscan + the tile's solid head, so
+   no soft gradient ever shows — black stays black up to the ragged boundary. */
 .edge-void__edge--top,
 .edge-void__edge--bottom {
   left: 0;
   right: 0;
-  height: 220px;
-  background: url('/void-edge-h.png') left top / 1408px 220px repeat-x;
+  height: 300px;
+  background:
+    linear-gradient(#000, #000) left top / 100% 60px no-repeat,
+    url('/void-edge-h.png') left 40px / 2048px 240px repeat-x;
 }
 
 .edge-void__edge--top {
@@ -759,12 +744,17 @@
   transform: scaleY(-1);
 }
 
+/* Sides hug the viewport edge tighter than the horizontal bands — the torn
+   zone must end before the content-safe padding (~55px) so it only grazes
+   the about column with outer wisps, like the original live filter did. */
 .edge-void__edge--left,
 .edge-void__edge--right {
   top: 0;
   bottom: 0;
-  width: 220px;
-  background: url('/void-edge-v.png') left top / 220px 1408px repeat-y;
+  width: 200px;
+  background:
+    linear-gradient(#000, #000) left top / 24px 100% no-repeat,
+    url('/void-edge-v.png') left top / 200px 2048px repeat-y;
 }
 
 .edge-void__edge--left {
@@ -782,24 +772,17 @@
    edge; no live filter. */
 .void-ceiling {
   position: fixed;
-  top: -8vh;
+  top: -10vh;
   left: -10vw;
   right: -10vw;
-  height: 34vh;
+  height: 42vh;
   z-index: 9;
   pointer-events: none;
-  background-image:
-    linear-gradient(to bottom, #000 0 44%, transparent 70%),
-    url('/void-edge-h.png');
-  background-position:
-    top left,
-    bottom left;
-  background-repeat:
-    no-repeat,
-    repeat-x;
-  background-size:
-    100% 100%,
-    1408px 220px;
+  /* solid black down to the baked torn band — the word is occluded by SOLID
+     darkness, never seen through a translucent haze */
+  background:
+    linear-gradient(#000, #000) left top / 100% calc(100% - 180px) no-repeat,
+    url('/void-edge-h.png') left bottom / 2048px 240px repeat-x;
   opacity: 0;
   transition: opacity 0.9s ease;
 }
@@ -815,11 +798,8 @@
     left: -8vw;
     right: -8vw;
     height: 20vh;
-    background-image:
-      linear-gradient(to bottom, #000 0 34%, rgba(0, 0, 0, 0.72) 50%, transparent 76%),
-      url('/void-edge-h.png');
-    background-size:
-      100% 100%,
-      1024px 160px;
+    background:
+      linear-gradient(#000, #000) left top / 100% calc(100% - 80px) no-repeat,
+      url('/void-edge-h.png') left bottom / 1024px 120px repeat-x;
   }
 }
