@@ -83,7 +83,7 @@
 }
 
 .craft-eyebrow {
-  padding: 0 var(--pad);
+  padding: 0 max(var(--pad), calc(var(--content-safe-pad) + 10px));
 }
 
 .craft-register {
@@ -97,7 +97,7 @@
   display: flex;
   align-items: baseline;
   gap: clamp(14px, 1.8vw, 40px);
-  padding: clamp(14px, 2.6vh, 36px) var(--pad);
+  padding: clamp(16px, 2.8vh, 38px) max(var(--pad), calc(var(--content-safe-pad) + 10px));
   border-top: 1px solid var(--teal-dim);
   transition: background 0.3s ease;
 }
