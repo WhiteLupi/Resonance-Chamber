@@ -77,29 +77,41 @@ function App() {
 
   // Mouse parallax — sets --mx / --my (-0.5 .. 0.5) on document root. The
   // inscription wrap reads these via CSS `translate` to drift opposite the
-  // cursor; CSS transition (0.16s) provides damping so no JS smoothing needed.
+  // cursor. We smooth and quantize here so rapid mousemove bursts do not restart
+  // CSS transitions every frame while the GL scene is also rotating.
   useEffect(() => {
     const root = document.documentElement;
     let raf = 0;
-    let nextMx = 0;
-    let nextMy = 0;
+    let targetMx = 0;
+    let targetMy = 0;
+    let curMx = 0;
+    let curMy = 0;
+    let lastMx = 0;
+    let lastMy = 0;
     const flush = () => {
-      raf = 0;
-      root.style.setProperty('--mx', nextMx.toFixed(4));
-      root.style.setProperty('--my', nextMy.toFixed(4));
+      curMx += (targetMx - curMx) * 0.12;
+      curMy += (targetMy - curMy) * 0.12;
+      if (Math.abs(curMx - lastMx) > 0.003 || Math.abs(curMy - lastMy) > 0.003) {
+        lastMx = curMx;
+        lastMy = curMy;
+        root.style.setProperty('--mx', curMx.toFixed(3));
+        root.style.setProperty('--my', curMy.toFixed(3));
+      }
+      if (Math.abs(targetMx - curMx) > 0.004 || Math.abs(targetMy - curMy) > 0.004) {
+        raf = requestAnimationFrame(flush);
+      } else {
+        raf = 0;
+      }
     };
     const onMove = (e: MouseEvent) => {
-      nextMx = (e.clientX / window.innerWidth) - 0.5;
-      nextMy = (e.clientY / window.innerHeight) - 0.5;
+      targetMx = (e.clientX / window.innerWidth) - 0.5;
+      targetMy = (e.clientY / window.innerHeight) - 0.5;
       if (!raf) raf = requestAnimationFrame(flush);
     };
     const onLeave = () => {
-      nextMx = 0;
-      nextMy = 0;
-      if (!raf) {
-        root.style.setProperty('--mx', '0');
-        root.style.setProperty('--my', '0');
-      }
+      targetMx = 0;
+      targetMy = 0;
+      if (!raf) raf = requestAnimationFrame(flush);
     };
     window.addEventListener('mousemove', onMove, { passive: true });
     document.addEventListener('mouseleave', onLeave);

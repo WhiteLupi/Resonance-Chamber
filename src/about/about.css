@@ -85,7 +85,7 @@
   position: relative;
   z-index: 2;
   width: 100%;
-  max-width: min(52ch, 100% - clamp(16px, 3vw, 40px));
+  max-width: min(52ch, 100% - clamp(8px, 2vw, 28px));
   display: flex;
   flex-direction: column;
   gap: clamp(28px, 3.2vh, 42px);
@@ -138,8 +138,9 @@
   --p-end: 0.86;
   --t: clamp(0, calc((var(--p, 0) - var(--p-start)) / (var(--p-end) - var(--p-start))), 1);
   overflow: clip;
-  /* slight padding so descenders (g, p, y) don't get truncated by the clip */
-  padding-bottom: 0.15em;
+  /* Internal mask breathing room keeps descenders/diacritics intact without
+     increasing the outer chamber padding. */
+  padding-block: 0.06em 0.28em;
 }
 .inscription__line[data-line="1"] { --p-start: 0.83; --p-end: 0.91; }
 .inscription__line[data-line="2"] { --p-start: 0.88; --p-end: 0.96; }
@@ -147,7 +148,7 @@
 .inscription__copy {
   display: inline-block;
   font-size: clamp(19px, 2.35vw, 27px);
-  line-height: 1.55;
+  line-height: 1.58;
   letter-spacing: 0.005em;
   color: var(--fg);
   /* Light crisping shadow; the dark box (.inscription::after) does the heavy

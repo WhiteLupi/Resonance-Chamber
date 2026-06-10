@@ -31,10 +31,12 @@ type HeroQualityTier = 'full' | 'balanced' | 'safe';
 const HERO_TIER_SETTINGS: Record<HeroQualityTier, {
   startupCapMax: number;
   settledCapMax: number;
+  parallaxScale: number;
   bloomScale: number;
   pulseScale: number;
   cometTrailScale: number;
   cometOpacity: number;
+  cometUpdateStep: number;
   idleRings: boolean;
   sonarOpacity: number;
   rootUpdateStep: number;
@@ -42,34 +44,40 @@ const HERO_TIER_SETTINGS: Record<HeroQualityTier, {
   full: {
     startupCapMax: 1.0,
     settledCapMax: 1.2,
+    parallaxScale: 1,
     bloomScale: 1,
     pulseScale: 1,
     cometTrailScale: 1,
     cometOpacity: 0.95,
+    cometUpdateStep: 1,
     idleRings: true,
     sonarOpacity: 1,
     rootUpdateStep: 1,
   },
   balanced: {
     startupCapMax: 1.0,
-    settledCapMax: 1.08,
-    bloomScale: 0.8,
-    pulseScale: 0.9,
-    cometTrailScale: 0.72,
-    cometOpacity: 0.72,
+    settledCapMax: 0.9,
+    parallaxScale: 0.42,
+    bloomScale: 0.7,
+    pulseScale: 0.82,
+    cometTrailScale: 0.48,
+    cometOpacity: 0.62,
+    cometUpdateStep: 2,
     idleRings: false,
-    sonarOpacity: 0.82,
-    rootUpdateStep: 1,
+    sonarOpacity: 0.76,
+    rootUpdateStep: 2,
   },
   safe: {
-    startupCapMax: 0.9,
-    settledCapMax: 1.0,
-    bloomScale: 0.45,
-    pulseScale: 0.7,
+    startupCapMax: 0.76,
+    settledCapMax: 0.82,
+    parallaxScale: 0,
+    bloomScale: 0.38,
+    pulseScale: 0.62,
     cometTrailScale: 0,
     cometOpacity: 0,
+    cometUpdateStep: 0,
     idleRings: false,
-    sonarOpacity: 0.55,
+    sonarOpacity: 0.48,
     rootUpdateStep: 2,
   },
 };
@@ -778,9 +786,9 @@ export function startHero(host: HTMLElement): HeroScene {
   const CAM_DIST = 9.0;
   const journeyTarget: Journey = { x: 50, y: 50, s: 1, o: 1, r: 0 };
   const journeyCur: Journey = { x: 50, y: 50, s: 1, o: 1, r: 0 };
-  const J_LERP = 0.08;
-  const CAMERA_EPS = 0.001;
-  const VIEW_OFFSET_EPS = 0.1;
+  const J_LERP = 0.07;
+  const CAMERA_EPS = 0.0025;
+  const VIEW_OFFSET_EPS = 0.35;
   const cameraApplied = { x: NaN, y: NaN, s: NaN, r: NaN, w: 0, h: 0 };
   let cameraDirty = true;
   // Roots dim far less than the core/bloom — they stay alive behind the about
@@ -985,13 +993,22 @@ export function startHero(host: HTMLElement): HeroScene {
 
     // Parallax — outerGroup deeper than tetraGroup. Kept subtle: mouse should
     // nudge the view, not swing the whole figure into unflattering edge-on angles.
-    if (HERO_PERF.enableParallax) {
-      parallaxX += (mouseX - parallaxX) * 0.08;
-      parallaxY += (mouseY - parallaxY) * 0.08;
-      outerGroup.rotation.y =  parallaxX * 0.16;
-      outerGroup.rotation.x = -parallaxY * 0.12;
-      tetraGroup.rotation.y =  parallaxX * 0.05;
-      tetraGroup.rotation.x = -parallaxY * 0.04;
+    if (HERO_PERF.enableParallax && tier.parallaxScale > 0) {
+      const parallaxScale = tier.parallaxScale;
+      const parallaxLerp = 0.035 + parallaxScale * 0.025;
+      parallaxX += (mouseX - parallaxX) * parallaxLerp;
+      parallaxY += (mouseY - parallaxY) * parallaxLerp;
+      outerGroup.rotation.y =  parallaxX * 0.16 * parallaxScale;
+      outerGroup.rotation.x = -parallaxY * 0.12 * parallaxScale;
+      tetraGroup.rotation.y =  parallaxX * 0.05 * parallaxScale;
+      tetraGroup.rotation.x = -parallaxY * 0.04 * parallaxScale;
+    } else {
+      parallaxX *= 0.88;
+      parallaxY *= 0.88;
+      outerGroup.rotation.y *= 0.88;
+      outerGroup.rotation.x *= 0.88;
+      tetraGroup.rotation.y *= 0.88;
+      tetraGroup.rotation.x *= 0.88;
     }
 
     // Roots breathe with a slow BOUNDED turn (±~9°) instead of a continuous spin —
@@ -1074,18 +1091,27 @@ export function startHero(host: HTMLElement): HeroScene {
     // Comets — pre-lock: speed scales with charge (slow → fast streaks). Post-
     // lock: speed decouples and stays at idle drift even though charge is 1.
     let pullX = 0, pullY = 0, pullZ = 0;
-    if (HERO_PERF.enableComets && cGeo && tier.cometTrailScale > 0) {
+    if (
+      HERO_PERF.enableComets
+      && cGeo
+      && tier.cometTrailScale > 0
+      && tier.cometUpdateStep > 0
+      && frameCount % tier.cometUpdateStep === 0
+    ) {
       const cometSpeedMul = locked ? 0.35 : 0.35 + charge * 3.2;
+      const cometDt = Math.min(dt, 0.022);
+      const pointerMotion = Math.min(1, (Math.abs(mouseX - parallaxX) + Math.abs(mouseY - parallaxY)) * 1.8);
+      const trailMotionDamp = 1 - pointerMotion * 0.55;
       const cPosAttr = cGeo.attributes.position.array as Float32Array;
       for (let i = 0; i < COMET_COUNT; i++) {
-        cPhase[i] += cBaseSpeed[i] * cometSpeedMul * dt;
+        cPhase[i] += cBaseSpeed[i] * cometSpeedMul * cometDt * tier.cometUpdateStep;
         const cs = Math.cos(cPhase[i]) * cRadius[i];
         const sn = Math.sin(cPhase[i]) * cRadius[i];
         const tx_ = cs * cuX[i] + sn * cvX[i];
         const ty_ = cs * cuY[i] + sn * cvY[i];
         const tz_ = cs * cuZ[i] + sn * cvZ[i];
 
-        const lr = Math.min(1, dt * 14);
+        const lr = Math.min(1, cometDt * 14 * tier.cometUpdateStep);
         const px = cPrevX[i] + (tx_ - cPrevX[i]) * lr;
         const py = cPrevY[i] + (ty_ - cPrevY[i]) * lr;
         const pz = cPrevZ[i] + (tz_ - cPrevZ[i]) * lr;
@@ -1095,7 +1121,7 @@ export function startHero(host: HTMLElement): HeroScene {
         const dz = pz - cPrevZ[i];
         const sp = Math.sqrt(dx*dx + dy*dy + dz*dz);
 
-        const trail = Math.min(0.82 * tier.cometTrailScale, sp * 24 * tier.cometTrailScale);
+        const trail = Math.min(0.46 * tier.cometTrailScale, sp * 16 * tier.cometTrailScale) * trailMotionDamp;
         const inv = sp > 0.00001 ? 1 / sp : 0;
         cPosAttr[i*6 + 0] = px - dx * inv * trail;
         cPosAttr[i*6 + 1] = py - dy * inv * trail;

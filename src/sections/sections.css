@@ -11,7 +11,7 @@
   min-height: 100vh;
   display: grid;
   place-items: center;
-  padding: 120px max(64px, var(--content-safe-pad));
+  padding: 112px max(54px, var(--content-safe-pad));
   font-family: 'Syne Mono', ui-monospace, monospace;
   color: var(--fg);
   background: transparent;
@@ -384,7 +384,7 @@
 /* ============================ responsive ============================ */
 
 @media (max-width: 720px) {
-  .section { padding: 96px 24px; }
+  .section { padding: 88px 22px; }
   .section-heading { margin-bottom: 40px; }
   .channel-nodes { gap: 18px; }
 }

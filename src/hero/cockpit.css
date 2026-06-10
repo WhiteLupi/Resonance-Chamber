@@ -21,8 +21,7 @@
   inset: 0;
   z-index: 8;
   pointer-events: none;
-  translate: calc(var(--mx, 0) * -22px) calc(var(--my, 0) * -14px);
-  transition: translate 0.16s cubic-bezier(0.2, 0.8, 0.2, 1);
+  translate: calc(var(--mx, 0) * -12px) calc(var(--my, 0) * -8px);
   will-change: translate;
 }
 
@@ -705,12 +704,13 @@
    (opacity pinned at 1) rather than snapping. */
 .edge-void {
   position: fixed;
-  /* extends well past the viewport so #void-warp (big scale) can rag the INNER
-     edge without ever exposing the screen perimeter */
-  top: -10vh;
-  left: -10vw;
-  right: -10vw;
-  bottom: -10vh;
+  /* Extends only a little past the viewport: enough for the warped perimeter
+     to stay sealed, but narrow enough that side darkness ends around the
+     section-spine/label alignment instead of invading the content field. */
+  top: -8vh;
+  left: -3vw;
+  right: -3vw;
+  bottom: -8vh;
   z-index: 4;
   pointer-events: none;
   /* hard-ish black bands (not a long soft fade) so the turbulence displacement
@@ -718,8 +718,8 @@
   background:
     linear-gradient(to bottom, #000 14%, transparent 22%),
     linear-gradient(to top,    #000 15%, transparent 23%),
-    linear-gradient(to right,  #000 11%, transparent 18%),
-    linear-gradient(to left,   #000 11%, transparent 18%);
+    linear-gradient(to right,  #000 5.5%, transparent 9%),
+    linear-gradient(to left,   #000 5.5%, transparent 9%);
   filter: url(#void-warp);
   opacity: 0;
   transition: opacity 0.9s ease;
@@ -756,4 +756,3 @@
   transition: opacity 0.9s ease;
 }
 .void-ceiling--in { opacity: 1; }
-
