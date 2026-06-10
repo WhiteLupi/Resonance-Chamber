@@ -717,9 +717,17 @@ export function startHero(host: HTMLElement): HeroScene {
   const journeyTarget: Journey = { x: 50, y: 50, s: 1, o: 1, r: 0 };
   const journeyCur: Journey = { x: 50, y: 50, s: 1, o: 1, r: 0 };
   const J_LERP = 0.08;
+  const CAMERA_EPS = 0.001;
+  const VIEW_OFFSET_EPS = 0.1;
+  const cameraApplied = { x: NaN, y: NaN, s: NaN, r: NaN, w: 0, h: 0 };
+  let cameraDirty = true;
   // Roots dim far less than the core/bloom — they stay alive behind the about
   // text rather than fading to a ghost (driven alongside sceneVis in setProgress).
   let rootsVis = 1.0;
+  const rootBaseColor = new THREE.Color(BASE_COLOR);
+  const rootAccentColor = new THREE.Color(ACCENT);
+  const rootTintColor = new THREE.Color(BASE_COLOR);
+  let lastRootTint = BASE_COLOR;
 
   const onMouseMove = (e: MouseEvent) => {
     mouseX = (e.clientX / viewW) * 2 - 1;
@@ -791,17 +799,33 @@ export function startHero(host: HTMLElement): HeroScene {
     journeyCur.s += (journeyTarget.s - journeyCur.s) * J_LERP;
     journeyCur.o += (journeyTarget.o - journeyCur.o) * J_LERP;
     journeyCur.r += (journeyTarget.r - journeyCur.r) * J_LERP;
-    const jRad = (journeyCur.r * Math.PI) / 180;
-    const jDist = CAM_DIST / journeyCur.s;
-    camera.position.set(Math.sin(jRad) * jDist, 0, Math.cos(jRad) * jDist);
-    camera.lookAt(0, 0, 0);
-    camera.setViewOffset(
-      viewW, viewH,
-      ((journeyCur.x - 50) / 100) * -viewW,
-      ((journeyCur.y - 50) / 100) * -viewH,
-      viewW, viewH,
-    );
-    camera.updateProjectionMatrix();
+    const cameraNeedsUpdate = cameraDirty
+      || Math.abs(journeyCur.x - cameraApplied.x) > VIEW_OFFSET_EPS
+      || Math.abs(journeyCur.y - cameraApplied.y) > VIEW_OFFSET_EPS
+      || Math.abs(journeyCur.s - cameraApplied.s) > CAMERA_EPS
+      || Math.abs(journeyCur.r - cameraApplied.r) > CAMERA_EPS
+      || viewW !== cameraApplied.w
+      || viewH !== cameraApplied.h;
+    if (cameraNeedsUpdate) {
+      const jRad = (journeyCur.r * Math.PI) / 180;
+      const jDist = CAM_DIST / journeyCur.s;
+      camera.position.set(Math.sin(jRad) * jDist, 0, Math.cos(jRad) * jDist);
+      camera.lookAt(0, 0, 0);
+      camera.setViewOffset(
+        viewW, viewH,
+        ((journeyCur.x - 50) / 100) * -viewW,
+        ((journeyCur.y - 50) / 100) * -viewH,
+        viewW, viewH,
+      );
+      camera.updateProjectionMatrix();
+      cameraApplied.x = journeyCur.x;
+      cameraApplied.y = journeyCur.y;
+      cameraApplied.s = journeyCur.s;
+      cameraApplied.r = journeyCur.r;
+      cameraApplied.w = viewW;
+      cameraApplied.h = viewH;
+      cameraDirty = false;
+    }
     const jVis = journeyCur.o;
 
     // Charge ramps LINEARLY in time while held — the ring fills at a steady
@@ -1014,15 +1038,16 @@ export function startHero(host: HTMLElement): HeroScene {
     if (cMat) cMat.opacity = 0.95 * sceneVis * jVis;
 
     const tintTarget = charge > 0.01
-      ? new THREE.Color(BASE_COLOR).lerp(new THREE.Color(ACCENT), charge * 0.4).getHex()
+      ? rootTintColor.copy(rootBaseColor).lerp(rootAccentColor, charge * 0.4).getHex()
       : BASE_COLOR;
     for (const m of rootMats) {
-      m.color.setHex(tintTarget);
+      if (tintTarget !== lastRootTint) m.color.setHex(tintTarget);
       // Roots use rootsVis (high floor) not sceneVis — the tendrils stay alive
       // behind the about text instead of fading to a pale ghost. Only the core /
       // bloom / halo dim hard (they're what washes the text out).
       m.opacity = (rootBaseOpacity.get(m) ?? 0.8) * rootsVis * (0.05 + 0.95 * jVis);
     }
+    lastRootTint = tintTarget;
 
     if (composer) {
       composer.render();
@@ -1040,6 +1065,7 @@ export function startHero(host: HTMLElement): HeroScene {
     composer?.setSize(viewW, viewH);
     bloom?.setSize(viewW, viewH);
     camera.aspect = viewW / viewH;
+    cameraDirty = true;
     camera.updateProjectionMatrix();
     const px = renderer.getPixelRatio();
     for (const m of rootMats) m.resolution.set(viewW * px, viewH * px);
