@@ -28,9 +28,9 @@ export function Contact() {
       >
         <p className="section-eyebrow">— THE CHANNEL</p>
         <h2 className="channel-headline">
-          Let&rsquo;s make
+          Need something
           <br />
-          something move.
+          clearer, stranger, or more alive.
         </h2>
 
         <a className="channel-cta" href="mailto:hello@kasiawalter.dev">
@@ -53,7 +53,7 @@ export function Contact() {
 
         <p className="channel-status" aria-hidden="true">
           <span className="channel-status__dot" />
-          transmission open
+          open to thoughtful product and frontend work
         </p>
       </div>
     </section>

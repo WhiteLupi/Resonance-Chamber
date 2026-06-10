@@ -23,13 +23,42 @@ dist-ssr
 *.sln
 *.sw?
 
-# debug screenshots from particle iterations
+# debug screenshots / explorations
 step*.png
 font-*.png
 hero-*.png
 intro-*.png
 nav-*.png
 !hero-aligned-bottom.png
+
+# local visual explorations dumped in repo root
+about-*.png
+app-*.png
+edge-*.png
+emerge-*.png
+flex-*.png
+fontpick-*.png
+fp-*.png
+hold-*.png
+locked-*.png
+m2-*.png
+marker-variants.png
+mo2-*.png
+mo3-*.png
+mo4-*.png
+mo5-*.png
+mo6-*.png
+mo7-*.png
+mono-*.png
+motion-*.png
+prelock-*.png
+review-*.png
+roots-*.png
+seals-*.png
+sh-*.png
+transition-*.png
+void-*.png
+wide-*.png
 
 # local tooling state
 .claude/

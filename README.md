@@ -1,73 +1,92 @@
-# React + TypeScript + Vite
+# Kasia Walter — portfolio
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Art-first portfolio built with React, TypeScript, Vite and Three.js.
 
-Currently, two official plugins are available:
+This project is not meant to read like a generic hiring template.
+Its center is motion, atmosphere, taste and a strong visual voice.
+The goal is to make the site feel like a small interactive piece, not just a list of skills.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Current direction
 
-## React Compiler
+The strongest part of the project is the opening sequence:
+- dark void / chamber atmosphere
+- luminous teal signal
+- living engine / seal energy
+- motion as the central theme
+- slow, intentional reveal
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+The rest of the site should feel like a continuation of that same instrument.
+Not “hero is special, then normal website”.
 
-## Expanding the ESLint configuration
+## Creative rules
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+Keep:
+- art-first presentation
+- strong motion language
+- black + phosphor teal palette
+- controlled, deliberate typography
+- sense of atmosphere, signal, tuning, resonance
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+Avoid:
+- generic SaaS portfolio patterns
+- glassmorphism UI for the sake of trendiness
+- random extra sections with weaker visual quality
+- text that sounds like default personal-brand copy
+- breaking the spell after hero/about
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+## Experience goals
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+The site should feel:
+- artistic
+- atmospheric
+- cohesive
+- memorable
+- slightly mysterious
+- carefully designed, not overfilled
+
+## Structure
+
+- `src/hero/*` — opening scene, lock/reveal, signal language
+- `src/about/*` — manifesto / personal voice
+- `src/sections/*` — later sections like Skills and Contact
+- `notes/*` — working design notes and decision log
+- `public/*` — experiments / support pages
+
+## Design notes
+
+Useful internal notes:
+- `notes/hero-design-progress.md`
+- `notes/2026-05-27-portfolio-session.md`
+- `notes/deferred-ideas.md`
+
+## Current priorities
+
+1. Keep the whole site visually consistent with hero/about
+2. Strengthen `Skills` and `Contact` so they feel authored, not filler
+3. Preserve the artistic voice while keeping the portfolio readable
+4. Clean documentation and process notes so returning to the project is easy
+
+## Local development
+
+```bash
+npm install
+npm run dev
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## Build
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+npm run build
+npm run preview
 ```
+
+## Working style for future sessions
+
+Best workflow for this project:
+1. Start from a visual or emotional idea
+2. Decide whether it changes motion, layout, typography, copy or atmosphere
+3. Keep changes aligned with the art-first direction
+4. Test whether the new section still belongs to the same world as hero/about
+
+Short version:
+this portfolio should feel like one composed piece, not a beautiful intro plus ordinary sections.

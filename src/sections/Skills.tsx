@@ -15,28 +15,28 @@ type Band = {
 const BANDS: Band[] = [
   {
     name: 'MOTION',
-    desc: 'Browser animation tuned until the sound in my head resolves.',
+    desc: 'Animation used as meaning: pacing, tension, feedback, and release.',
     tags: 'webgl · glsl · scroll choreography',
   },
   {
     name: 'INTERFACE',
-    desc: 'React apps for the quieter briefs — built to feel inevitable.',
+    desc: 'React systems that stay clear under real product constraints.',
     tags: 'react · typescript · design systems',
   },
   {
-    name: 'REAL-TIME',
-    desc: 'Light, particles and fields, all running at frame rate.',
-    tags: 'three.js · shaders · generative',
+    name: 'INTERACTION',
+    desc: 'Micro-signals that reduce friction and make intent legible.',
+    tags: 'gesture · easing · states · polish',
   },
   {
-    name: 'INTERACTION',
-    desc: 'The micro-detail: cursor, feedback, the half-second that sells it.',
-    tags: 'gesture · easing · obsessive polish',
+    name: 'REPAIR',
+    desc: 'Finding what feels off, then tightening flow, structure, and experience.',
+    tags: 'debugging · refinement · UX friction',
   },
   {
     name: 'DIRECTION',
-    desc: 'A layer above the code — AI does the typing, the taste is mine.',
-    tags: 'taste · judgement · systems thinking',
+    desc: 'Using AI agents without giving away authorship, taste, or the final call.',
+    tags: 'ai workflows · judgement · systems thinking',
   },
 ];
 
@@ -59,7 +59,7 @@ export function Skills() {
       >
         <p className="section-eyebrow">— THE CRAFT</p>
         <h2 className="section-heading">
-          One instrument,
+          Frontend as medium,
           <br />
           tuned across five bands.
         </h2>
