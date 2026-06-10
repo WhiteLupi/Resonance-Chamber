@@ -80,19 +80,31 @@ function App() {
   // cursor; CSS transition (0.16s) provides damping so no JS smoothing needed.
   useEffect(() => {
     const root = document.documentElement;
+    let raf = 0;
+    let nextMx = 0;
+    let nextMy = 0;
+    const flush = () => {
+      raf = 0;
+      root.style.setProperty('--mx', nextMx.toFixed(4));
+      root.style.setProperty('--my', nextMy.toFixed(4));
+    };
     const onMove = (e: MouseEvent) => {
-      const mx = (e.clientX / window.innerWidth) - 0.5;
-      const my = (e.clientY / window.innerHeight) - 0.5;
-      root.style.setProperty('--mx', mx.toFixed(4));
-      root.style.setProperty('--my', my.toFixed(4));
+      nextMx = (e.clientX / window.innerWidth) - 0.5;
+      nextMy = (e.clientY / window.innerHeight) - 0.5;
+      if (!raf) raf = requestAnimationFrame(flush);
     };
     const onLeave = () => {
-      root.style.setProperty('--mx', '0');
-      root.style.setProperty('--my', '0');
+      nextMx = 0;
+      nextMy = 0;
+      if (!raf) {
+        root.style.setProperty('--mx', '0');
+        root.style.setProperty('--my', '0');
+      }
     };
     window.addEventListener('mousemove', onMove, { passive: true });
     document.addEventListener('mouseleave', onLeave);
     return () => {
+      cancelAnimationFrame(raf);
       window.removeEventListener('mousemove', onMove);
       document.removeEventListener('mouseleave', onLeave);
     };

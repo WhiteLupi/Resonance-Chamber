@@ -251,29 +251,29 @@
   position: absolute;
   top: -10%;
   height: 130%;
-  width: 96px;
+  width: 72px;
   pointer-events: none;
-  filter: blur(14px);
+  filter: blur(12px);
   will-change: opacity;
 }
 
 .atmosphere__shaft--l {
-  left: 12%;
+  left: 6%;
   background: linear-gradient(15deg,
-    transparent 30%,
-    rgba(122, 196, 175, 0.18) 50%,
-    transparent 70%);
-  rotate: -6deg;
+    transparent 34%,
+    rgba(122, 196, 175, 0.11) 50%,
+    transparent 66%);
+  rotate: -5deg;
   animation: shaft-breathe 14s ease-in-out infinite;
 }
 
 .atmosphere__shaft--r {
-  right: 12%;
+  right: 6%;
   background: linear-gradient(-15deg,
-    transparent 30%,
-    rgba(122, 196, 175, 0.14) 50%,
-    transparent 70%);
-  rotate: 6deg;
+    transparent 34%,
+    rgba(122, 196, 175, 0.09) 50%,
+    transparent 66%);
+  rotate: 5deg;
   animation: shaft-breathe 11s ease-in-out infinite -3s;
 }
 
@@ -285,8 +285,8 @@
 .atmosphere__dust {
   position: absolute;
   border-radius: 50%;
-  background: rgba(122, 196, 175, 0.75);
-  box-shadow: 0 0 5px rgba(122, 196, 175, 0.5);
+  background: rgba(122, 196, 175, 0.58);
+  box-shadow: 0 0 4px rgba(122, 196, 175, 0.35);
   pointer-events: none;
   animation: dust-drift 14s ease-in-out infinite;
   will-change: translate, opacity;

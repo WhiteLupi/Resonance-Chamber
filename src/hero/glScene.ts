@@ -26,14 +26,64 @@ const RELEASE_FALL_S = 0.9;
 const STARTUP_QUALITY_S = 1.2;
 const QUALITY_RAMP_S = 0.8;
 
+type HeroQualityTier = 'full' | 'balanced' | 'safe';
+
+const HERO_TIER_SETTINGS: Record<HeroQualityTier, {
+  startupCapMax: number;
+  settledCapMax: number;
+  bloomScale: number;
+  pulseScale: number;
+  cometTrailScale: number;
+  cometOpacity: number;
+  idleRings: boolean;
+  sonarOpacity: number;
+  rootUpdateStep: number;
+}> = {
+  full: {
+    startupCapMax: 1.0,
+    settledCapMax: 1.2,
+    bloomScale: 1,
+    pulseScale: 1,
+    cometTrailScale: 1,
+    cometOpacity: 0.95,
+    idleRings: true,
+    sonarOpacity: 1,
+    rootUpdateStep: 1,
+  },
+  balanced: {
+    startupCapMax: 1.0,
+    settledCapMax: 1.08,
+    bloomScale: 0.8,
+    pulseScale: 0.9,
+    cometTrailScale: 0.72,
+    cometOpacity: 0.72,
+    idleRings: false,
+    sonarOpacity: 0.82,
+    rootUpdateStep: 1,
+  },
+  safe: {
+    startupCapMax: 0.9,
+    settledCapMax: 1.0,
+    bloomScale: 0.45,
+    pulseScale: 0.7,
+    cometTrailScale: 0,
+    cometOpacity: 0,
+    idleRings: false,
+    sonarOpacity: 0.55,
+    rootUpdateStep: 2,
+  },
+};
+
+const HERO_TIER_ORDER: HeroQualityTier[] = ['full', 'balanced', 'safe'];
+
 const HERO_PERF_DEFAULTS = {
   enableBloom: true,
   enableComets: true,
   enableSonarRings: true,
   enableChargePulse: true,
   enableParallax: true,
-  startupPixelRatioCap: 1.25,
-  settledPixelRatioCap: 1.5,
+  startupPixelRatioCap: 1.0,
+  settledPixelRatioCap: 1.2,
   profile: false,
 };
 
@@ -55,8 +105,8 @@ const readHeroPerf = () => {
     config.enableComets = false;
     config.enableSonarRings = false;
     config.enableChargePulse = false;
-    config.startupPixelRatioCap = 1;
-    config.settledPixelRatioCap = 1.25;
+    config.startupPixelRatioCap = 0.9;
+    config.settledPixelRatioCap = 1.0;
   }
   return config;
 };
@@ -83,6 +133,7 @@ export type HeroScene = {
 
 export function startHero(host: HTMLElement): HeroScene {
   const HERO_PERF = readHeroPerf();
+  const perfDebug = window as typeof window & { __heroPerf?: Record<string, unknown> };
   const lockSubs = new Set<() => void>();
   const chargeSubs = new Set<(charge: number) => void>();
   let locked = false;
@@ -107,10 +158,21 @@ export function startHero(host: HTMLElement): HeroScene {
   });
 
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false });
-  const setRenderPixelRatio = (cap: number) => {
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, cap));
+  let runtimeTier: HeroQualityTier = HERO_PERF.enableComets && window.devicePixelRatio >= 2 ? 'balanced' : 'full';
+  if (!HERO_PERF.enableComets && !HERO_PERF.enableSonarRings && !HERO_PERF.enableChargePulse) {
+    runtimeTier = 'safe';
+  }
+  const getTierSettings = () => HERO_TIER_SETTINGS[runtimeTier];
+  const getPixelRatioCap = (phase: 'startup' | 'steady' | 'locked') => {
+    const tier = getTierSettings();
+    const baseCap = phase === 'startup' ? HERO_PERF.startupPixelRatioCap : HERO_PERF.settledPixelRatioCap;
+    const tierCap = phase === 'startup' ? tier.startupCapMax : tier.settledCapMax;
+    return Math.min(baseCap, tierCap);
   };
-  setRenderPixelRatio(HERO_PERF.startupPixelRatioCap);
+  const setRenderPixelRatio = (phase: 'startup' | 'steady' | 'locked') => {
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, getPixelRatioCap(phase)));
+  };
+  setRenderPixelRatio('startup');
 
   const measure = () => ({
     w: host.clientWidth || window.innerWidth,
@@ -729,9 +791,26 @@ export function startHero(host: HTMLElement): HeroScene {
   const rootTintColor = new THREE.Color(BASE_COLOR);
   let lastRootTint = BASE_COLOR;
 
+  let pendingMouseX = 0;
+  let pendingMouseY = 0;
+  let mouseRaf = 0;
+  const flushMouseMove = () => {
+    mouseRaf = 0;
+    mouseX = pendingMouseX;
+    mouseY = pendingMouseY;
+  };
   const onMouseMove = (e: MouseEvent) => {
-    mouseX = (e.clientX / viewW) * 2 - 1;
-    mouseY = (e.clientY / viewH) * 2 - 1;
+    pendingMouseX = (e.clientX / viewW) * 2 - 1;
+    pendingMouseY = (e.clientY / viewH) * 2 - 1;
+    if (!mouseRaf) mouseRaf = requestAnimationFrame(flushMouseMove);
+  };
+  const onMouseLeave = () => {
+    pendingMouseX = 0;
+    pendingMouseY = 0;
+    if (!mouseRaf) {
+      mouseX = 0;
+      mouseY = 0;
+    }
   };
   // Pre-lock clicks should NOT emit sonar rings — they're a post-activation
   // gesture (engine broadcasting), not a charge signal. The charge ring +
@@ -748,6 +827,7 @@ export function startHero(host: HTMLElement): HeroScene {
   };
   const onTouchEnd   = () => { clickHeld = false; };
   window.addEventListener('mousemove', onMouseMove);
+  document.addEventListener('mouseleave', onMouseLeave);
   window.addEventListener('mousedown', onMouseDown);
   window.addEventListener('mouseup',   onMouseUp);
   window.addEventListener('blur',      onBlur);
@@ -767,21 +847,69 @@ export function startHero(host: HTMLElement): HeroScene {
   let raf = 0;
   let perfPhase: 'startup' | 'steady' | 'locked' = 'startup';
   let qualityRamp = 0;
+  let frameCount = 0;
+  const perfStats = { samples: 0, over24: 0, over32: 0, maxDt: 0, degrades: 0, lastReason: 'init' };
   // Idle heartbeat — once locked, the engine emits a slow rhythmic ring on
   // its own so the chamber doesn't fall completely silent between user
   // interactions. Triggered after the post-lock announcement ring.
   let nextIdleRingAt = Infinity;
   const IDLE_RING_INTERVAL = 12.5;
-  const settleRenderQuality = () => {
-    setRenderPixelRatio(HERO_PERF.settledPixelRatioCap);
+  const syncPerfDebug = (extra?: Record<string, unknown>) => {
+    perfDebug.__heroPerf = {
+      tier: runtimeTier,
+      phase: perfPhase,
+      dpr: window.devicePixelRatio,
+      renderPixelRatio: renderer.getPixelRatio(),
+      ...perfStats,
+      ...extra,
+    };
+  };
+  const refreshLineResolutions = () => {
     const px = renderer.getPixelRatio();
     for (const m of rootMats) m.resolution.set(viewW * px, viewH * px);
   };
+  const resetPerfWindow = (reason: string) => {
+    perfStats.samples = 0;
+    perfStats.over24 = 0;
+    perfStats.over32 = 0;
+    perfStats.maxDt = 0;
+    perfStats.lastReason = reason;
+  };
+  const applyRuntimeTier = (nextTier: HeroQualityTier, reason: string) => {
+    if (HERO_TIER_ORDER.indexOf(nextTier) <= HERO_TIER_ORDER.indexOf(runtimeTier)) return;
+    runtimeTier = nextTier;
+    perfStats.degrades += 1;
+    resetPerfWindow(reason);
+    setRenderPixelRatio(perfPhase);
+    refreshLineResolutions();
+    syncPerfDebug({ downgraded: true, downgradeReason: reason });
+  };
+  const maybeDegradeRuntimeTier = (dtMs: number, t: number) => {
+    if (t > 4.5) return;
+    perfStats.samples += 1;
+    if (dtMs > 24) perfStats.over24 += 1;
+    if (dtMs > 32) perfStats.over32 += 1;
+    perfStats.maxDt = Math.max(perfStats.maxDt, dtMs);
+    if (runtimeTier === 'full' && (perfStats.over32 >= 1 || perfStats.over24 >= 4)) {
+      applyRuntimeTier('balanced', `startup-drop:${dtMs.toFixed(1)}ms`);
+    } else if (runtimeTier === 'balanced' && perfStats.samples >= 45 && (perfStats.over32 >= 1 || perfStats.over24 >= 6)) {
+      applyRuntimeTier('safe', `persistent-drop:${dtMs.toFixed(1)}ms`);
+    }
+  };
+  const settleRenderQuality = () => {
+    setRenderPixelRatio(perfPhase);
+    refreshLineResolutions();
+  };
+  syncPerfDebug();
 
   const loop = () => {
     const t = clock.getElapsedTime();
     const dt = Math.min(0.05, t - lastT);
     lastT = t;
+    frameCount += 1;
+    const tier = getTierSettings();
+    const dtMs = dt * 1000;
+    maybeDegradeRuntimeTier(dtMs, t);
 
     if (perfPhase === 'startup' && t >= STARTUP_QUALITY_S) {
       perfPhase = 'steady';
@@ -841,15 +969,16 @@ export function startHero(host: HTMLElement): HeroScene {
     if (!locked && charge >= LOCK_THRESHOLD) {
       charge = 1;
       fireLock();
-      settleRenderQuality();
+      resetPerfWindow('post-lock');
       perfPhase = 'locked';
+      settleRenderQuality();
       // Announce activation with one final ring — the engine just turned on.
       triggerRing(t);
       nextIdleRingAt = t + IDLE_RING_INTERVAL;
     }
 
     // Idle heartbeat post-lock — slow rhythmic ring even without input.
-    if (locked && t >= nextIdleRingAt) {
+    if (locked && tier.idleRings && t >= nextIdleRingAt) {
       triggerRing(t);
       nextIdleRingAt = t + IDLE_RING_INTERVAL;
     }
@@ -874,6 +1003,7 @@ export function startHero(host: HTMLElement): HeroScene {
 
     // Growth + flex. Tendrils are ordered parent-before-branch, so a branch can
     // read its parent's already-flexed attach point this same frame and ride it.
+    const shouldUpdateRoots = frameCount % tier.rootUpdateStep === 0;
     for (const tend of tendrils) {
       if (tend.type === 'main') {
         // Start at the staggered growthStart, reach full exactly at charge=1 so
@@ -896,26 +1026,28 @@ export function startHero(host: HTMLElement): HeroScene {
       // stays put and the tip whips. A branch's base inherits its parent's flex
       // displacement at the attach point, keeping the join seamless under motion.
       const { basePts, flexed, flex } = tend;
-      const N = basePts.length;
-      let bx = 0, by = 0, bz = 0;
-      if (tend.type === 'branch' && tend.parent && tend.attachIndex != null) {
-        const ai = tend.attachIndex;
-        const pf = tend.parent.flexed[ai], pb = tend.parent.basePts[ai];
-        bx = pf.x - pb.x; by = pf.y - pb.y; bz = pf.z - pb.z;
-      }
-      const d1 = flex.dir1, d2 = flex.dir2;
-      for (let i = 0; i < N; i++) {
-        const f = N > 1 ? i / (N - 1) : 0;
-        const w = Math.pow(f, 1.5);
-        const ang = t * flex.speed + flex.phase - f * flex.waveK;
-        const o1 = flex.amp1 * w * Math.sin(ang);
-        const o2 = flex.amp2 * w * Math.cos(ang);
-        const bp = basePts[i];
-        flexed[i].set(
-          bp.x + d1.x * o1 + d2.x * o2 + bx,
-          bp.y + d1.y * o1 + d2.y * o2 + by,
-          bp.z + d1.z * o1 + d2.z * o2 + bz,
-        );
+      if (shouldUpdateRoots) {
+        const N = basePts.length;
+        let bx = 0, by = 0, bz = 0;
+        if (tend.type === 'branch' && tend.parent && tend.attachIndex != null) {
+          const ai = tend.attachIndex;
+          const pf = tend.parent.flexed[ai], pb = tend.parent.basePts[ai];
+          bx = pf.x - pb.x; by = pf.y - pb.y; bz = pf.z - pb.z;
+        }
+        const d1 = flex.dir1, d2 = flex.dir2;
+        for (let i = 0; i < N; i++) {
+          const f = N > 1 ? i / (N - 1) : 0;
+          const w = Math.pow(f, 1.5);
+          const ang = t * flex.speed + flex.phase - f * flex.waveK;
+          const o1 = flex.amp1 * w * Math.sin(ang);
+          const o2 = flex.amp2 * w * Math.cos(ang);
+          const bp = basePts[i];
+          flexed[i].set(
+            bp.x + d1.x * o1 + d2.x * o2 + bx,
+            bp.y + d1.y * o1 + d2.y * o2 + by,
+            bp.z + d1.z * o1 + d2.z * o2 + bz,
+          );
+        }
       }
 
       const targetIdx = Math.floor(tend.growth * tend.samples);
@@ -926,13 +1058,15 @@ export function startHero(host: HTMLElement): HeroScene {
         // (no realloc): segment s holds point s as start, point s+1 as end.
         const buf = (geom.getAttribute('instanceStart') as THREE.InterleavedBufferAttribute).data;
         const arr = buf.array as Float32Array;
-        for (let s = 0; s < segs; s++) {
-          const a = flexed[s], b = flexed[s + 1];
-          const o = s * 6;
-          arr[o] = a.x; arr[o + 1] = a.y; arr[o + 2] = a.z;
-          arr[o + 3] = b.x; arr[o + 4] = b.y; arr[o + 5] = b.z;
+        if (shouldUpdateRoots) {
+          for (let s = 0; s < segs; s++) {
+            const a = flexed[s], b = flexed[s + 1];
+            const o = s * 6;
+            arr[o] = a.x; arr[o + 1] = a.y; arr[o + 2] = a.z;
+            arr[o + 3] = b.x; arr[o + 4] = b.y; arr[o + 5] = b.z;
+          }
+          if (segs > 0) buf.needsUpdate = true;
         }
-        if (segs > 0) buf.needsUpdate = true;
         geom.instanceCount = segs;
       }
     }
@@ -940,7 +1074,7 @@ export function startHero(host: HTMLElement): HeroScene {
     // Comets — pre-lock: speed scales with charge (slow → fast streaks). Post-
     // lock: speed decouples and stays at idle drift even though charge is 1.
     let pullX = 0, pullY = 0, pullZ = 0;
-    if (HERO_PERF.enableComets && cGeo) {
+    if (HERO_PERF.enableComets && cGeo && tier.cometTrailScale > 0) {
       const cometSpeedMul = locked ? 0.35 : 0.35 + charge * 3.2;
       const cPosAttr = cGeo.attributes.position.array as Float32Array;
       for (let i = 0; i < COMET_COUNT; i++) {
@@ -961,7 +1095,7 @@ export function startHero(host: HTMLElement): HeroScene {
         const dz = pz - cPrevZ[i];
         const sp = Math.sqrt(dx*dx + dy*dy + dz*dz);
 
-        const trail = Math.min(1.0, sp * 30);
+        const trail = Math.min(0.82 * tier.cometTrailScale, sp * 24 * tier.cometTrailScale);
         const inv = sp > 0.00001 ? 1 / sp : 0;
         cPosAttr[i*6 + 0] = px - dx * inv * trail;
         cPosAttr[i*6 + 1] = py - dy * inv * trail;
@@ -1000,10 +1134,11 @@ export function startHero(host: HTMLElement): HeroScene {
     tetraGroup.position.z += (pullZ * tugStrength - tetraGroup.position.z) * tugLerp;
 
     // Core breathing + emissive
-    const chargeFx = HERO_PERF.enableChargePulse ? charge : 0;
-    const breath = 1 + (HERO_PERF.enableChargePulse ? Math.sin(t * 1.25) * 0.04 : 0);
+    const pulseScale = HERO_PERF.enableChargePulse ? tier.pulseScale : 0;
+    const chargeFx = HERO_PERF.enableChargePulse ? charge * pulseScale : 0;
+    const breath = 1 + (HERO_PERF.enableChargePulse ? Math.sin(t * 1.25) * 0.04 * pulseScale : 0);
     coreMesh.scale.setScalar(breath);
-    coreMat.emissiveIntensity = (3.2 + chargeFx * 3.0 + (HERO_PERF.enableChargePulse ? Math.sin(t * 1.7) * 0.15 : 0)) * sceneVis * jVis;
+    coreMat.emissiveIntensity = (3.2 + chargeFx * 3.0 + (HERO_PERF.enableChargePulse ? Math.sin(t * 1.7) * 0.15 * pulseScale : 0)) * sceneVis * jVis;
 
     glowSprite.scale.setScalar((1.0 + chargeFx * 0.5) * breath);
     haloMat.opacity = (0.50 + chargeFx * 0.18) * sceneVis * jVis;
@@ -1029,13 +1164,13 @@ export function startHero(host: HTMLElement): HeroScene {
       // The pulse "dissolves into the walls" rather than blinking out.
       const rise = Math.min(1, local / 0.08);
       const fall = Math.pow(1 - Math.max(0, (local - 0.08) / 0.92), 0.7);
-      r.mat.opacity = rise * fall * 0.55 * sceneVis * jVis;
+      r.mat.opacity = rise * fall * 0.55 * tier.sonarOpacity * sceneVis * jVis;
     }
 
     const startupBloomMul = 0.65 + qualityRamp * 0.35;
-    if (bloom) bloom.strength = (0.32 + chargeFx * 0.20) * startupBloomMul * sceneVis * jVis;
+    if (bloom) bloom.strength = (0.32 + chargeFx * 0.20) * startupBloomMul * tier.bloomScale * sceneVis * jVis;
 
-    if (cMat) cMat.opacity = 0.95 * sceneVis * jVis;
+    if (cMat) cMat.opacity = tier.cometOpacity * sceneVis * jVis;
 
     const tintTarget = charge > 0.01
       ? rootTintColor.copy(rootBaseColor).lerp(rootAccentColor, charge * 0.4).getHex()
@@ -1054,6 +1189,7 @@ export function startHero(host: HTMLElement): HeroScene {
     } else {
       renderer.render(scene, camera);
     }
+    if (frameCount % 30 === 0) syncPerfDebug();
     raf = requestAnimationFrame(loop);
   };
   raf = requestAnimationFrame(loop);
@@ -1067,8 +1203,8 @@ export function startHero(host: HTMLElement): HeroScene {
     camera.aspect = viewW / viewH;
     cameraDirty = true;
     camera.updateProjectionMatrix();
-    const px = renderer.getPixelRatio();
-    for (const m of rootMats) m.resolution.set(viewW * px, viewH * px);
+    refreshLineResolutions();
+    syncPerfDebug({ resized: true });
   };
   window.addEventListener('resize', onResize);
 
@@ -1107,13 +1243,16 @@ export function startHero(host: HTMLElement): HeroScene {
     },
     dispose() {
       cancelAnimationFrame(raf);
+      delete perfDebug.__heroPerf;
       window.removeEventListener('resize', onResize);
       window.removeEventListener('mousemove', onMouseMove);
+      document.removeEventListener('mouseleave', onMouseLeave);
       window.removeEventListener('mousedown', onMouseDown);
       window.removeEventListener('mouseup',   onMouseUp);
       window.removeEventListener('blur',      onBlur);
       window.removeEventListener('touchstart', onTouchStart);
-      window.removeEventListener('touchend',   onTouchEnd);
+      window.removeEventListener('touchend', onTouchEnd);
+      cancelAnimationFrame(mouseRaf);
       for (const m of rootMats) m.dispose();
       for (const tend of tendrils) {
         for (const { geom } of tend.lines) geom.dispose();

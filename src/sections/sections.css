@@ -11,33 +11,45 @@
   min-height: 100vh;
   display: grid;
   place-items: center;
-  padding: 120px 64px;
+  padding: 120px max(64px, var(--content-safe-pad));
   font-family: 'Syne Mono', ui-monospace, monospace;
   color: var(--fg);
   background: transparent;
 }
 
-.section-inner {
+/* Shared content safe-zone for sections that sit inside the chamber haze. */
+.section-inner,
+.work-grid,
+.channel-grid,
+.craft-register {
   position: relative;
-  width: min(960px, 100%);
+  isolation: isolate;
+}
+
+.section-inner {
+  width: min(880px, 100%);
+  padding-inline: clamp(10px, 1.4vw, 22px);
 }
 
 /* Local legibility pool — a soft dark wash so text holds over the live ghost
-   roots, same trick as the about inscription's blurred slab. */
-.section-inner::before {
+   roots and chamber haze. */
+.section-inner::before,
+.work-grid::before,
+.channel-grid::before,
+.craft-register::before {
   content: '';
   position: absolute;
   z-index: -1;
-  inset: -16% -10%;
-  border-radius: 36px;
+  inset: -18% -12%;
+  border-radius: 42px;
   background: radial-gradient(
     ellipse at center,
-    rgba(0, 0, 0, 0.92),
-    rgba(0, 0, 0, 0.72) 52%,
-    rgba(0, 0, 0, 0.3) 80%,
+    rgba(0, 0, 0, 0.95),
+    rgba(0, 0, 0, 0.8) 54%,
+    rgba(0, 0, 0, 0.36) 82%,
     transparent 100%
   );
-  filter: blur(46px);
+  filter: blur(54px);
   pointer-events: none;
 }
 

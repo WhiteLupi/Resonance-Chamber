@@ -23,24 +23,24 @@
   display: grid;
   grid-template-rows: 1fr auto;
   align-items: center;
-  padding: var(--sec-pad) var(--pad);
+  padding: var(--sec-pad) max(var(--pad), var(--content-safe-pad));
   overflow: hidden;
 }
 
 /* Row 1: thesis left + aside right; middle space belongs to the seal. */
 .practice-top {
   display: grid;
-  grid-template-columns: minmax(0, 1.7fr) minmax(0, 1fr);
-  gap: var(--gap-fluid);
+  grid-template-columns: minmax(0, 1.55fr) minmax(0, 0.92fr);
+  gap: clamp(28px, 5vw, 120px);
   align-items: center;
   width: 100%;
 }
 
 .practice-aside {
   justify-self: end;
-  max-width: 38ch;
+  max-width: 34ch;
   border-left: 1px solid var(--teal-dim);
-  padding-left: clamp(14px, 1.8vw, 40px);
+  padding-left: clamp(18px, 2.2vw, 48px);
   opacity: clamp(0, calc((var(--p, 0) - 0.78) / 0.12), 1);
 }
 
@@ -85,10 +85,10 @@
   position: relative;
   z-index: 2;
   width: 100%;
-  max-width: var(--measure);
+  max-width: min(52ch, 100% - clamp(16px, 3vw, 40px));
   display: flex;
   flex-direction: column;
-  gap: 30px;
+  gap: clamp(28px, 3.2vh, 42px);
 }
 
 .inscription::before {
@@ -118,10 +118,10 @@
   content: '';
   position: absolute;
   z-index: -1;
-  inset: -16% -7%;
+  inset: -18% -10%;
   border-radius: 28px;
-  background: rgba(0, 0, 0, 0.82);
-  filter: blur(36px);
+  background: rgba(0, 0, 0, 0.9);
+  filter: blur(42px);
   opacity: clamp(0, calc((var(--p, 0) - 0.72) / 0.14), 1);
   pointer-events: none;
 }
