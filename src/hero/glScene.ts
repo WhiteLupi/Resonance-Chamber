@@ -24,6 +24,41 @@ const LOCK_THRESHOLD = 0.999;
 const HOLD_FILL_S = 2.0;
 const RELEASE_FALL_S = 0.9;
 
+const HERO_PERF_DEFAULTS = {
+  enableBloom: true,
+  enableComets: true,
+  enableSonarRings: true,
+  enableChargePulse: true,
+  enableParallax: true,
+  startupPixelRatioCap: 1.25,
+  settledPixelRatioCap: 1.5,
+  profile: false,
+};
+
+const readHeroPerf = () => {
+  const config = { ...HERO_PERF_DEFAULTS };
+  const params = new URLSearchParams(window.location.search);
+  const readBool = (key: keyof typeof HERO_PERF_DEFAULTS) => {
+    const value = params.get(`hero-${String(key)}`);
+    if (value === '0' || value === 'false') config[key] = false as never;
+    if (value === '1' || value === 'true') config[key] = true as never;
+  };
+  readBool('enableBloom');
+  readBool('enableComets');
+  readBool('enableSonarRings');
+  readBool('enableChargePulse');
+  readBool('enableParallax');
+  readBool('profile');
+  if (params.get('hero-safe') === '1') {
+    config.enableComets = false;
+    config.enableSonarRings = false;
+    config.enableChargePulse = false;
+    config.startupPixelRatioCap = 1;
+    config.settledPixelRatioCap = 1.25;
+  }
+  return config;
+};
+
 export type Journey = {
   /** seal position on screen, in viewport percent (50/50 = center) */
   x: number;
@@ -45,6 +80,7 @@ export type HeroScene = {
 };
 
 export function startHero(host: HTMLElement): HeroScene {
+  const HERO_PERF = readHeroPerf();
   const lockSubs = new Set<() => void>();
   const chargeSubs = new Set<(charge: number) => void>();
   let locked = false;
@@ -69,8 +105,10 @@ export function startHero(host: HTMLElement): HeroScene {
   });
 
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false });
-  const pixelRatio = Math.min(window.devicePixelRatio, 2);
-  renderer.setPixelRatio(pixelRatio);
+  const setRenderPixelRatio = (cap: number) => {
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, cap));
+  };
+  setRenderPixelRatio(HERO_PERF.startupPixelRatioCap);
 
   const measure = () => ({
     w: host.clientWidth || window.innerWidth,
@@ -98,16 +136,18 @@ export function startHero(host: HTMLElement): HeroScene {
   rimLight.position.set(-3, -1, -2);
   scene.add(rimLight);
 
-  const composer = new EffectComposer(renderer);
-  composer.setSize(viewW, viewH);
-  composer.addPass(new RenderPass(scene, camera));
+  const composer = HERO_PERF.enableBloom ? new EffectComposer(renderer) : null;
+  composer?.setSize(viewW, viewH);
+  composer?.addPass(new RenderPass(scene, camera));
   // Very tight bloom — small radius so glow stays at the core, doesn't
   // leak to canvas edges. (When bloom spread reached the framebuffer edges
   // it lifted canvas pixels above clearColor, producing a visible seam vs.
   // the solid about-section bg below.) Emissive is bumped separately to
   // compensate — the seal glows via its own pixels, not bloom-spread.
-  const bloom = new UnrealBloomPass(new THREE.Vector2(viewW, viewH), 0.32, 0.18, 0.18);
-  composer.addPass(bloom);
+  const bloom = HERO_PERF.enableBloom
+    ? new UnrealBloomPass(new THREE.Vector2(viewW, viewH), 0.32, 0.18, 0.18)
+    : null;
+  if (bloom) composer?.addPass(bloom);
 
   const outerGroup = new THREE.Group();
   const tetraGroup = new THREE.Group();
@@ -160,21 +200,24 @@ export function startHero(host: HTMLElement): HeroScene {
   // engine is broadcasting. Wide screens have lots of horizontal space and
   // these radial rings carry energy across it, giving the composition a
   // rhythmic heartbeat instead of a static centerpiece.
-  const ringCanvas = document.createElement('canvas');
-  ringCanvas.width = ringCanvas.height = 256;
-  const rctx = ringCanvas.getContext('2d')!;
-  // Build an additive ring texture: transparent center, thin bright ring at
-  // the edge, soft outer falloff.
-  const rGrad = rctx.createRadialGradient(128, 128, 80, 128, 128, 128);
-  rGrad.addColorStop(0,    `rgba(0,0,0,0)`);
-  rGrad.addColorStop(0.70, `rgba(0,0,0,0)`);
-  rGrad.addColorStop(0.86, `rgba(${acR},${acG},${acB},0.30)`);
-  rGrad.addColorStop(0.94, `rgba(${acR},${acG},${acB},0.80)`);
-  rGrad.addColorStop(0.98, `rgba(${acR},${acG},${acB},0.35)`);
-  rGrad.addColorStop(1,    `rgba(0,0,0,0)`);
-  rctx.fillStyle = rGrad;
-  rctx.fillRect(0, 0, 256, 256);
-  const ringTex = new THREE.CanvasTexture(ringCanvas);
+  let ringTex: THREE.CanvasTexture | null = null;
+  if (HERO_PERF.enableSonarRings) {
+    const ringCanvas = document.createElement('canvas');
+    ringCanvas.width = ringCanvas.height = 256;
+    const rctx = ringCanvas.getContext('2d')!;
+    // Build an additive ring texture: transparent center, thin bright ring at
+    // the edge, soft outer falloff.
+    const rGrad = rctx.createRadialGradient(128, 128, 80, 128, 128, 128);
+    rGrad.addColorStop(0,    `rgba(0,0,0,0)`);
+    rGrad.addColorStop(0.70, `rgba(0,0,0,0)`);
+    rGrad.addColorStop(0.86, `rgba(${acR},${acG},${acB},0.30)`);
+    rGrad.addColorStop(0.94, `rgba(${acR},${acG},${acB},0.80)`);
+    rGrad.addColorStop(0.98, `rgba(${acR},${acG},${acB},0.35)`);
+    rGrad.addColorStop(1,    `rgba(0,0,0,0)`);
+    rctx.fillStyle = rGrad;
+    rctx.fillRect(0, 0, 256, 256);
+    ringTex = new THREE.CanvasTexture(ringCanvas);
+  }
 
   // Pool sized generously so rapid clicks don't force a visible recycle. If
   // the user does manage to fill the pool, we recycle the LEAST VISIBLE ring
@@ -193,18 +236,20 @@ export function startHero(host: HTMLElement): HeroScene {
     startT: number;
   };
   const rings: Ring[] = [];
-  for (let i = 0; i < RING_COUNT; i++) {
-    const mat = new THREE.SpriteMaterial({
+  if (HERO_PERF.enableSonarRings) {
+    for (let i = 0; i < RING_COUNT; i++) {
+      const mat = new THREE.SpriteMaterial({
       map: ringTex,
-      blending: THREE.AdditiveBlending,
-      transparent: true,
-      depthWrite: false,
-      opacity: 0,
-    });
-    const sprite = new THREE.Sprite(mat);
-    sprite.scale.setScalar(RING_MIN_SCALE);
-    tetraGroup.add(sprite);
-    rings.push({ sprite, mat, active: false, startT: 0 });
+        blending: THREE.AdditiveBlending,
+        transparent: true,
+        depthWrite: false,
+        opacity: 0,
+      });
+      const sprite = new THREE.Sprite(mat);
+      sprite.scale.setScalar(RING_MIN_SCALE);
+      tetraGroup.add(sprite);
+      rings.push({ sprite, mat, active: false, startT: 0 });
+    }
   }
 
   // Fire one ring outward. Recycle by LOWEST current opacity instead of by
@@ -212,6 +257,7 @@ export function startHero(host: HTMLElement): HeroScene {
   // not perceptible. Called on mousedown and once on engine lock; not on a
   // timer.
   const triggerRing = (now: number) => {
+    if (!HERO_PERF.enableSonarRings) return;
     let target = rings.find(r => !r.active);
     if (!target) {
       target = rings.reduce((a, b) => a.mat.opacity < b.mat.opacity ? a : b);
@@ -266,7 +312,10 @@ export function startHero(host: HTMLElement): HeroScene {
   const rootsGroup = new THREE.Group();
   const BASE_COLOR = 0xdcd5cb;
   const rootMats: LineMaterial[] = [];
-  const lineRes = new THREE.Vector2(viewW * pixelRatio, viewH * pixelRatio);
+  const lineRes = new THREE.Vector2(
+    viewW * renderer.getPixelRatio(),
+    viewH * renderer.getPixelRatio(),
+  );
   const tendrils: Tendril[] = [];
 
   const rootBaseOpacity = new WeakMap<LineMaterial, number>();
@@ -571,7 +620,7 @@ export function startHero(host: HTMLElement): HeroScene {
   tetraGroup.add(rootsGroup);
 
   // Comets — 24 particles on random 3D orbital planes
-  const COMET_COUNT = 24;
+  const COMET_COUNT = HERO_PERF.enableComets ? 24 : 0;
   const cuX = new Float32Array(COMET_COUNT), cuY = new Float32Array(COMET_COUNT), cuZ = new Float32Array(COMET_COUNT);
   const cvX = new Float32Array(COMET_COUNT), cvY = new Float32Array(COMET_COUNT), cvZ = new Float32Array(COMET_COUNT);
   const cRadius = new Float32Array(COMET_COUNT);
@@ -609,31 +658,35 @@ export function startHero(host: HTMLElement): HeroScene {
     cPrevZ[i] = cs * cuZ[i] + sn * cvZ[i];
   }
 
-  const cPositions = new Float32Array(COMET_COUNT * 6);
-  const cColors = new Float32Array(COMET_COUNT * 6);
-  const accentCol = new THREE.Color(ACCENT);
-  for (let i = 0; i < COMET_COUNT; i++) {
-    // tail dim → head bright (vertex colors)
-    cColors[i*6 + 0] = accentCol.r * 0.08;
-    cColors[i*6 + 1] = accentCol.g * 0.08;
-    cColors[i*6 + 2] = accentCol.b * 0.08;
-    cColors[i*6 + 3] = accentCol.r;
-    cColors[i*6 + 4] = accentCol.g;
-    cColors[i*6 + 5] = accentCol.b;
-  }
+  let cGeo: THREE.BufferGeometry | null = null;
+  let cMat: THREE.LineBasicMaterial | null = null;
+  if (HERO_PERF.enableComets) {
+    const cPositions = new Float32Array(COMET_COUNT * 6);
+    const cColors = new Float32Array(COMET_COUNT * 6);
+    const accentCol = new THREE.Color(ACCENT);
+    for (let i = 0; i < COMET_COUNT; i++) {
+      // tail dim → head bright (vertex colors)
+      cColors[i*6 + 0] = accentCol.r * 0.08;
+      cColors[i*6 + 1] = accentCol.g * 0.08;
+      cColors[i*6 + 2] = accentCol.b * 0.08;
+      cColors[i*6 + 3] = accentCol.r;
+      cColors[i*6 + 4] = accentCol.g;
+      cColors[i*6 + 5] = accentCol.b;
+    }
 
-  const cGeo = new THREE.BufferGeometry();
-  cGeo.setAttribute('position', new THREE.BufferAttribute(cPositions, 3));
-  cGeo.setAttribute('color',    new THREE.BufferAttribute(cColors, 3));
-  const cMat = new THREE.LineBasicMaterial({
-    vertexColors: true,
-    transparent: true,
-    opacity: 0.95,
-    blending: THREE.AdditiveBlending,
-    depthWrite: false,
-  });
-  const cometLines = new THREE.LineSegments(cGeo, cMat);
-  particlesGroup.add(cometLines);
+    cGeo = new THREE.BufferGeometry();
+    cGeo.setAttribute('position', new THREE.BufferAttribute(cPositions, 3));
+    cGeo.setAttribute('color',    new THREE.BufferAttribute(cColors, 3));
+    cMat = new THREE.LineBasicMaterial({
+      vertexColors: true,
+      transparent: true,
+      opacity: 0.95,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
+    });
+    const cometLines = new THREE.LineSegments(cGeo, cMat);
+    particlesGroup.add(cometLines);
+  }
 
   // Anchors for proximity tug — placed on the comet orbital shell so passes
   // actually trigger.
@@ -760,12 +813,14 @@ export function startHero(host: HTMLElement): HeroScene {
 
     // Parallax — outerGroup deeper than tetraGroup. Kept subtle: mouse should
     // nudge the view, not swing the whole figure into unflattering edge-on angles.
-    parallaxX += (mouseX - parallaxX) * 0.08;
-    parallaxY += (mouseY - parallaxY) * 0.08;
-    outerGroup.rotation.y =  parallaxX * 0.16;
-    outerGroup.rotation.x = -parallaxY * 0.12;
-    tetraGroup.rotation.y =  parallaxX * 0.05;
-    tetraGroup.rotation.x = -parallaxY * 0.04;
+    if (HERO_PERF.enableParallax) {
+      parallaxX += (mouseX - parallaxX) * 0.08;
+      parallaxY += (mouseY - parallaxY) * 0.08;
+      outerGroup.rotation.y =  parallaxX * 0.16;
+      outerGroup.rotation.x = -parallaxY * 0.12;
+      tetraGroup.rotation.y =  parallaxX * 0.05;
+      tetraGroup.rotation.x = -parallaxY * 0.04;
+    }
 
     // Roots breathe with a slow BOUNDED turn (±~9°) instead of a continuous spin —
     // a full rotation would swing the in-plane tendrils edge-on, where they pile
@@ -841,55 +896,57 @@ export function startHero(host: HTMLElement): HeroScene {
 
     // Comets — pre-lock: speed scales with charge (slow → fast streaks). Post-
     // lock: speed decouples and stays at idle drift even though charge is 1.
-    const cometSpeedMul = locked ? 0.35 : 0.35 + charge * 3.2;
-    const cPosAttr = cGeo.attributes.position.array as Float32Array;
     let pullX = 0, pullY = 0, pullZ = 0;
-    for (let i = 0; i < COMET_COUNT; i++) {
-      cPhase[i] += cBaseSpeed[i] * cometSpeedMul * dt;
-      const cs = Math.cos(cPhase[i]) * cRadius[i];
-      const sn = Math.sin(cPhase[i]) * cRadius[i];
-      const tx_ = cs * cuX[i] + sn * cvX[i];
-      const ty_ = cs * cuY[i] + sn * cvY[i];
-      const tz_ = cs * cuZ[i] + sn * cvZ[i];
+    if (HERO_PERF.enableComets && cGeo) {
+      const cometSpeedMul = locked ? 0.35 : 0.35 + charge * 3.2;
+      const cPosAttr = cGeo.attributes.position.array as Float32Array;
+      for (let i = 0; i < COMET_COUNT; i++) {
+        cPhase[i] += cBaseSpeed[i] * cometSpeedMul * dt;
+        const cs = Math.cos(cPhase[i]) * cRadius[i];
+        const sn = Math.sin(cPhase[i]) * cRadius[i];
+        const tx_ = cs * cuX[i] + sn * cvX[i];
+        const ty_ = cs * cuY[i] + sn * cvY[i];
+        const tz_ = cs * cuZ[i] + sn * cvZ[i];
 
-      const lr = Math.min(1, dt * 14);
-      const px = cPrevX[i] + (tx_ - cPrevX[i]) * lr;
-      const py = cPrevY[i] + (ty_ - cPrevY[i]) * lr;
-      const pz = cPrevZ[i] + (tz_ - cPrevZ[i]) * lr;
+        const lr = Math.min(1, dt * 14);
+        const px = cPrevX[i] + (tx_ - cPrevX[i]) * lr;
+        const py = cPrevY[i] + (ty_ - cPrevY[i]) * lr;
+        const pz = cPrevZ[i] + (tz_ - cPrevZ[i]) * lr;
 
-      const dx = px - cPrevX[i];
-      const dy = py - cPrevY[i];
-      const dz = pz - cPrevZ[i];
-      const sp = Math.sqrt(dx*dx + dy*dy + dz*dz);
+        const dx = px - cPrevX[i];
+        const dy = py - cPrevY[i];
+        const dz = pz - cPrevZ[i];
+        const sp = Math.sqrt(dx*dx + dy*dy + dz*dz);
 
-      const trail = Math.min(1.0, sp * 30);
-      const inv = sp > 0.00001 ? 1 / sp : 0;
-      cPosAttr[i*6 + 0] = px - dx * inv * trail;
-      cPosAttr[i*6 + 1] = py - dy * inv * trail;
-      cPosAttr[i*6 + 2] = pz - dz * inv * trail;
-      cPosAttr[i*6 + 3] = px;
-      cPosAttr[i*6 + 4] = py;
-      cPosAttr[i*6 + 5] = pz;
+        const trail = Math.min(1.0, sp * 30);
+        const inv = sp > 0.00001 ? 1 / sp : 0;
+        cPosAttr[i*6 + 0] = px - dx * inv * trail;
+        cPosAttr[i*6 + 1] = py - dy * inv * trail;
+        cPosAttr[i*6 + 2] = pz - dz * inv * trail;
+        cPosAttr[i*6 + 3] = px;
+        cPosAttr[i*6 + 4] = py;
+        cPosAttr[i*6 + 5] = pz;
 
-      let minD = 1e9;
-      let nvx = 0, nvy = 0, nvz = 0;
-      for (let k = 0; k < anchorVerts.length; k++) {
-        const vv = anchorVerts[k];
-        const ddx = px - vv.x, ddy = py - vv.y, ddz = pz - vv.z;
-        const d = ddx*ddx + ddy*ddy + ddz*ddz;
-        if (d < minD) { minD = d; nvx = vv.x; nvy = vv.y; nvz = vv.z; }
+        let minD = 1e9;
+        let nvx = 0, nvy = 0, nvz = 0;
+        for (let k = 0; k < anchorVerts.length; k++) {
+          const vv = anchorVerts[k];
+          const ddx = px - vv.x, ddy = py - vv.y, ddz = pz - vv.z;
+          const d = ddx*ddx + ddy*ddy + ddz*ddz;
+          if (d < minD) { minD = d; nvx = vv.x; nvy = vv.y; nvz = vv.z; }
+        }
+        const dist = Math.sqrt(minD);
+        const aff = Math.max(0, 1 - dist / PROX);
+        if (aff > 0) {
+          pullX += (px - nvx) * aff;
+          pullY += (py - nvy) * aff;
+          pullZ += (pz - nvz) * aff;
+        }
+
+        cPrevX[i] = px; cPrevY[i] = py; cPrevZ[i] = pz;
       }
-      const dist = Math.sqrt(minD);
-      const aff = Math.max(0, 1 - dist / PROX);
-      if (aff > 0) {
-        pullX += (px - nvx) * aff;
-        pullY += (py - nvy) * aff;
-        pullZ += (pz - nvz) * aff;
-      }
-
-      cPrevX[i] = px; cPrevY[i] = py; cPrevZ[i] = pz;
+      cGeo.attributes.position.needsUpdate = true;
     }
-    cGeo.attributes.position.needsUpdate = true;
 
     // Proximity tug — post-lock dampens (no charge multiplier) so the seal
     // settles still while comets continue drifting.
@@ -900,12 +957,13 @@ export function startHero(host: HTMLElement): HeroScene {
     tetraGroup.position.z += (pullZ * tugStrength - tetraGroup.position.z) * tugLerp;
 
     // Core breathing + emissive
-    const breath = 1 + Math.sin(t * 1.25) * 0.04;
+    const chargeFx = HERO_PERF.enableChargePulse ? charge : 0;
+    const breath = 1 + (HERO_PERF.enableChargePulse ? Math.sin(t * 1.25) * 0.04 : 0);
     coreMesh.scale.setScalar(breath);
-    coreMat.emissiveIntensity = (3.2 + charge * 3.0 + Math.sin(t * 1.7) * 0.15) * sceneVis * jVis;
+    coreMat.emissiveIntensity = (3.2 + chargeFx * 3.0 + (HERO_PERF.enableChargePulse ? Math.sin(t * 1.7) * 0.15 : 0)) * sceneVis * jVis;
 
-    glowSprite.scale.setScalar((1.0 + charge * 0.5) * breath);
-    haloMat.opacity = (0.50 + charge * 0.18) * sceneVis * jVis;
+    glowSprite.scale.setScalar((1.0 + chargeFx * 0.5) * breath);
+    haloMat.opacity = (0.50 + chargeFx * 0.18) * sceneVis * jVis;
 
     // Sonar rings — each pulse is a discrete event (mousedown / lock), not a
     // metronome. Idle rings sit at opacity 0; active rings expand outward
@@ -931,9 +989,9 @@ export function startHero(host: HTMLElement): HeroScene {
       r.mat.opacity = rise * fall * 0.55 * sceneVis * jVis;
     }
 
-    bloom.strength = (0.32 + charge * 0.20) * sceneVis * jVis;
+    if (bloom) bloom.strength = (0.32 + chargeFx * 0.20) * sceneVis * jVis;
 
-    cMat.opacity = 0.95 * sceneVis * jVis;
+    if (cMat) cMat.opacity = 0.95 * sceneVis * jVis;
 
     const tintTarget = charge > 0.01
       ? new THREE.Color(BASE_COLOR).lerp(new THREE.Color(ACCENT), charge * 0.4).getHex()
@@ -946,7 +1004,11 @@ export function startHero(host: HTMLElement): HeroScene {
       m.opacity = (rootBaseOpacity.get(m) ?? 0.8) * rootsVis * (0.05 + 0.95 * jVis);
     }
 
-    composer.render();
+    if (composer) {
+      composer.render();
+    } else {
+      renderer.render(scene, camera);
+    }
     raf = requestAnimationFrame(loop);
   };
   raf = requestAnimationFrame(loop);
@@ -955,8 +1017,8 @@ export function startHero(host: HTMLElement): HeroScene {
     const s = measure();
     viewW = s.w; viewH = s.h;
     renderer.setSize(viewW, viewH);
-    composer.setSize(viewW, viewH);
-    bloom.setSize(viewW, viewH);
+    composer?.setSize(viewW, viewH);
+    bloom?.setSize(viewW, viewH);
     camera.aspect = viewW / viewH;
     camera.updateProjectionMatrix();
     const px = renderer.getPixelRatio();
@@ -1014,9 +1076,10 @@ export function startHero(host: HTMLElement): HeroScene {
       coreGeom.dispose();
       haloMat.dispose();
       haloTex.dispose();
-      cMat.dispose();
-      cGeo.dispose();
-      composer.dispose();
+      ringTex?.dispose();
+      cMat?.dispose();
+      cGeo?.dispose();
+      composer?.dispose();
       renderer.dispose();
       canvas.remove();
     },
