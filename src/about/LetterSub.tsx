@@ -61,7 +61,7 @@ function visual(state: CharState, now: number): Visual {
 
 function CharSpan({ ch, lineIdx, charIdx }: { ch: string; lineIdx: number; charIdx: number }) {
   const [state, setState] = useState<CharState>(() => ({ phase: 'idle', startedAt: 0, shape: 'circle' }));
-  const [, setTick] = useState(0);
+  const [now, setNow] = useState(0);
 
   useEffect(() => letterSubBus.subscribe(lineIdx, charIdx, setState), [lineIdx, charIdx]);
 
@@ -70,14 +70,14 @@ function CharSpan({ ch, lineIdx, charIdx }: { ch: string; lineIdx: number; charI
     if (state.phase !== 'entering' && state.phase !== 'exiting') return;
     let raf = 0;
     const tick = () => {
-      setTick(x => (x + 1) | 0);
+      setNow(performance.now());
       raf = requestAnimationFrame(tick);
     };
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
   }, [state.phase]);
 
-  const v = visual(state, performance.now());
+  const v = visual(state, Math.max(now, state.startedAt));
 
   if (!v.showSwap) {
     return (

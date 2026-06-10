@@ -153,14 +153,23 @@ function App() {
       { id: 'work', x: 30, y: 50, s: 1.05, o: 0.95, r: 130 },
       { id: 'contact', x: 52, y: 72, s: 0.52, o: 0.80, r: 170 },
     ];
+    const KEYS_MOBILE: Key[] = [
+      { id: 'hero', x: 50, y: 50, s: 1.00, o: 1.00, r: 0 },
+      { id: 'about', x: 50, y: 24, s: 0.62, o: 0.10, r: 40 },
+      { id: 'skills', x: 115, y: 42, s: 0.72, o: 0.02, r: 85 },
+      { id: 'work', x: 50, y: 18, s: 0.65, o: 0.65, r: 130 },
+      { id: 'contact', x: 90, y: 85, s: 0.32, o: 0.04, r: 170 },
+    ];
     const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
     const ease = (t: number) => (t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2);
 
     const onScroll = () => {
       const scene = sceneRef.current;
       if (!scene) return;
-      const mid = window.innerHeight * 0.5;
-      const secs = KEYS
+      const mobile = window.innerWidth <= 760;
+      const activeKeys = mobile ? KEYS_MOBILE : KEYS;
+      const mid = window.innerHeight * (mobile ? 0.12 : 0.5);
+      const secs = activeKeys
         .map((k) => ({ k, el: document.getElementById(k.id) }))
         .filter((s): s is { k: Key; el: HTMLElement } => s.el !== null);
       for (let i = 0; i < secs.length; i++) {

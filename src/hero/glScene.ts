@@ -585,7 +585,8 @@ export function startHero(host: HTMLElement): HeroScene {
     let nz = Math.random() * 2 - 1;
     const nl = 1 / Math.sqrt(nx*nx + ny*ny + nz*nz);
     nx *= nl; ny *= nl; nz *= nl;
-    let tx = 1, ty = 0, tz = 0;
+    let tx = 1, ty = 0;
+    const tz = 0;
     if (Math.abs(nx) > 0.9) { tx = 0; ty = 1; }
     let ux = ny * tz - nz * ty;
     let uy = nz * tx - nx * tz;
@@ -942,7 +943,7 @@ export function startHero(host: HTMLElement): HeroScene {
       // Roots use rootsVis (high floor) not sceneVis — the tendrils stay alive
       // behind the about text instead of fading to a pale ghost. Only the core /
       // bloom / halo dim hard (they're what washes the text out).
-      m.opacity = (rootBaseOpacity.get(m) ?? 0.8) * rootsVis * (0.6 + 0.4 * jVis);
+      m.opacity = (rootBaseOpacity.get(m) ?? 0.8) * rootsVis * (0.05 + 0.95 * jVis);
     }
 
     composer.render();
