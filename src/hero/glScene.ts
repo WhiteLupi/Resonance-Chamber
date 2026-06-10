@@ -24,8 +24,21 @@ const LOCK_THRESHOLD = 0.999;
 const HOLD_FILL_S = 2.0;
 const RELEASE_FALL_S = 0.9;
 
+export type Journey = {
+  /** seal position on screen, in viewport percent (50/50 = center) */
+  x: number;
+  y: number;
+  /** scale (1 = hero size), implemented as camera dolly */
+  s: number;
+  /** brightness 0..1, multiplied into scene visibility tracks */
+  o: number;
+  /** camera orbit rotation around Y axis, in degrees */
+  r: number;
+};
+
 export type HeroScene = {
   setProgress: (p: number) => void;
+  setJourney: (j: Journey) => void;
   onLock: (cb: () => void) => () => void;
   onCharge: (cb: (charge: number) => void) => () => void;
   dispose: () => void;
@@ -642,6 +655,12 @@ export function startHero(host: HTMLElement): HeroScene {
   // opacities so the seal dims via shader (not opacity fade on the host) and
   // becomes a faint ambient backdrop for the about inscription.
   let sceneVis = 1.0;
+  // Travelling seal (spec 2026-06-10): App sets the target; the scene lerps per
+  // frame so scroll updates feel continuous instead of stepping section to section.
+  const CAM_DIST = 9.0;
+  const journeyTarget: Journey = { x: 50, y: 50, s: 1, o: 1, r: 0 };
+  const journeyCur: Journey = { x: 50, y: 50, s: 1, o: 1, r: 0 };
+  const J_LERP = 0.08;
   // Roots dim far less than the core/bloom — they stay alive behind the about
   // text rather than fading to a ghost (driven alongside sceneVis in setProgress).
   let rootsVis = 1.0;
@@ -692,6 +711,27 @@ export function startHero(host: HTMLElement): HeroScene {
     const t = clock.getElapsedTime();
     const dt = Math.min(0.05, t - lastT);
     lastT = t;
+
+    // Journey: lerp toward the App target, then apply camera orbit/dolly and
+    // frame offset. The world stays at origin; the camera decides where the
+    // seal lands on screen.
+    journeyCur.x += (journeyTarget.x - journeyCur.x) * J_LERP;
+    journeyCur.y += (journeyTarget.y - journeyCur.y) * J_LERP;
+    journeyCur.s += (journeyTarget.s - journeyCur.s) * J_LERP;
+    journeyCur.o += (journeyTarget.o - journeyCur.o) * J_LERP;
+    journeyCur.r += (journeyTarget.r - journeyCur.r) * J_LERP;
+    const jRad = (journeyCur.r * Math.PI) / 180;
+    const jDist = CAM_DIST / journeyCur.s;
+    camera.position.set(Math.sin(jRad) * jDist, 0, Math.cos(jRad) * jDist);
+    camera.lookAt(0, 0, 0);
+    camera.setViewOffset(
+      viewW, viewH,
+      ((journeyCur.x - 50) / 100) * -viewW,
+      ((journeyCur.y - 50) / 100) * -viewH,
+      viewW, viewH,
+    );
+    camera.updateProjectionMatrix();
+    const jVis = journeyCur.o;
 
     // Charge ramps LINEARLY in time while held — the ring fills at a steady
     // rate with no asymptotic crawl at the end. Releasing early drains it faster.
@@ -861,10 +901,10 @@ export function startHero(host: HTMLElement): HeroScene {
     // Core breathing + emissive
     const breath = 1 + Math.sin(t * 1.25) * 0.04;
     coreMesh.scale.setScalar(breath);
-    coreMat.emissiveIntensity = (3.2 + charge * 3.0 + Math.sin(t * 1.7) * 0.15) * sceneVis;
+    coreMat.emissiveIntensity = (3.2 + charge * 3.0 + Math.sin(t * 1.7) * 0.15) * sceneVis * jVis;
 
     glowSprite.scale.setScalar((1.0 + charge * 0.5) * breath);
-    haloMat.opacity = (0.50 + charge * 0.18) * sceneVis;
+    haloMat.opacity = (0.50 + charge * 0.18) * sceneVis * jVis;
 
     // Sonar rings — each pulse is a discrete event (mousedown / lock), not a
     // metronome. Idle rings sit at opacity 0; active rings expand outward
@@ -887,12 +927,12 @@ export function startHero(host: HTMLElement): HeroScene {
       // The pulse "dissolves into the walls" rather than blinking out.
       const rise = Math.min(1, local / 0.08);
       const fall = Math.pow(1 - Math.max(0, (local - 0.08) / 0.92), 0.7);
-      r.mat.opacity = rise * fall * 0.55 * sceneVis;
+      r.mat.opacity = rise * fall * 0.55 * sceneVis * jVis;
     }
 
-    bloom.strength = (0.32 + charge * 0.20) * sceneVis;
+    bloom.strength = (0.32 + charge * 0.20) * sceneVis * jVis;
 
-    cMat.opacity = 0.95 * sceneVis;
+    cMat.opacity = 0.95 * sceneVis * jVis;
 
     const tintTarget = charge > 0.01
       ? new THREE.Color(BASE_COLOR).lerp(new THREE.Color(ACCENT), charge * 0.4).getHex()
@@ -902,7 +942,7 @@ export function startHero(host: HTMLElement): HeroScene {
       // Roots use rootsVis (high floor) not sceneVis — the tendrils stay alive
       // behind the about text instead of fading to a pale ghost. Only the core /
       // bloom / halo dim hard (they're what washes the text out).
-      m.opacity = (rootBaseOpacity.get(m) ?? 0.8) * rootsVis;
+      m.opacity = (rootBaseOpacity.get(m) ?? 0.8) * rootsVis * (0.6 + 0.4 * jVis);
     }
 
     composer.render();
@@ -938,6 +978,13 @@ export function startHero(host: HTMLElement): HeroScene {
       // the text, not from killing the engine. (.inscription::after in about.css)
       sceneVis = 1 - local * 0.35;
       rootsVis = 1 - local * 0.2;
+    },
+    setJourney(j: Journey) {
+      journeyTarget.x = j.x;
+      journeyTarget.y = j.y;
+      journeyTarget.s = j.s;
+      journeyTarget.o = j.o;
+      journeyTarget.r = j.r;
     },
     onLock(cb) {
       lockSubs.add(cb);
