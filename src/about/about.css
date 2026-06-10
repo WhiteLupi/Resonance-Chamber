@@ -21,9 +21,60 @@
   top: 0;
   height: 100vh;
   display: grid;
-  place-items: center;
-  padding: 96px 64px;
+  grid-template-rows: 1fr auto;
+  align-items: center;
+  padding: var(--sec-pad) var(--pad);
   overflow: hidden;
+}
+
+/* Row 1: thesis left + aside right; middle space belongs to the seal. */
+.practice-top {
+  display: grid;
+  grid-template-columns: minmax(0, 1.7fr) minmax(0, 1fr);
+  gap: var(--gap-fluid);
+  align-items: center;
+  width: 100%;
+}
+
+.practice-aside {
+  justify-self: end;
+  max-width: 38ch;
+  border-left: 1px solid var(--teal-dim);
+  padding-left: clamp(14px, 1.8vw, 40px);
+  opacity: clamp(0, calc((var(--p, 0) - 0.78) / 0.12), 1);
+}
+
+.practice-aside__label {
+  margin: 0 0 0.6em;
+  color: var(--teal);
+  font-size: var(--fs-small);
+  letter-spacing: 0.26em;
+  text-transform: uppercase;
+}
+
+.practice-aside__copy {
+  margin: 0;
+  font-size: var(--fs-body);
+  line-height: 1.55;
+  color: var(--fg-soft);
+}
+
+/* Row 2: facets across the full width. */
+.practice-facets {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: clamp(12px, 2vw, 40px);
+  margin: 0;
+  padding: clamp(16px, 3vh, 40px) 0 0;
+  border-top: 1px solid var(--teal-dim);
+  opacity: clamp(0, calc((var(--p, 0) - 0.86) / 0.1), 1);
+}
+
+.practice-facets li {
+  color: var(--teal-soft);
+  font-size: var(--fs-small);
+  letter-spacing: 0.12em;
 }
 
 /* the single bounding box around all three sentences. A vertical hairline runs
@@ -33,7 +84,8 @@
 .inscription {
   position: relative;
   z-index: 2;
-  width: min(880px, 100%);
+  width: 100%;
+  max-width: var(--measure);
   display: flex;
   flex-direction: column;
   gap: 30px;
@@ -173,5 +225,15 @@
 @media (max-width: 720px) {
   .about-stage {
     padding: 80px 24px;
+  }
+  .practice-top {
+    grid-template-columns: 1fr;
+  }
+  .practice-aside {
+    justify-self: start;
+    border-left: none;
+    border-top: 1px solid var(--teal-dim);
+    padding-left: 0;
+    padding-top: 16px;
   }
 }
