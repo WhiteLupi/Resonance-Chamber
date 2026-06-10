@@ -5,6 +5,7 @@ import { Hero } from './hero/Hero'
 import { Navbar } from './hero/Navbar'
 import { About } from './about/About'
 import { Skills } from './sections/Skills'
+import { Work } from './sections/Work'
 import { Contact } from './sections/Contact'
 import { Cursor } from './hero/Cursor'
 import { Atmosphere } from './hero/Atmosphere'
@@ -166,6 +167,7 @@ function App() {
       <Hero locked={locked} />
       <About />
       <Skills />
+      <Work />
       <Contact />
       <Navbar locked={locked} />
       <Cursor />

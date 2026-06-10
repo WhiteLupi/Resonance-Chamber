@@ -93,6 +93,10 @@ export function Navbar({ locked }: NavbarProps) {
           <Glyph kind="triangle" />
           <span>SKILLS</span>
         </a>
+        <a className="cockpit-navbar__link" href="#work">
+          <Glyph kind="circle-half" />
+          <span>WORK</span>
+        </a>
         <a className="cockpit-navbar__link" href="#contact">
           <Glyph kind="square" />
           <span>CONTACT</span>

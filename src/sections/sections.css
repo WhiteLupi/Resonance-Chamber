@@ -142,6 +142,80 @@
   translate: 0 0;
 }
 
+/* ===== SELECTED WORK — showcase (spec 2026-06-10) ===== */
+.work-section {
+  display: block;
+  padding: var(--sec-pad) var(--pad);
+}
+
+.work-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
+  gap: var(--gap-fluid);
+  align-items: start;
+  min-height: clamp(320px, 56vh, 640px);
+}
+
+.work-title {
+  margin: 0 0 0.5em;
+  font-size: var(--fs-band);
+  font-weight: 400;
+  letter-spacing: 0.06em;
+  color: var(--fg-vault);
+}
+
+.work-copy {
+  margin: 0 0 0.9em;
+  max-width: 44ch;
+  font-size: var(--fs-body);
+  line-height: 1.55;
+  color: var(--fg-soft);
+}
+
+.work-chips {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 1.2em 0 2em;
+  padding: 0;
+}
+
+.work-chips li {
+  border: 1px solid var(--teal-dim);
+  border-radius: 999px;
+  padding: 0.35em 0.8em;
+  font-size: var(--fs-small);
+  letter-spacing: 0.08em;
+  color: var(--teal-soft);
+}
+
+.work-side {
+  display: grid;
+  gap: clamp(16px, 2.5vh, 36px);
+  border-top: 1px solid var(--teal-dim);
+  padding-top: clamp(16px, 2.5vh, 36px);
+}
+
+.work-side__label {
+  margin: 0 0 0.6em;
+  color: var(--teal);
+  font-size: var(--fs-small);
+  letter-spacing: 0.26em;
+  text-transform: uppercase;
+}
+
+.work-grid .work-info {
+  opacity: 0;
+  translate: 0 14px;
+  transition: opacity 0.5s ease, translate 0.5s ease;
+}
+
+.work-grid.is-in .work-info {
+  opacity: 1;
+  translate: 0 0;
+}
+
 /* ============================ THE CHANNEL ============================ */
 
 .channel-inner {
@@ -304,6 +378,13 @@
   .craft-band__tags {
     margin-left: 0;
     white-space: normal;
+  }
+  .work-grid {
+    grid-template-columns: 1fr;
+    min-height: 0;
+  }
+  .work-stage {
+    min-height: 40vh;
   }
 }
 
