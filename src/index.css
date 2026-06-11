@@ -70,6 +70,10 @@ html, body {
   /* kill rubber-band over-scroll bounce; otherwise body bg shows above hero
      without noise/vignette/canvas overlays, breaking the decayed-cockpit feel */
   overscroll-behavior: none;
+  /* The soft legibility pools (::before, inset -18%/-12%) intentionally bleed
+     past their sections; clip keeps that paint without giving the page a
+     sideways scroll. */
+  overflow-x: clip;
 }
 
 body {

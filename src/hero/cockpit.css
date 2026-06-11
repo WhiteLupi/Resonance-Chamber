@@ -21,6 +21,10 @@
   inset: 0;
   z-index: 8;
   pointer-events: none;
+  /* The rising "motion" word (scale + tracking at full --rise) pokes past the
+     viewport edge and gives the page a sideways scroll on narrow screens;
+     clipping at the fixed container (= viewport) costs nothing visually. */
+  overflow: hidden;
   translate: calc(var(--mx, 0) * -12px) calc(var(--my, 0) * -8px);
   will-change: translate;
 }
