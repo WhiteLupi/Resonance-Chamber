@@ -775,7 +775,9 @@
   top: -10vh;
   left: -10vw;
   right: -10vw;
-  height: 42vh;
+  /* fixed-depth ceiling: the torn boundary starts right under the navbar
+     (~80px) instead of tracking viewport height and sagging into the frame */
+  height: calc(10vh + 250px);
   z-index: 9;
   pointer-events: none;
   /* solid black down to the baked torn band — the word is occluded by SOLID
