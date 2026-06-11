@@ -172,10 +172,12 @@ function App() {
     type Key = { id: string; x: number; y: number; s: number; o: number; r: number };
     const KEYS: Key[] = [
       { id: 'hero', x: 50, y: 50, s: 1.00, o: 1.00, r: 0 },
-      { id: 'about', x: 47, y: 38, s: 0.62, o: 0.50, r: 40 },
+      { id: 'about', x: 61, y: 42, s: 0.66, o: 0.50, r: 40 },
       { id: 'skills', x: 60, y: 52, s: 0.85, o: 0.38, r: 85 },
       { id: 'work', x: 30, y: 50, s: 1.05, o: 0.95, r: 130 },
-      { id: 'contact', x: 52, y: 72, s: 0.52, o: 0.80, r: 170 },
+      // Contact: the seal settles in the open air above the closing line —
+      // large and present for the farewell, not shrunk into the footer.
+      { id: 'contact', x: 52, y: 42, s: 0.88, o: 0.85, r: 170 },
     ];
     const KEYS_MOBILE: Key[] = [
       { id: 'hero', x: 50, y: 50, s: 1.00, o: 1.00, r: 0 },
@@ -186,6 +188,32 @@ function App() {
     ];
     const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
     const ease = (t: number) => (t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2);
+
+    // The keyframe `o` is the brightness when the seal sits UNDER text; in
+    // open space it stays at full glow. Measured live against the text blocks
+    // on screen, so dimming only happens where the core would wash copy out —
+    // not on the empty stretches of the route.
+    const TEXT_BLOCKS =
+      '.inscription, .practice-aside, .craft-band__name, .craft-band__desc, ' +
+      '.craft-band__tags, .work-info, .channel-headline, .channel-panel, .section-eyebrow';
+    const dimNearText = (x: number, y: number, s: number, baseO: number) => {
+      const vw = window.innerWidth;
+      const vh = window.innerHeight;
+      const cx = (x / 100) * vw;
+      const cy = (y / 100) * vh;
+      // Bright zone ≈ core + halo + dense root cluster, scales with the dolly.
+      const radius = s * vh * 0.3;
+      let overlap = 0;
+      for (const el of document.querySelectorAll(TEXT_BLOCKS)) {
+        const r = el.getBoundingClientRect();
+        if (r.bottom < -40 || r.top > vh + 40 || r.width === 0) continue;
+        const dx = Math.max(r.left - cx, 0, cx - r.right);
+        const dy = Math.max(r.top - cy, 0, cy - r.bottom);
+        overlap = Math.max(overlap, 1 - Math.min(1, Math.hypot(dx, dy) / radius));
+        if (overlap >= 1) break;
+      }
+      return 1 - (1 - baseO) * overlap;
+    };
 
     const onScroll = () => {
       const scene = sceneRef.current;
@@ -200,17 +228,20 @@ function App() {
         const r = secs[i].el.getBoundingClientRect();
         const next = secs[i + 1];
         if (!next) {
-          scene.setJourney(secs[i].k);
+          const k = secs[i].k;
+          scene.setJourney(mobile ? k : { ...k, o: dimNearText(k.x, k.y, k.s, k.o) });
           return;
         }
         const nr = next.el.getBoundingClientRect();
         if (r.top <= mid && nr.top > mid) {
           const t = ease(Math.min(1, Math.max(0, (mid - r.top) / (nr.top - r.top))));
+          const x = lerp(secs[i].k.x, next.k.x, t);
+          const y = lerp(secs[i].k.y, next.k.y, t);
+          const s = lerp(secs[i].k.s, next.k.s, t);
+          const o = lerp(secs[i].k.o, next.k.o, t);
           scene.setJourney({
-            x: lerp(secs[i].k.x, next.k.x, t),
-            y: lerp(secs[i].k.y, next.k.y, t),
-            s: lerp(secs[i].k.s, next.k.s, t),
-            o: lerp(secs[i].k.o, next.k.o, t),
+            x, y, s,
+            o: mobile ? o : dimNearText(x, y, s, o),
             r: lerp(secs[i].k.r, next.k.r, t),
           });
           return;
