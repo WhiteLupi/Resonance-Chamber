@@ -20,6 +20,7 @@
 /* Shared content safe-zone for sections that sit inside the chamber haze. */
 .section-inner,
 .work-grid,
+.work-info,
 .channel-grid,
 .craft-register {
   position: relative;
@@ -33,8 +34,11 @@
 
 /* Local legibility pool — a soft dark wash so text holds over the live ghost
    roots and chamber haze. */
+/* NOTE: the work pool sits on .work-info (the text column), NOT .work-grid —
+   the grid's left half is the seal's dock and a grid-wide pool was dimming
+   the seal even though no text sits there. */
 .section-inner::before,
-.work-grid::before,
+.work-info::before,
 .channel-grid::before,
 .craft-register::before {
   content: '';
