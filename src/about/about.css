@@ -38,6 +38,8 @@
 
 .practice-aside {
   justify-self: end;
+  /* ch measured against the body size the copy actually renders at. */
+  font-size: var(--fs-body);
   max-width: 34ch;
   border-left: 1px solid var(--teal-dim);
   padding-left: clamp(18px, 2.2vw, 48px);
@@ -77,12 +79,16 @@
   letter-spacing: 0.12em;
 }
 
-/* the single bounding box around all three sentences. */
+/* the single bounding box around all three sentences. Font size lives HERE
+   (not on the copy) so the ch-based measure tracks the rendered text — with
+   the size on the child, 52ch resolved against the 16px wrapper and squeezed
+   the column to ~30 characters per line. */
 .inscription {
   position: relative;
   z-index: 2;
   width: 100%;
-  max-width: min(52ch, 100% - clamp(8px, 2vw, 28px));
+  font-size: clamp(19px, 2.35vw, 27px);
+  max-width: min(44ch, 100% - clamp(8px, 2vw, 28px));
   display: flex;
   flex-direction: column;
   gap: clamp(28px, 3.2vh, 42px);
@@ -125,7 +131,6 @@
 
 .inscription__copy {
   display: inline-block;
-  font-size: clamp(19px, 2.35vw, 27px);
   line-height: 1.58;
   letter-spacing: 0.005em;
   color: var(--fg);

@@ -121,7 +121,7 @@
 
 .craft-band__desc {
   margin: 0;
-  max-width: 48ch;
+  max-width: 60ch;
   font-size: var(--fs-body);
   line-height: 1.55;
   color: var(--teal-soft);
@@ -178,7 +178,7 @@
 
 .work-copy {
   margin: 0 0 0.9em;
-  max-width: 44ch;
+  max-width: 56ch;
   font-size: var(--fs-body);
   line-height: 1.55;
   color: var(--fg-soft);
