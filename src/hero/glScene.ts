@@ -789,7 +789,8 @@ export function startHero(host: HTMLElement): HeroScene {
   const J_LERP = 0.07;
   const CAMERA_EPS = 0.0025;
   const VIEW_OFFSET_EPS = 0.35;
-  const cameraApplied = { x: NaN, y: NaN, s: NaN, r: NaN, w: 0, h: 0 };
+  const PARALLAX_EPS = 0.0008;
+  const cameraApplied = { x: NaN, y: NaN, s: NaN, r: NaN, yawOff: NaN, pitchOff: NaN, w: 0, h: 0 };
   let cameraDirty = true;
   // Roots dim far less than the core/bloom — they stay alive behind the about
   // text rather than fading to a ghost (driven alongside sceneVis in setProgress).
@@ -935,17 +936,40 @@ export function startHero(host: HTMLElement): HeroScene {
     journeyCur.s += (journeyTarget.s - journeyCur.s) * J_LERP;
     journeyCur.o += (journeyTarget.o - journeyCur.o) * J_LERP;
     journeyCur.r += (journeyTarget.r - journeyCur.r) * J_LERP;
+
+    // Pointer parallax moves the CAMERA, not the figure. The seal never turns
+    // toward the cursor — the viewpoint drifts around it on a small orbit, so
+    // perspective and (world-fixed) lighting both say "we move, it holds
+    // still", the same illusion as the moon keeping its face.
+    if (HERO_PERF.enableParallax && tier.parallaxScale > 0) {
+      const parallaxLerp = 0.035 + tier.parallaxScale * 0.025;
+      parallaxX += (mouseX - parallaxX) * parallaxLerp;
+      parallaxY += (mouseY - parallaxY) * parallaxLerp;
+    } else {
+      parallaxX *= 0.88;
+      parallaxY *= 0.88;
+    }
+    const camYawOff = parallaxX * 0.21 * tier.parallaxScale;
+    const camPitchOff = -parallaxY * 0.16 * tier.parallaxScale;
+
     const cameraNeedsUpdate = cameraDirty
       || Math.abs(journeyCur.x - cameraApplied.x) > VIEW_OFFSET_EPS
       || Math.abs(journeyCur.y - cameraApplied.y) > VIEW_OFFSET_EPS
       || Math.abs(journeyCur.s - cameraApplied.s) > CAMERA_EPS
       || Math.abs(journeyCur.r - cameraApplied.r) > CAMERA_EPS
+      || Math.abs(camYawOff - cameraApplied.yawOff) > PARALLAX_EPS
+      || Math.abs(camPitchOff - cameraApplied.pitchOff) > PARALLAX_EPS
       || viewW !== cameraApplied.w
       || viewH !== cameraApplied.h;
     if (cameraNeedsUpdate) {
-      const jRad = (journeyCur.r * Math.PI) / 180;
+      const yaw = (journeyCur.r * Math.PI) / 180 + camYawOff;
       const jDist = CAM_DIST / journeyCur.s;
-      camera.position.set(Math.sin(jRad) * jDist, 0, Math.cos(jRad) * jDist);
+      const cosPitch = Math.cos(camPitchOff);
+      camera.position.set(
+        Math.sin(yaw) * jDist * cosPitch,
+        Math.sin(camPitchOff) * jDist,
+        Math.cos(yaw) * jDist * cosPitch,
+      );
       camera.lookAt(0, 0, 0);
       camera.setViewOffset(
         viewW, viewH,
@@ -958,6 +982,8 @@ export function startHero(host: HTMLElement): HeroScene {
       cameraApplied.y = journeyCur.y;
       cameraApplied.s = journeyCur.s;
       cameraApplied.r = journeyCur.r;
+      cameraApplied.yawOff = camYawOff;
+      cameraApplied.pitchOff = camPitchOff;
       cameraApplied.w = viewW;
       cameraApplied.h = viewH;
       cameraDirty = false;
@@ -989,26 +1015,6 @@ export function startHero(host: HTMLElement): HeroScene {
     if (locked && tier.idleRings && t >= nextIdleRingAt) {
       triggerRing(t);
       nextIdleRingAt = t + IDLE_RING_INTERVAL;
-    }
-
-    // Parallax — outerGroup deeper than tetraGroup. Kept subtle: mouse should
-    // nudge the view, not swing the whole figure into unflattering edge-on angles.
-    if (HERO_PERF.enableParallax && tier.parallaxScale > 0) {
-      const parallaxScale = tier.parallaxScale;
-      const parallaxLerp = 0.035 + parallaxScale * 0.025;
-      parallaxX += (mouseX - parallaxX) * parallaxLerp;
-      parallaxY += (mouseY - parallaxY) * parallaxLerp;
-      outerGroup.rotation.y =  parallaxX * 0.16 * parallaxScale;
-      outerGroup.rotation.x = -parallaxY * 0.12 * parallaxScale;
-      tetraGroup.rotation.y =  parallaxX * 0.05 * parallaxScale;
-      tetraGroup.rotation.x = -parallaxY * 0.04 * parallaxScale;
-    } else {
-      parallaxX *= 0.88;
-      parallaxY *= 0.88;
-      outerGroup.rotation.y *= 0.88;
-      outerGroup.rotation.x *= 0.88;
-      tetraGroup.rotation.y *= 0.88;
-      tetraGroup.rotation.x *= 0.88;
     }
 
     // Roots breathe with a slow BOUNDED turn (±~9°) instead of a continuous spin —
