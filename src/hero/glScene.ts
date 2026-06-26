@@ -822,6 +822,14 @@ export function startHero(host: HTMLElement): HeroScene {
   const rootTintColor = new THREE.Color(BASE_COLOR);
   let lastRootTint = BASE_COLOR;
 
+  // Size floor: the seal's on-screen size is ∝ viewport height (perspective
+  // projection). On short viewports it would shrink without limit, so below
+  // MIN_VIEWH we pull the camera proportionally closer — the apparent size then
+  // freezes at its MIN_VIEWH value instead of collapsing. Applied to every place
+  // that derives the seal's screen size (camera dolly + the hit-test).
+  const MIN_VIEWH = 640;
+  const fitScale = () => (viewH < MIN_VIEWH ? MIN_VIEWH / viewH : 1);
+
   // Hit-test: is a screen point (client px) over the seal core's projected disc?
   // Projects the core's world centre through the live camera (so it stays true
   // under journey travel + parallax orbit), and derives the on-screen radius
@@ -837,7 +845,7 @@ export function startHero(host: HTMLElement): HeroScene {
     ).project(camera);
     const cx = (_coreNdc.x * 0.5 + 0.5) * viewW;
     const cy = (-_coreNdc.y * 0.5 + 0.5) * viewH;
-    const jDist = CAM_DIST / journeyCur.s;
+    const jDist = CAM_DIST / (journeyCur.s * fitScale());
     const worldR = CORE_R * tetraGroup.scale.x;
     const pxR =
       (worldR / jDist) *
@@ -1023,7 +1031,7 @@ export function startHero(host: HTMLElement): HeroScene {
       || viewH !== cameraApplied.h;
     if (cameraNeedsUpdate) {
       const yaw = (journeyCur.r * Math.PI) / 180 + camYawOff;
-      const jDist = CAM_DIST / journeyCur.s;
+      const jDist = CAM_DIST / (journeyCur.s * fitScale());
       const cosPitch = Math.cos(camPitchOff);
       camera.position.set(
         Math.sin(yaw) * jDist * cosPitch,
