@@ -204,11 +204,17 @@ export function startHero(host: HTMLElement): HeroScene {
   const camera = new THREE.PerspectiveCamera(42, viewW / viewH, 0.1, 100);
   camera.position.set(0, 0, 9.0);
 
-  scene.add(new THREE.AmbientLight(0xffffff, 0.32));
-  const keyLight = new THREE.DirectionalLight(0xffffff, 0.6);
+  // Ambient-dominant so the core sphere reads as a SYMMETRIC glowing orb: its
+  // bright centroid stays at the geometric centre (= the charge ring's centre)
+  // regardless of the parallax camera orbit. Strong directional key/rim used to
+  // throw the lit hemisphere — and the bloom riding it — off toward the light,
+  // so the ball looked shoved sideways inside the ring. These lights only touch
+  // the core (roots/comets are Line2/points, unlit), so flattening is safe.
+  scene.add(new THREE.AmbientLight(0xffffff, 0.78));
+  const keyLight = new THREE.DirectionalLight(0xffffff, 0.15);
   keyLight.position.set(2, 3, 4);
   scene.add(keyLight);
-  const rimLight = new THREE.DirectionalLight(ACCENT, 0.4);
+  const rimLight = new THREE.DirectionalLight(ACCENT, 0.15);
   rimLight.position.set(-3, -1, -2);
   scene.add(rimLight);
 

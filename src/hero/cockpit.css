@@ -745,6 +745,9 @@
 
 .cockpit-cursor--wave .cockpit-cursor__shape {
   opacity: 0;
+  /* kill the shape-pop animation too — it re-fires on every 7s glyph swap and
+     would otherwise flash the hidden glyph back to opacity 1 mid-pulse */
+  animation: none;
 }
 
 .cockpit-cursor__ripple {
