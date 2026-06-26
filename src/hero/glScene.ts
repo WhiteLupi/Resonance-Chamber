@@ -210,12 +210,18 @@ export function startHero(host: HTMLElement): HeroScene {
   // throw the lit hemisphere — and the bloom riding it — off toward the light,
   // so the ball looked shoved sideways inside the ring. These lights only touch
   // the core (roots/comets are Line2/points, unlit), so flattening is safe.
+  // Both lights sit on the Z axis (dead in front / dead behind) so there is
+  // ZERO left/right or up/down bias: the core's lit disc is radially symmetric
+  // and its bright centroid stays exactly on the geometric centre = the charge
+  // ring's centre. The old off-axis key (2,3,4) threw a CONSTANT highlight to
+  // the upper-right (amplified by bloom), so the ball read as shoved that way
+  // no matter where the mouse was. Ambient dominates; these only touch the core.
   scene.add(new THREE.AmbientLight(0xffffff, 0.78));
-  const keyLight = new THREE.DirectionalLight(0xffffff, 0.15);
-  keyLight.position.set(2, 3, 4);
+  const keyLight = new THREE.DirectionalLight(0xffffff, 0.18);
+  keyLight.position.set(0, 0, 6);
   scene.add(keyLight);
   const rimLight = new THREE.DirectionalLight(ACCENT, 0.15);
-  rimLight.position.set(-3, -1, -2);
+  rimLight.position.set(0, 0, -6);
   scene.add(rimLight);
 
   const composer = HERO_PERF.enableBloom ? new EffectComposer(renderer) : null;
