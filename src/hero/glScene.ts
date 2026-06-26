@@ -136,6 +136,9 @@ export type HeroScene = {
   setJourney: (j: Journey) => void;
   onLock: (cb: () => void) => () => void;
   onCharge: (cb: (charge: number) => void) => () => void;
+  /** Fires when the pointer enters/leaves the seal core's screen disc — drives
+      the cursor "hold"/"wave" affordance so it only shows over the ball. */
+  onHover: (cb: (over: boolean) => void) => () => void;
   dispose: () => void;
 };
 
@@ -144,6 +147,7 @@ export function startHero(host: HTMLElement): HeroScene {
   const perfDebug = window as typeof window & { __heroPerf?: Record<string, unknown> };
   const lockSubs = new Set<() => void>();
   const chargeSubs = new Set<(charge: number) => void>();
+  const hoverSubs = new Set<(over: boolean) => void>();
   let locked = false;
   const fireLock = () => {
     if (locked) return;
@@ -775,6 +779,12 @@ export function startHero(host: HTMLElement): HeroScene {
   let clickHeld = false;
   let mouseX = 0, mouseY = 0;
   let parallaxX = 0, parallaxY = 0;
+  // Last raw pointer position (client px) + whether it sits over the seal core's
+  // screen disc. The core is the ONLY interactive target — charging (pre-lock)
+  // and the broadcast wave (post-lock) fire only over the ball, never from a
+  // dead corner of the canvas. Hover is broadcast so the cursor can show it.
+  let lastClientX = -1, lastClientY = -1;
+  let overCore = false;
 
   // Scene visibility — driven by setProgress(p). 1.0 at hero, ramps to 0 as
   // user scrolls into about. Multiplied into emissive / bloom / material
@@ -800,6 +810,32 @@ export function startHero(host: HTMLElement): HeroScene {
   const rootTintColor = new THREE.Color(BASE_COLOR);
   let lastRootTint = BASE_COLOR;
 
+  // Hit-test: is a screen point (client px) over the seal core's projected disc?
+  // Projects the core's world centre through the live camera (so it stays true
+  // under journey travel + parallax orbit), and derives the on-screen radius
+  // analytically from the perspective FOV. HIT_FORGIVE widens it past the bare
+  // sphere to cover the visible glow/halo so the target feels comfortable.
+  const HIT_FORGIVE = 2.4;
+  const _coreNdc = new THREE.Vector3();
+  const isOverCore = (clientX: number, clientY: number) => {
+    _coreNdc.set(
+      tetraGroup.position.x,
+      tetraGroup.position.y,
+      tetraGroup.position.z,
+    ).project(camera);
+    const cx = (_coreNdc.x * 0.5 + 0.5) * viewW;
+    const cy = (-_coreNdc.y * 0.5 + 0.5) * viewH;
+    const jDist = CAM_DIST / journeyCur.s;
+    const worldR = CORE_R * tetraGroup.scale.x;
+    const pxR =
+      (worldR / jDist) *
+      (viewH / (2 * Math.tan((camera.fov * Math.PI) / 360))) *
+      HIT_FORGIVE;
+    const dx = clientX - cx;
+    const dy = clientY - cy;
+    return dx * dx + dy * dy <= pxR * pxR;
+  };
+
   let pendingMouseX = 0;
   let pendingMouseY = 0;
   let mouseRaf = 0;
@@ -809,11 +845,19 @@ export function startHero(host: HTMLElement): HeroScene {
     mouseY = pendingMouseY;
   };
   const onMouseMove = (e: MouseEvent) => {
+    lastClientX = e.clientX;
+    lastClientY = e.clientY;
     pendingMouseX = (e.clientX / viewW) * 2 - 1;
     pendingMouseY = (e.clientY / viewH) * 2 - 1;
     if (!mouseRaf) mouseRaf = requestAnimationFrame(flushMouseMove);
   };
   const onMouseLeave = () => {
+    lastClientX = -1;
+    lastClientY = -1;
+    if (overCore) {
+      overCore = false;
+      for (const cb of hoverSubs) cb(false);
+    }
     pendingMouseX = 0;
     pendingMouseY = 0;
     if (!mouseRaf) {
@@ -821,16 +865,20 @@ export function startHero(host: HTMLElement): HeroScene {
       mouseY = 0;
     }
   };
-  // Pre-lock clicks should NOT emit sonar rings — they're a post-activation
-  // gesture (engine broadcasting), not a charge signal. The charge ring +
-  // HOLD prompt handle pre-lock feedback by themselves.
-  const onMouseDown = () => {
+  // The seal core is the only interactive target. Pre-lock: holding the ball
+  // charges the engine (a corner press is ignored — it misses the point of the
+  // ritual). Post-lock: pressing the ball broadcasts a sonar wave. Either way,
+  // off-ball presses do nothing.
+  const onMouseDown = (e: MouseEvent) => {
+    if (!isOverCore(e.clientX, e.clientY)) return;
     clickHeld = true;
     if (locked) triggerRing(clock.getElapsedTime());
   };
   const onMouseUp   = () => { clickHeld = false; };
   const onBlur      = () => { clickHeld = false; };
-  const onTouchStart = () => {
+  const onTouchStart = (e: TouchEvent) => {
+    const t0 = e.touches[0];
+    if (t0 && !isOverCore(t0.clientX, t0.clientY)) return;
     clickHeld = true;
     if (locked) triggerRing(clock.getElapsedTime());
   };
@@ -1157,13 +1205,26 @@ export function startHero(host: HTMLElement): HeroScene {
       cGeo.attributes.position.needsUpdate = true;
     }
 
-    // Proximity tug — post-lock dampens (no charge multiplier) so the seal
-    // settles still while comets continue drifting.
-    const tugStrength = locked ? 0.0015 : 0.008 * charge;
+    // Proximity tug — post-lock the seal drifts a hair toward passing comets so
+    // it reads as alive. PRE-LOCK the tug is OFF: the core must stay pinned at
+    // origin so it sits dead-centre inside the charge ring during the hold
+    // ritual (the tug used to pull it off-centre as charge climbed).
+    const tugStrength = locked ? 0.0015 : 0;
     const tugLerp = 0.15;
     tetraGroup.position.x += (pullX * tugStrength - tetraGroup.position.x) * tugLerp;
     tetraGroup.position.y += (pullY * tugStrength - tetraGroup.position.y) * tugLerp;
     tetraGroup.position.z += (pullZ * tugStrength - tetraGroup.position.z) * tugLerp;
+
+    // Hover state — recomputed once per frame against the live camera + core
+    // position, broadcast on change so the cursor's over-ball affordance tracks
+    // the seal wherever it travels. Skipped while the pointer is off-canvas.
+    if (lastClientX >= 0) {
+      const nowOver = isOverCore(lastClientX, lastClientY);
+      if (nowOver !== overCore) {
+        overCore = nowOver;
+        for (const cb of hoverSubs) cb(nowOver);
+      }
+    }
 
     // Core breathing + emissive
     const pulseScale = HERO_PERF.enableChargePulse ? tier.pulseScale : 0;
@@ -1272,6 +1333,11 @@ export function startHero(host: HTMLElement): HeroScene {
       chargeSubs.add(cb);
       cb(charge);
       return () => { chargeSubs.delete(cb); };
+    },
+    onHover(cb) {
+      hoverSubs.add(cb);
+      cb(overCore);
+      return () => { hoverSubs.delete(cb); };
     },
     dispose() {
       cancelAnimationFrame(raf);

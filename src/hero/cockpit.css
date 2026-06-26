@@ -732,6 +732,41 @@
   opacity: 1;
 }
 
+/* Post-lock, over the ball: a "wave" cue — accent ring with a single ripple
+   radiating outward, telling the visitor a click broadcasts a sonar wave from
+   the seal. */
+.cockpit-cursor--wave {
+  width: 54px;
+  height: 54px;
+  color: var(--accent);
+}
+
+.cockpit-cursor--wave .cockpit-cursor__shape {
+  opacity: 0.4;
+}
+
+.cockpit-cursor__ripple {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  border: 1px solid var(--accent);
+  transform: translate(-50%, -50%) scale(0.4);
+  opacity: 0;
+  pointer-events: none;
+}
+
+.cockpit-cursor--wave .cockpit-cursor__ripple {
+  animation: cockpit-cursor-ripple 1.6s ease-out infinite;
+}
+
+@keyframes cockpit-cursor-ripple {
+  0%   { transform: translate(-50%, -50%) scale(0.4); opacity: 0.7; }
+  100% { transform: translate(-50%, -50%) scale(1.5); opacity: 0; }
+}
+
 @media (hover: none), (pointer: coarse) {
   .cockpit-cursor { display: none; }
 }

@@ -18,6 +18,7 @@ function App() {
   const stageRef = useRef<HTMLDivElement>(null)
   const sceneRef = useRef<HeroScene | null>(null)
   const [locked, setLocked] = useState(false)
+  const [overCore, setOverCore] = useState(false)
 
   const lenisRef = useRef<Lenis | null>(null)
 
@@ -31,10 +32,12 @@ function App() {
     const unsubCharge = scene.onCharge((c) => {
       root.style.setProperty('--charge', c.toFixed(4))
     })
+    const unsubHover = scene.onHover(setOverCore)
     return () => {
       sceneRef.current = null
       unsub()
       unsubCharge()
+      unsubHover()
       scene.dispose()
     }
   }, [])
@@ -306,7 +309,7 @@ function App() {
       <Work />
       <Contact />
       <Navbar locked={locked} />
-      <Cursor locked={locked} />
+      <Cursor locked={locked} overCore={overCore} />
     </>
   )
 }

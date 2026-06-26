@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 
-type Variant = 'default' | 'link' | 'scroll' | 'hold' | 'charging';
+type Variant = 'default' | 'link' | 'scroll' | 'hold' | 'charging' | 'wave';
 export type ShapeKind = 'circle' | 'triangle' | 'square' | 'circle-half' | 'triangle-half';
 
 const SHAPES: ShapeKind[] = [
@@ -83,7 +83,7 @@ export function ShapeSvg({ kind }: { kind: ShapeKind }) {
 // default. Scroll-up cancels the state immediately. Link hover always wins.
 const SCROLL_HOLD_MS = 380;
 
-export function Cursor({ locked }: { locked: boolean }) {
+export function Cursor({ locked, overCore }: { locked: boolean; overCore: boolean }) {
   const ref = useRef<HTMLDivElement>(null);
   const [hoverVariant, setHoverVariant] = useState<'default' | 'link'>('default');
   const [scrolling, setScrolling] = useState(false);
@@ -167,15 +167,12 @@ export function Cursor({ locked }: { locked: boolean }) {
     };
   }, []);
 
-  // Pre-lock the whole hero IS the hold target (glScene charges on mousedown
-  // anywhere), and there is nothing else on screen to hover — so the cursor
-  // becomes the affordance: a "hold" ring, contracting to a "charging" state
-  // while pressed. Post-lock: link hover wins, then the scroll indicator.
+  // The seal core is the sole hold target. Pre-lock, over the ball the cursor
+  // becomes a "hold" ring, contracting to "charging" while pressed; off the
+  // ball it stays default so a corner press reads as inert. Post-lock, over the
+  // ball it shows a "wave" ripple (a click broadcasts a sonar wave). Press is
+  // tracked window-wide but only surfaces as "charging" when actually on-ball.
   useEffect(() => {
-    if (locked) {
-      setHeld(false);
-      return;
-    }
     const down = () => setHeld(true);
     const up = () => setHeld(false);
     window.addEventListener('mousedown', down);
@@ -186,15 +183,21 @@ export function Cursor({ locked }: { locked: boolean }) {
       window.removeEventListener('mouseup', up);
       window.removeEventListener('blur', up);
     };
-  }, [locked]);
+  }, []);
 
   const variant: Variant = !locked
-    ? (held ? 'charging' : 'hold')
+    ? overCore
+      ? held
+        ? 'charging'
+        : 'hold'
+      : 'default'
     : hoverVariant === 'link'
       ? 'link'
-      : scrolling
-        ? 'scroll'
-        : 'default';
+      : overCore
+        ? 'wave'
+        : scrolling
+          ? 'scroll'
+          : 'default';
 
   useEffect(() => {
     const id = window.setInterval(() => {
@@ -222,6 +225,7 @@ export function Cursor({ locked }: { locked: boolean }) {
         <span className="cockpit-cursor__hint-arrow">↓</span>
       </span>
       <span className="cockpit-cursor__hold" aria-hidden="true">hold</span>
+      <span className="cockpit-cursor__ripple" aria-hidden="true" />
     </div>
   );
 }
