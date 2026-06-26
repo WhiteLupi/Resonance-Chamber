@@ -101,6 +101,22 @@ body {
   min-height: 100%;
 }
 
+/* Visually hidden, but present in the DOM and read by screen readers, crawlers,
+   and JS-running agents. The visual layer keeps the copy poetic and (in About)
+   split per-character for animation; this carries the same content as plain,
+   parseable prose so the page is legible to machines, not just felt by humans. */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 @media (hover: hover) and (pointer: fine) {
   html, body, a, button, [role="button"] {
     cursor: none;

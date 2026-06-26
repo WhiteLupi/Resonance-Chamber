@@ -298,6 +298,31 @@ function App() {
 
   return (
     <>
+      {/* Machine-readable identity (see .sr-only). The visual layer stays poetic
+          and, in About, split per-character for animation; this carries the same
+          content as plain prose so search + AI agents can actually read it. */}
+      <header className="sr-only">
+        <h1>Kasia Walter — Frontend &amp; Motion Engineer</h1>
+        <p>
+          I build interfaces that carry feeling. My work sits where motion,
+          structure, and problem-solving meet — using frontend to shape products
+          that feel clearer, calmer, and more alive. AI is part of the process,
+          not the point: a tool for exploring, structuring, and shipping, while
+          judgement stays with me.
+        </p>
+        <p>
+          Selected work: cuewigs — a motion-led marketing site, GSAP-driven;
+          Awwwards Developer Award and Site of the Day, 2024. Currently at Pirxey
+          / Widelab, working across frontend, interface quality, product UI, and
+          design systems.
+        </p>
+        <p>
+          Contact:{' '}
+          <a href="mailto:bronowickakasia@gmail.com">bronowickakasia@gmail.com</a>
+          {' · '}
+          <a href="https://www.linkedin.com/in/kasiawalter">LinkedIn</a>
+        </p>
+      </header>
       <div ref={stageRef} className="gl-stage" aria-hidden="true" />
       <div className={`edge-void${locked ? ' edge-void--in' : ''}`} aria-hidden="true">
         <span className="edge-void__edge edge-void__edge--top" />
