@@ -14,7 +14,7 @@ export function Hero({ locked }: HeroProps) {
     <section id="hero" className={`hero-section ${locked ? 'hero-section--revealed' : ''}`}>
       <div className="hero-prompt" aria-hidden={locked}>HOLD</div>
       <div className="hero-inscription">
-        <div className="hero-inscription__bottom" aria-hidden={!locked}>alive</div>
+        <div className="hero-inscription__bottom" aria-hidden={!locked}>Alive</div>
       </div>
     </section>
   );

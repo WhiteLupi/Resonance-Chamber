@@ -323,7 +323,9 @@
   font-weight: 400;
   font-size: clamp(40px, 5.8vw, 132px);
   letter-spacing: -0.012em;
-  text-transform: lowercase;
+  /* "Alive" keeps its capital A — the Boldonse lowercase 'a' read as awkward.
+     (Was lowercase for the old single word "motion".) */
+  text-transform: none;
   color: rgba(245, 244, 240, 0.94);
   text-shadow:
     0 0 28px rgba(4, 7, 10, 0.92),
@@ -732,17 +734,17 @@
   opacity: 1;
 }
 
-/* Post-lock, over the ball: a "wave" cue — accent ring with a single ripple
-   radiating outward, telling the visitor a click broadcasts a sonar wave from
-   the seal. */
+/* Post-lock, over the ball: a "wave" cue — the rotating glyph is hidden (it
+   clashed with the pulse) and the cursor becomes one clean accent ring that
+   breathes, signalling the ball is live and a click broadcasts a wave. */
 .cockpit-cursor--wave {
-  width: 54px;
-  height: 54px;
+  width: 50px;
+  height: 50px;
   color: var(--accent);
 }
 
 .cockpit-cursor--wave .cockpit-cursor__shape {
-  opacity: 0.4;
+  opacity: 0;
 }
 
 .cockpit-cursor__ripple {
@@ -753,18 +755,18 @@
   height: 100%;
   border-radius: 50%;
   border: 1px solid var(--accent);
-  transform: translate(-50%, -50%) scale(0.4);
+  transform: translate(-50%, -50%) scale(0.8);
   opacity: 0;
   pointer-events: none;
 }
 
 .cockpit-cursor--wave .cockpit-cursor__ripple {
-  animation: cockpit-cursor-ripple 1.6s ease-out infinite;
+  animation: cockpit-cursor-wave-pulse 1.8s ease-in-out infinite;
 }
 
-@keyframes cockpit-cursor-ripple {
-  0%   { transform: translate(-50%, -50%) scale(0.4); opacity: 0.7; }
-  100% { transform: translate(-50%, -50%) scale(1.5); opacity: 0; }
+@keyframes cockpit-cursor-wave-pulse {
+  0%, 100% { transform: translate(-50%, -50%) scale(0.8); opacity: 0.4; }
+  50%      { transform: translate(-50%, -50%) scale(1.1); opacity: 0.9; }
 }
 
 @media (hover: none), (pointer: coarse) {
