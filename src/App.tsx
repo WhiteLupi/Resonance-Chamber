@@ -243,7 +243,17 @@ function App() {
         }
         const nr = next.el.getBoundingClientRect();
         if (r.top <= mid && nr.top > mid) {
-          const t = ease(Math.min(1, Math.max(0, (mid - r.top) / (nr.top - r.top))));
+          let raw = Math.min(1, Math.max(0, (mid - r.top) / (nr.top - r.top)));
+          // Hold the seal dead-centre through the first part of the HERO track
+          // (the hold ritual + the word rising); only then let it begin the
+          // journey toward About. Without this it drifts up-right from the very
+          // first pixel of scroll, so the centred hero seal looks like it wanders
+          // off for no reason.
+          if (secs[i].k.id === 'hero') {
+            const HERO_HOLD = 0.45;
+            raw = Math.max(0, (raw - HERO_HOLD) / (1 - HERO_HOLD));
+          }
+          const t = ease(raw);
           const x = lerp(secs[i].k.x, next.k.x, t);
           const y = lerp(secs[i].k.y, next.k.y, t);
           const s = lerp(secs[i].k.s, next.k.s, t);
