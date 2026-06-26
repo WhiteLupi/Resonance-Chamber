@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 
-type Variant = 'default' | 'link' | 'scroll';
+type Variant = 'default' | 'link' | 'scroll' | 'hold' | 'charging';
 export type ShapeKind = 'circle' | 'triangle' | 'square' | 'circle-half' | 'triangle-half';
 
 const SHAPES: ShapeKind[] = [
@@ -83,10 +83,11 @@ export function ShapeSvg({ kind }: { kind: ShapeKind }) {
 // default. Scroll-up cancels the state immediately. Link hover always wins.
 const SCROLL_HOLD_MS = 380;
 
-export function Cursor() {
+export function Cursor({ locked }: { locked: boolean }) {
   const ref = useRef<HTMLDivElement>(null);
   const [hoverVariant, setHoverVariant] = useState<'default' | 'link'>('default');
   const [scrolling, setScrolling] = useState(false);
+  const [held, setHeld] = useState(false);
   const [shapeIdx, setShapeIdx] = useState(0);
 
   useEffect(() => {
@@ -166,9 +167,34 @@ export function Cursor() {
     };
   }, []);
 
-  // Link hover wins. Otherwise show scroll indicator while scrolling down.
-  const variant: Variant =
-    hoverVariant === 'link' ? 'link' : scrolling ? 'scroll' : 'default';
+  // Pre-lock the whole hero IS the hold target (glScene charges on mousedown
+  // anywhere), and there is nothing else on screen to hover — so the cursor
+  // becomes the affordance: a "hold" ring, contracting to a "charging" state
+  // while pressed. Post-lock: link hover wins, then the scroll indicator.
+  useEffect(() => {
+    if (locked) {
+      setHeld(false);
+      return;
+    }
+    const down = () => setHeld(true);
+    const up = () => setHeld(false);
+    window.addEventListener('mousedown', down);
+    window.addEventListener('mouseup', up);
+    window.addEventListener('blur', up);
+    return () => {
+      window.removeEventListener('mousedown', down);
+      window.removeEventListener('mouseup', up);
+      window.removeEventListener('blur', up);
+    };
+  }, [locked]);
+
+  const variant: Variant = !locked
+    ? (held ? 'charging' : 'hold')
+    : hoverVariant === 'link'
+      ? 'link'
+      : scrolling
+        ? 'scroll'
+        : 'default';
 
   useEffect(() => {
     const id = window.setInterval(() => {
@@ -195,6 +221,7 @@ export function Cursor() {
         <span className="cockpit-cursor__hint-text">going down</span>
         <span className="cockpit-cursor__hint-arrow">↓</span>
       </span>
+      <span className="cockpit-cursor__hold" aria-hidden="true">hold</span>
     </div>
   );
 }

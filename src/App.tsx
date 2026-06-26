@@ -45,6 +45,11 @@ function App() {
   // silent walk-past of the central interaction.
   useEffect(() => {
     document.body.style.overflow = 'hidden'
+    // Always begin at the hero. Paired with history.scrollRestoration='manual'
+    // (main.tsx), this guarantees the hold-ritual runs from the top on every
+    // load — a refresh deeper in the page can't strand the visitor at a scroll
+    // offset while the engine is still un-locked.
+    window.scrollTo(0, 0)
     // Glide: longer duration + a touch less wheel travel per notch so the
     // transition reads as a flowing scrub, not a couple of jumpy notches.
     const lenis = new Lenis({
@@ -122,6 +127,15 @@ function App() {
     };
   }, []);
 
+  // Scroll-driven scene state — hero→about progress AND the travelling-seal
+  // journey — computed in ONE rAF-coalesced pass. These used to be two separate
+  // window 'scroll' listeners, each doing synchronous layout reads (the journey
+  // one re-ran querySelectorAll + getBoundingClientRect over every text block on
+  // EVERY scroll event). Lenis fires scroll densely, so that was many forced
+  // reflows per frame contending with the WebGL loop — the stutter felt while
+  // the seal rotates from about→work. Now scroll just flags a frame; we read
+  // layout at most once per rAF, and the text-block list is cached (refreshed on
+  // resize) instead of re-queried each time.
   useEffect(() => {
     const root = document.documentElement;
 
@@ -136,17 +150,13 @@ function App() {
       sceneRef.current?.setProgress(clamped);
       root.style.setProperty('--p', clamped.toFixed(4));
       root.style.setProperty('--dim', '1');
-      // About text emerges by OCCLUSION, not distortion: each line is clipped and
-      // its copy rises up from below the mask (see .inscription__copy in
-      // about.css). The letters stay whole — the dark simply uncovers them — so
-      // there is no scroll-driven warp to drive here anymore.
     };
 
     // Transition spans HERO_SPAN screens of scroll (the .hero-section height in
     // index.css must match). p = 0 when about top is HERO_SPAN viewports below;
     // p = 1 when about top hits scroll top. Longer span = slower, flowing reveal.
     const HERO_SPAN = 2.4;
-    const onScroll = () => {
+    const computeProgress = () => {
       const about = document.getElementById('about');
       if (!about) return;
       const vh = window.innerHeight;
@@ -155,20 +165,9 @@ function App() {
       setProgress(p);
     };
 
-    setProgress(0);
-    onScroll();
-    window.addEventListener('scroll', onScroll, { passive: true });
-    window.addEventListener('resize', onScroll);
-    return () => {
-      window.removeEventListener('scroll', onScroll);
-      window.removeEventListener('resize', onScroll);
-    };
-  }, []);
-
-  // Travelling seal (spec 2026-06-10): the route moves through the empty
-  // spaces in each section. App interpolates section keyframes from scroll
-  // position; glScene smooths the target per frame.
-  useEffect(() => {
+    // Travelling seal (spec 2026-06-10): the route moves through the empty
+    // spaces in each section. App interpolates section keyframes from scroll
+    // position; glScene smooths the target per frame.
     type Key = { id: string; x: number; y: number; s: number; o: number; r: number };
     const KEYS: Key[] = [
       { id: 'hero', x: 50, y: 50, s: 1.00, o: 1.00, r: 0 },
@@ -196,6 +195,13 @@ function App() {
     const TEXT_BLOCKS =
       '.inscription, .practice-aside, .craft-band__name, .craft-band__desc, ' +
       '.craft-band__tags, .work-info, .channel-headline, .channel-panel, .section-eyebrow';
+    // Cached node list — these sections mount once and never unmount (the in-view
+    // class toggles in place), so re-querying the DOM tree every frame was pure
+    // waste. Refresh on resize, where layout can actually change.
+    let textBlocks: Element[] = [];
+    const refreshTextBlocks = () => {
+      textBlocks = Array.from(document.querySelectorAll(TEXT_BLOCKS));
+    };
     const dimNearText = (x: number, y: number, s: number, baseO: number) => {
       const vw = window.innerWidth;
       const vh = window.innerHeight;
@@ -204,7 +210,7 @@ function App() {
       // Bright zone ≈ core + halo + dense root cluster, scales with the dolly.
       const radius = s * vh * 0.3;
       let overlap = 0;
-      for (const el of document.querySelectorAll(TEXT_BLOCKS)) {
+      for (const el of textBlocks) {
         const r = el.getBoundingClientRect();
         if (r.bottom < -40 || r.top > vh + 40 || r.width === 0) continue;
         const dx = Math.max(r.left - cx, 0, cx - r.right);
@@ -215,7 +221,7 @@ function App() {
       return 1 - (1 - baseO) * overlap;
     };
 
-    const onScroll = () => {
+    const computeJourney = () => {
       const scene = sceneRef.current;
       if (!scene) return;
       const mobile = window.innerWidth <= 760;
@@ -249,12 +255,31 @@ function App() {
       }
     };
 
-    onScroll();
-    window.addEventListener('scroll', onScroll, { passive: true });
-    window.addEventListener('resize', onScroll);
+    // One frame, one batch of layout reads — for both progress and journey.
+    let raf = 0;
+    const frame = () => {
+      raf = 0;
+      computeProgress();
+      computeJourney();
+    };
+    const schedule = () => {
+      if (!raf) raf = requestAnimationFrame(frame);
+    };
+    const onResize = () => {
+      refreshTextBlocks();
+      schedule();
+    };
+
+    refreshTextBlocks();
+    setProgress(0);
+    computeProgress();
+    computeJourney();
+    window.addEventListener('scroll', schedule, { passive: true });
+    window.addEventListener('resize', onResize);
     return () => {
-      window.removeEventListener('scroll', onScroll);
-      window.removeEventListener('resize', onScroll);
+      if (raf) cancelAnimationFrame(raf);
+      window.removeEventListener('scroll', schedule);
+      window.removeEventListener('resize', onResize);
     };
   }, []);
 
@@ -281,7 +306,7 @@ function App() {
       <Work />
       <Contact />
       <Navbar locked={locked} />
-      <Cursor />
+      <Cursor locked={locked} />
     </>
   )
 }

@@ -679,6 +679,59 @@
   opacity: 1;
 }
 
+/* Pre-lock affordance: a wide teal ring (the dim rotating glyph) with the word
+   "hold" at its centre, gently breathing to read as "press me". Mirrors the
+   centre charge ring's language so cursor + seal say the same thing. */
+.cockpit-cursor--hold {
+  width: 72px;
+  height: 72px;
+  color: var(--accent);
+}
+
+.cockpit-cursor--hold .cockpit-cursor__shape {
+  opacity: 0.3;
+  animation:
+    cockpit-shape-pop 0.55s cubic-bezier(0.2, 0.8, 0.2, 1),
+    cockpit-cursor-hold-breathe 2.2s ease-in-out infinite;
+}
+
+@keyframes cockpit-cursor-hold-breathe {
+  0%, 100% { transform: scale(1);    opacity: 0.3; }
+  50%      { transform: scale(1.12); opacity: 0.55; }
+}
+
+/* Pressed: the ring contracts and brightens — the gesture is registering. */
+.cockpit-cursor--charging {
+  width: 46px;
+  height: 46px;
+  color: var(--accent);
+}
+
+.cockpit-cursor--charging .cockpit-cursor__shape {
+  opacity: 0.6;
+}
+
+.cockpit-cursor__hold {
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  font-family: 'Syne Mono', ui-monospace, monospace;
+  font-size: 8.5px;
+  letter-spacing: 0.34em;
+  /* letter-spacing pushes the last glyph; indent re-centres the word */
+  text-indent: 0.34em;
+  text-transform: lowercase;
+  white-space: nowrap;
+  color: var(--accent);
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  pointer-events: none;
+}
+
+.cockpit-cursor--hold .cockpit-cursor__hold {
+  opacity: 1;
+}
+
 @media (hover: none), (pointer: coarse) {
   .cockpit-cursor { display: none; }
 }
