@@ -863,6 +863,21 @@
   transform: scaleX(-1);
 }
 
+/* Short viewports: the horizontal bands are fixed-pixel (300px) while the
+   sections' safe padding scales with vh — on a low window the torn zone would
+   swallow nearly half the screen and drown the closing headline. Scale the
+   bands down (same baked texture at half size, like the mobile ceiling) so the
+   frame keeps its proportion to the room. */
+@media (max-height: 700px) {
+  .edge-void__edge--top,
+  .edge-void__edge--bottom {
+    height: 160px;
+    background:
+      linear-gradient(#000, #000) left top / 100% 30px no-repeat,
+      url('/void-edge-h.png') left 20px / 1024px 120px repeat-x;
+  }
+}
+
 /* Darkness at the top of the void — the space above (and behind) the navbar is
    solid black so "motion" slides up INTO it and disappears, never visible
    passing through the top. The lower boundary is the baked horizontal void

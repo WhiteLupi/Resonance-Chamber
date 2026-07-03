@@ -238,6 +238,12 @@
   flex-direction: column;
   justify-content: flex-end;
   padding: var(--sec-pad) var(--pad);
+  /* The closing block rests at the page bottom, inside the fixed edge-void
+     frame. The torn band's dense zone is fixed-pixel (~180px deep) and only
+     8vh of it hangs offscreen, so on anything but a tall window --sec-pad
+     alone leaves the last headline line drowned in the black. Clear the band:
+     its visible dense depth is ~(220px − 8vh). */
+  padding-bottom: max(var(--sec-pad), calc(220px - 8vh));
 }
 
 .channel-grid {
