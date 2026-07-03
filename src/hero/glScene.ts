@@ -797,6 +797,7 @@ export function startHero(host: HTMLElement): HeroScene {
 
   // Interaction
   let charge = 0;
+  let lastNotifiedCharge = -1;
   let clickHeld = false;
   let mouseX = 0, mouseY = 0;
   let parallaxX = 0, parallaxY = 0;
@@ -1079,7 +1080,12 @@ export function startHero(host: HTMLElement): HeroScene {
     } else {
       charge = Math.max(0, charge - dt / RELEASE_FALL_S);
     }
-    for (const cb of chargeSubs) cb(charge);
+    // Notify only on actual movement — post-lock charge is a constant 1 and
+    // subscribers write CSS vars; no reason to touch style 60×/s forever.
+    if (charge !== lastNotifiedCharge) {
+      lastNotifiedCharge = charge;
+      for (const cb of chargeSubs) cb(charge);
+    }
     if (!locked && charge >= LOCK_THRESHOLD) {
       charge = 1;
       fireLock();

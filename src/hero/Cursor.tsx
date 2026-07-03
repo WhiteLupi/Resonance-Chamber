@@ -6,6 +6,14 @@ type Variant = 'default' | 'link' | 'scroll' | 'hold' | 'charging' | 'wave';
 
 const SHAPE_INTERVAL_MS = 7000;
 
+// Touch devices hide the cursor in CSS (hover:none / pointer:coarse) — match
+// that here and skip the whole tracker: no rAF loop, listeners, or interval
+// for an element that never shows. Evaluated once; a session doesn't change
+// its primary pointer.
+const TOUCH_ONLY =
+  typeof window !== 'undefined' &&
+  window.matchMedia('(hover: none), (pointer: coarse)').matches;
+
 // Cursor enters the scroll-indicator state while the user is actively
 // scrolling down. After the scroll burst stops we hold the state briefly so
 // the indicator still confirms "going down" for a beat, then return to
@@ -13,6 +21,11 @@ const SHAPE_INTERVAL_MS = 7000;
 const SCROLL_HOLD_MS = 380;
 
 export function Cursor({ locked, overCore }: { locked: boolean; overCore: boolean }) {
+  if (TOUCH_ONLY) return null;
+  return <PointerCursor locked={locked} overCore={overCore} />;
+}
+
+function PointerCursor({ locked, overCore }: { locked: boolean; overCore: boolean }) {
   const ref = useRef<HTMLDivElement>(null);
   const [hoverVariant, setHoverVariant] = useState<'default' | 'link'>('default');
   const [scrolling, setScrolling] = useState(false);
@@ -29,17 +42,24 @@ export function Cursor({ locked, overCore }: { locked: boolean; overCore: boolea
     let cy = ty;
     const ease = 0.22;
 
-    const onMove = (e: MouseEvent) => {
-      tx = e.clientX;
-      ty = e.clientY;
-    };
-
     let raf = 0;
+    // Ease toward the pointer, then idle out once converged (sub-pixel) — the
+    // same rest-and-wake pattern as the parallax vars in App. A moving mouse
+    // wakes the loop again.
     const tick = () => {
       cx += (tx - cx) * ease;
       cy += (ty - cy) * ease;
       el.style.transform = `translate3d(${cx}px, ${cy}px, 0) translate(-50%, -50%)`;
-      raf = requestAnimationFrame(tick);
+      if (Math.abs(tx - cx) > 0.1 || Math.abs(ty - cy) > 0.1) {
+        raf = requestAnimationFrame(tick);
+      } else {
+        raf = 0;
+      }
+    };
+    const onMove = (e: MouseEvent) => {
+      tx = e.clientX;
+      ty = e.clientY;
+      if (!raf) raf = requestAnimationFrame(tick);
     };
     raf = requestAnimationFrame(tick);
 

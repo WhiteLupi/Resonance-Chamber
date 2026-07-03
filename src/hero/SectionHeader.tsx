@@ -25,26 +25,43 @@ export function SectionHeader({ locked }: Props) {
   const [active, setActive] = useState(0);
 
   useEffect(() => {
-    const onScroll = () => {
+    // Same discipline as App's scroll pass: sections mount once, so the element
+    // list is cached (refreshed on resize) and layout is read at most once per
+    // rAF — Lenis fires scroll densely and this must not contend with the GL
+    // frame budget.
+    let els: (HTMLElement | null)[] = [];
+    const refreshEls = () => {
+      els = SECTIONS.map((s) => document.getElementById(s.id));
+    };
+
+    let raf = 0;
+    const frame = () => {
+      raf = 0;
       // Mark a touch above viewport centre: a section claims the spine once its
       // top has risen past ~42% of the screen.
-      const mark = window.scrollY + window.innerHeight * 0.42;
+      const mark = window.innerHeight * 0.42;
       let idx = 0;
-      for (let i = 0; i < SECTIONS.length; i++) {
-        const el = document.getElementById(SECTIONS[i].id);
-        if (!el) continue;
-        const top = el.getBoundingClientRect().top + window.scrollY;
-        if (top <= mark) idx = i;
+      for (let i = 0; i < els.length; i++) {
+        if (els[i] && els[i]!.getBoundingClientRect().top <= mark) idx = i;
       }
       setActive((prev) => (prev === idx ? prev : idx));
     };
+    const schedule = () => {
+      if (!raf) raf = requestAnimationFrame(frame);
+    };
+    const onResize = () => {
+      refreshEls();
+      schedule();
+    };
 
-    onScroll();
-    window.addEventListener('scroll', onScroll, { passive: true });
-    window.addEventListener('resize', onScroll);
+    refreshEls();
+    frame();
+    window.addEventListener('scroll', schedule, { passive: true });
+    window.addEventListener('resize', onResize);
     return () => {
-      window.removeEventListener('scroll', onScroll);
-      window.removeEventListener('resize', onScroll);
+      if (raf) cancelAnimationFrame(raf);
+      window.removeEventListener('scroll', schedule);
+      window.removeEventListener('resize', onResize);
     };
   }, []);
 
