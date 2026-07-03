@@ -9,7 +9,7 @@ export function Work() {
 
   return (
     <section className="section work-section" id="work" aria-label="selected work">
-      <p className="section-eyebrow">— SELECTED WORK</p>
+      <h2 className="section-eyebrow">— SELECTED WORK</h2>
       <div ref={ref} className={`work-grid${inView ? ' is-in' : ''}`}>
         <div className="work-stage" aria-hidden="true" />
         <div className="work-info">

@@ -44,7 +44,7 @@ export function Skills() {
 
   return (
     <section className="section craft-section" id="skills" aria-label="craft">
-      <p className="section-eyebrow craft-eyebrow">— THE CRAFT</p>
+      <h2 className="section-eyebrow craft-eyebrow">— THE CRAFT</h2>
       <ul
         ref={ref}
         className={`craft-register${inView ? ' is-in' : ''}`}

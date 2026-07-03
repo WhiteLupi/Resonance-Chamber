@@ -14,16 +14,16 @@ export function Contact() {
 
   return (
     <section className="section channel-section" id="contact" aria-label="contact">
-      <p className="section-eyebrow">— THE CHANNEL</p>
+      <h2 className="section-eyebrow">— THE CHANNEL</h2>
       <div
         ref={ref}
         className={`channel-grid${inView ? ' is-in' : ''}`}
       >
-        <h2 className="channel-headline">
+        <h3 className="channel-headline">
           Need something
           <br />
           clearer, stranger, or more alive.
-        </h2>
+        </h3>
         <div className="channel-panel">
           <a className="channel-cta" href="mailto:bronowickakasia@gmail.com">
             <span className="channel-cta__text">bronowickakasia@gmail.com</span>
@@ -41,8 +41,10 @@ export function Contact() {
               </li>
             ))}
           </ul>
-          <p className="channel-status" aria-hidden="true">
-            <span className="channel-status__dot" />
+          {/* The availability line is real content — only the pulsing dot is
+              decoration. */}
+          <p className="channel-status">
+            <span className="channel-status__dot" aria-hidden="true" />
             open to thoughtful product and frontend work
           </p>
         </div>

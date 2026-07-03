@@ -343,10 +343,14 @@ function App() {
           design systems.
         </p>
         <p>
+          {/* tabIndex -1: these exist for machines; the same links are real,
+              visible tab stops in the Contact section. Keeping them out of the
+              tab order means the first Tab lands on the HOLD button instead of
+              an invisible focus ring. */}
           Contact:{' '}
-          <a href="mailto:bronowickakasia@gmail.com">bronowickakasia@gmail.com</a>
+          <a href="mailto:bronowickakasia@gmail.com" tabIndex={-1}>bronowickakasia@gmail.com</a>
           {' · '}
-          <a href="https://www.linkedin.com/in/kasiawalter">LinkedIn</a>
+          <a href="https://www.linkedin.com/in/kasiawalter" tabIndex={-1}>LinkedIn</a>
         </p>
       </header>
       <div ref={stageRef} className="gl-stage" aria-hidden="true" />
@@ -364,11 +368,13 @@ function App() {
       <ChargeIndicator locked={locked} />
       <SectionHeader locked={locked} />
       <Signature locked={locked} />
-      <Hero locked={locked} />
-      <About />
-      <Skills />
-      <Work />
-      <Contact />
+      <main>
+        <Hero locked={locked} />
+        <About />
+        <Skills />
+        <Work />
+        <Contact />
+      </main>
       <Navbar locked={locked} />
       <Cursor locked={locked} overCore={overCore} />
     </>

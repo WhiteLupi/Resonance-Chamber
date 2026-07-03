@@ -61,6 +61,8 @@
    left section spine. */
 .section-eyebrow {
   margin: 0 0 22px;
+  /* h2 semantics, eyebrow voice — undo the heading's default bold/size */
+  font-weight: 400;
   font-size: var(--fs-small);
   letter-spacing: 0.32em;
   text-transform: uppercase;
@@ -137,7 +139,9 @@
   font-size: var(--fs-small);
   letter-spacing: 0.14em;
   white-space: nowrap;
-  color: var(--teal-dim);
+  /* dim metadata, but still data — --teal-dim sat at ~2:1 on the black,
+     functionally illegible; this stays quieter than the desc while passing AA */
+  color: rgba(125, 169, 158, 0.78);
   transition: color 0.3s ease;
 }
 
@@ -360,7 +364,8 @@
   font-size: 10px;
   letter-spacing: 0.4em;
   text-transform: uppercase;
-  color: rgba(170, 222, 205, 0.55);
+  /* readable by AT now (was aria-hidden) — lift off the borderline-AA alpha */
+  color: rgba(170, 222, 205, 0.72);
 }
 
 .channel-status__dot {

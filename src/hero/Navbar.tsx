@@ -83,8 +83,10 @@ export function Navbar({ locked }: NavbarProps) {
     hidden ? 'cockpit-navbar--hidden' : '',
   ].filter(Boolean).join(' ');
 
+  // inert while invisible — an opacity-0 navbar must not hold four phantom
+  // tab stops (pre-lock) or catch focus while slid away (scroll-hidden).
   return (
-    <nav className={cls} aria-label="primary">
+    <nav className={cls} aria-label="primary" inert={!introDone || hidden}>
       <div className="cockpit-navbar__center">
         <a className="cockpit-navbar__link" href="#about">
           <Glyph kind="circle" />
