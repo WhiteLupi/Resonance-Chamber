@@ -1,3 +1,21 @@
+/* Self-hosted (latin subsets, preloaded in index.html) — the Google Fonts
+   stylesheet was a render-blocking third-party chain on the critical path. */
+@font-face {
+  font-family: 'Boldonse';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fonts/boldonse-latin.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Syne Mono';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fonts/syne-mono-latin.woff2') format('woff2');
+}
+
 :root {
   /* --p is the hero→about scroll progress, written by App.tsx (0..1).
      All colors are color-mix lerps in OKLab keyed off it — one source of
