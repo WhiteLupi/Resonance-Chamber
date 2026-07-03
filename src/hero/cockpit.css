@@ -91,9 +91,15 @@
   will-change: color, opacity;
 }
 
+/* Focus affordance: no outline box — a rectangle would slice across the seal's
+   ring arc. The focused prompt drops just BELOW the arc into open air (the arc
+   sits at ~50% + 17vh of the seal's projected radius; 21vh clears it, and the
+   190px floor mirrors the seal's own min-size on short viewports), stops
+   breathing, holds steady-bright, and reveals the key hint. */
 .hero-prompt:focus-visible {
-  outline: 1px solid rgba(122, 196, 175, 0.55);
-  outline-offset: 12px;
+  outline: none;
+  top: calc(50% + max(21vh, 190px));
+  animation: hero-prompt-arrive 0.3s ease-out both;
 }
 
 /* Sighted keyboard users need to know WHICH key to hold — reveal it only on

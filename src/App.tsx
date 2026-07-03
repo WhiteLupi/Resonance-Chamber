@@ -42,16 +42,12 @@ function App() {
     }
   }, [])
 
-  // Lock gate — scroll is disabled until the engine is activated. Once
-  // locked we resume Lenis smooth scroll and restore body overflow. This
-  // forces the user to engage with the seal before progressing — no
-  // silent walk-past of the central interaction.
+  // Lenis lifecycle — created stopped; the lock gate below decides when it
+  // runs. Always begin at the hero: paired with scrollRestoration='manual'
+  // (main.tsx), this guarantees the hold-ritual runs from the top on every
+  // load — a refresh deeper in the page can't strand the visitor at a scroll
+  // offset while the engine is still un-locked.
   useEffect(() => {
-    document.body.style.overflow = 'hidden'
-    // Always begin at the hero. Paired with history.scrollRestoration='manual'
-    // (main.tsx), this guarantees the hold-ritual runs from the top on every
-    // load — a refresh deeper in the page can't strand the visitor at a scroll
-    // offset while the engine is still un-locked.
     window.scrollTo(0, 0)
     // Glide: longer duration + a touch less wheel travel per notch so the
     // transition reads as a flowing scrub, not a couple of jumpy notches.
@@ -73,14 +69,44 @@ function App() {
       cancelAnimationFrame(raf)
       lenis.destroy()
       lenisRef.current = null
-      document.body.style.overflow = ''
     }
   }, [])
 
+  // Lock gate — the whole pre-lock input policy in one place. No scroll until
+  // the engine is activated: overflow:hidden stops wheel/touch, and since
+  // Chromium still lets keyboard scrolling (Space, PageDown, End…) move an
+  // overflow-hidden viewport, the gate swallows those keys too. Holding Enter
+  // anywhere charges the ritual — the keyboard's version of holding the ball
+  // (links keep their Enter). On lock everything opens and Lenis takes over.
   useEffect(() => {
-    if (!locked) return
-    document.body.style.overflow = ''
-    lenisRef.current?.start()
+    if (locked) {
+      document.body.style.overflow = ''
+      lenisRef.current?.start()
+      return
+    }
+    document.body.style.overflow = 'hidden'
+    const SCROLL_KEYS = new Set([
+      ' ', 'PageDown', 'PageUp', 'End', 'Home', 'ArrowDown', 'ArrowUp',
+    ])
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (SCROLL_KEYS.has(e.key)) e.preventDefault()
+      if (e.key !== 'Enter' || e.repeat) return
+      if (document.activeElement instanceof HTMLAnchorElement) return
+      sceneRef.current?.holdStart()
+    }
+    const onKeyUp = (e: KeyboardEvent) => {
+      if (e.key === 'Enter') sceneRef.current?.holdEnd()
+    }
+    const onWindowBlur = () => sceneRef.current?.holdEnd()
+    window.addEventListener('keydown', onKeyDown)
+    window.addEventListener('keyup', onKeyUp)
+    window.addEventListener('blur', onWindowBlur)
+    return () => {
+      document.body.style.overflow = ''
+      window.removeEventListener('keydown', onKeyDown)
+      window.removeEventListener('keyup', onKeyUp)
+      window.removeEventListener('blur', onWindowBlur)
+    }
   }, [locked])
 
   // Mouse parallax — sets --mx / --my (-0.5 .. 0.5) on document root. The
@@ -338,7 +364,7 @@ function App() {
       <ChargeIndicator locked={locked} />
       <SectionHeader locked={locked} />
       <Signature locked={locked} />
-      <Hero locked={locked} scene={sceneRef} />
+      <Hero locked={locked} />
       <About />
       <Skills />
       <Work />
