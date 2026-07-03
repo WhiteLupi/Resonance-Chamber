@@ -338,7 +338,7 @@ function App() {
       <ChargeIndicator locked={locked} />
       <SectionHeader locked={locked} />
       <Signature locked={locked} />
-      <Hero locked={locked} />
+      <Hero locked={locked} scene={sceneRef} />
       <About />
       <Skills />
       <Work />

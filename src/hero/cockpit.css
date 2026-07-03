@@ -80,9 +80,27 @@
   animation:
     hero-prompt-arrive 1.4s ease-out 1.8s both,
     hero-prompt-breathe 2.4s ease-in-out infinite 3.2s;
+  /* A real <button> now — the keyboard door into the ritual (hold Enter).
+     Pointer users still charge via the ball itself: pointer-events stays off
+     so the prompt never intercepts the canvas. */
+  background: none;
+  border: 0;
+  padding: 0;
   pointer-events: none;
   user-select: none;
   will-change: color, opacity;
+}
+
+.hero-prompt:focus-visible {
+  outline: 1px solid rgba(122, 196, 175, 0.55);
+  outline-offset: 12px;
+}
+
+/* Sighted keyboard users need to know WHICH key to hold — reveal it only on
+   focus so the pointer encounter stays a single carved word. */
+.hero-prompt:focus-visible::after {
+  content: ' · ENTER';
+  color: rgba(122, 196, 175, 0.6);
 }
 
 @keyframes hero-prompt-arrive {

@@ -139,6 +139,11 @@ export type HeroScene = {
   /** Fires when the pointer enters/leaves the seal core's screen disc — drives
       the cursor "hold"/"wave" affordance so it only shows over the ball. */
   onHover: (cb: (over: boolean) => void) => () => void;
+  /** Keyboard door into the ritual: an explicit control (the HOLD prompt
+      button) replaces the pointer's spatial targeting, so no hit-test here —
+      same charge/wave path as pressing the ball. */
+  holdStart: () => void;
+  holdEnd: () => void;
   dispose: () => void;
 };
 
@@ -1358,6 +1363,13 @@ export function startHero(host: HTMLElement): HeroScene {
       hoverSubs.add(cb);
       cb(overCore);
       return () => { hoverSubs.delete(cb); };
+    },
+    holdStart() {
+      clickHeld = true;
+      if (locked) triggerRing(clock.getElapsedTime());
+    },
+    holdEnd() {
+      clickHeld = false;
     },
     dispose() {
       cancelAnimationFrame(raf);
