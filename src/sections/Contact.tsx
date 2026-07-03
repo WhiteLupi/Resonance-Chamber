@@ -1,5 +1,6 @@
 import { useInView } from './useInView';
-import { ShapeSvg, type ShapeKind } from '../hero/Cursor';
+import { ShapeSvg } from '../ShapeSvg';
+import type { ShapeKind } from '../glyphs';
 import './sections.css';
 
 type Node = { label: string; href: string; glyph: ShapeKind };

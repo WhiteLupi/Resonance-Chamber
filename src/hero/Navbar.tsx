@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
-import { ShapeSvg, type ShapeKind } from './Cursor';
+import { ShapeSvg } from '../ShapeSvg';
+import type { ShapeKind } from '../glyphs';
 
 // Delay between lock and navbar reveal — gives the chamber a beat to
 // settle into its locked state before HUD elements arrive.

@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { ShapeSvg, type ShapeKind } from '../hero/Cursor';
+import { ShapeSvg } from '../ShapeSvg';
+import type { ShapeKind } from '../glyphs';
 import {
   letterSubBus,
   ENTER_MS,

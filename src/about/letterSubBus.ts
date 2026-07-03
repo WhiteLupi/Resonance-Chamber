@@ -1,12 +1,10 @@
-import type { ShapeKind } from '../hero/Cursor';
+import { SHAPES, type ShapeKind } from '../glyphs';
 
 // Voice v2 — letter substitution bus.
 // Char state machine: idle → entering → held → exiting → idle. Hover-in-radius
 // keeps a char held indefinitely; when the radius leaves, it cascades back out.
 // Ambient scheduler triggers a single brief enter+exit cycle on a random char
 // to keep the inscription quietly breathing even without interaction.
-
-const SHAPES: ShapeKind[] = ['circle', 'triangle', 'square', 'circle-half', 'triangle-half'];
 
 export const ENTER_MS = 220;
 export const EXIT_MS = 220;
