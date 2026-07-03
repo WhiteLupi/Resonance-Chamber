@@ -173,8 +173,9 @@ export function startHero(host: HTMLElement): HeroScene {
 
   // Intro fade — promote host opacity from 0→1 on the next frame so the CSS
   // transition (set on .gl-stage) animates the reveal. setProgress takes over
-  // afterwards to hand off into the about section.
-  requestAnimationFrame(() => {
+  // afterwards to hand off into the about section. Cancelled in dispose so a
+  // StrictMode-discarded instance can't mutate the host after teardown.
+  const introRaf = requestAnimationFrame(() => {
     host.style.opacity = '1';
   });
 
@@ -336,7 +337,7 @@ export function startHero(host: HTMLElement): HeroScene {
   if (HERO_PERF.enableSonarRings) {
     for (let i = 0; i < RING_COUNT; i++) {
       const mat = new THREE.SpriteMaterial({
-      map: ringTex,
+        map: ringTex,
         blending: THREE.AdditiveBlending,
         transparent: true,
         depthWrite: false,
@@ -1396,6 +1397,7 @@ export function startHero(host: HTMLElement): HeroScene {
       window.removeEventListener('touchstart', onTouchStart);
       window.removeEventListener('touchend', onTouchEnd);
       cancelAnimationFrame(mouseRaf);
+      cancelAnimationFrame(introRaf);
       for (const m of rootMats) m.dispose();
       for (const tend of tendrils) {
         for (const { geom } of tend.lines) geom.dispose();
@@ -1404,6 +1406,10 @@ export function startHero(host: HTMLElement): HeroScene {
       coreGeom.dispose();
       haloMat.dispose();
       haloTex.dispose();
+      // EffectComposer.dispose only frees its own targets (r169) — the bloom
+      // pass and the sonar sprite materials hold GPU resources of their own.
+      for (const r of rings) r.mat.dispose();
+      bloom?.dispose();
       ringTex?.dispose();
       cMat?.dispose();
       cGeo?.dispose();
