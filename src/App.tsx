@@ -13,6 +13,7 @@ import { ChargeIndicator } from './hero/ChargeIndicator'
 import { SectionHeader } from './hero/SectionHeader'
 import { Signature } from './hero/Signature'
 import { progressStore } from './about/dwellStore'
+import { prefersReducedMotion } from './motion'
 
 function App() {
   const stageRef = useRef<HTMLDivElement>(null)
@@ -49,6 +50,9 @@ function App() {
   // offset while the engine is still un-locked.
   useEffect(() => {
     window.scrollTo(0, 0)
+    // Under reduced motion the browser's own scrolling is the right amount of
+    // motion — no Lenis; the gate below still works (start() on null no-ops).
+    if (prefersReducedMotion()) return
     // Glide: longer duration + a touch less wheel travel per notch so the
     // transition reads as a flowing scrub, not a couple of jumpy notches.
     const lenis = new Lenis({

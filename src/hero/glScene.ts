@@ -5,6 +5,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { Line2 } from 'three/addons/lines/Line2.js';
 import { LineMaterial } from 'three/addons/lines/LineMaterial.js';
 import { LineGeometry } from 'three/addons/lines/LineGeometry.js';
+import { prefersReducedMotion } from '../motion';
 
 // Oxidized teal — single accent shared with CSS --accent (#3d6e63). The seal
 // is the "ancient engine" — the energy reads as patinated/copper-oxidized,
@@ -153,6 +154,14 @@ export type HeroScene = {
 
 export function startHero(host: HTMLElement): HeroScene {
   const HERO_PERF = readHeroPerf();
+  // Reduced motion: the chamber holds still. No comets, no breathing core, no
+  // idle heartbeat, and motionT freezes the roots' autonomous sway/flex in the
+  // frame loop. Interaction-driven life stays — charging, growth, the journey.
+  const REDUCED_MOTION = prefersReducedMotion();
+  if (REDUCED_MOTION) {
+    HERO_PERF.enableComets = false;
+    HERO_PERF.enableChargePulse = false;
+  }
   const perfDebug = window as typeof window & { __heroPerf?: Record<string, unknown> };
   const lockSubs = new Set<() => void>();
   const chargeSubs = new Set<(charge: number) => void>();
@@ -1095,21 +1104,23 @@ export function startHero(host: HTMLElement): HeroScene {
       settleRenderQuality();
       // Announce activation with one final ring — the engine just turned on.
       triggerRing(t);
-      nextIdleRingAt = t + IDLE_RING_INTERVAL;
+      nextIdleRingAt = REDUCED_MOTION ? Infinity : t + IDLE_RING_INTERVAL;
     }
 
     // Idle heartbeat post-lock — slow rhythmic ring even without input.
     if (locked && tier.idleRings && t >= nextIdleRingAt) {
       triggerRing(t);
-      nextIdleRingAt = t + IDLE_RING_INTERVAL;
+      nextIdleRingAt = REDUCED_MOTION ? Infinity : t + IDLE_RING_INTERVAL;
     }
 
     // Roots breathe with a slow BOUNDED turn (±~9°) instead of a continuous spin —
     // a full rotation would swing the in-plane tendrils edge-on, where they pile
     // into a tangled mess. Oscillating keeps the figure in its good-looking range.
-    rootsGroup.rotation.y = Math.sin(t * 0.045) * 0.16;
-    rootsGroup.rotation.x = Math.sin(t * 0.06) * 0.05;
-    rootsGroup.position.y = Math.sin(t * 0.4) * 0.015;
+    // motionT freezes at 0 under reduced motion — the figure holds its pose.
+    const motionT = REDUCED_MOTION ? 0 : t;
+    rootsGroup.rotation.y = Math.sin(motionT * 0.045) * 0.16;
+    rootsGroup.rotation.x = Math.sin(motionT * 0.06) * 0.05;
+    rootsGroup.position.y = Math.sin(motionT * 0.4) * 0.015;
 
     // Growth + flex. Tendrils are ordered parent-before-branch, so a branch can
     // read its parent's already-flexed attach point this same frame and ride it.
@@ -1148,7 +1159,7 @@ export function startHero(host: HTMLElement): HeroScene {
         for (let i = 0; i < N; i++) {
           const f = N > 1 ? i / (N - 1) : 0;
           const w = Math.pow(f, 1.5);
-          const ang = t * flex.speed + flex.phase - f * flex.waveK;
+          const ang = motionT * flex.speed + flex.phase - f * flex.waveK;
           const o1 = flex.amp1 * w * Math.sin(ang);
           const o2 = flex.amp2 * w * Math.cos(ang);
           const bp = basePts[i];

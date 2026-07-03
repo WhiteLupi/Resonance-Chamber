@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { ShapeSvg } from '../ShapeSvg';
+import { prefersReducedMotion } from '../motion';
 import type { ShapeKind } from '../glyphs';
 import {
   letterSubBus,
@@ -133,7 +134,10 @@ export function LetterSub({
   }, [lineIdx, eligible]);
 
   useEffect(() => {
-    if (active) letterSubBus.ensureRunning();
+    // The ambient scheduler swaps letters on its own — that's exactly the kind
+    // of uninvited motion reduced-motion asks to silence. Pointer-driven swaps
+    // still work: they move only when the visitor moves.
+    if (active && !prefersReducedMotion()) letterSubBus.ensureRunning();
   }, [active]);
 
   type Part = { type: 'space' | 'word'; text: string; start: number };

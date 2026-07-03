@@ -455,12 +455,3 @@
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .channel-status__dot { animation: none; }
-  .craft-register .craft-band,
-  .channel-grid > * {
-    transition: opacity 0.4s ease;
-    transform: none;
-    translate: 0 0;
-  }
-}

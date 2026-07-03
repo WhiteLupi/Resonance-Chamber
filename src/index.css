@@ -101,6 +101,21 @@ body {
   min-height: 100%;
 }
 
+/* Visitors who ask for calm get it everywhere at once: every keyframe loop
+   (breathing prompts, drifting dust, pulsing dots) collapses to its final
+   frame and reveals become cuts. Scroll-driven properties (--p, --rise) are
+   untouched — they move only when the visitor scrolls. JS motion sources gate
+   separately on prefersReducedMotion (src/motion.ts). */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
 /* Visually hidden, but present in the DOM and read by screen readers, crawlers,
    and JS-running agents. The visual layer keeps the copy poetic and (in About)
    split per-character for animation; this carries the same content as plain,
