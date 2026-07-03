@@ -210,6 +210,46 @@
   color: var(--teal-soft);
 }
 
+/* Live-site link — same filament grammar as .channel-cta, body-sized. */
+.work-link {
+  position: relative;
+  display: inline-block;
+  margin: 0 0 2em;
+  padding-bottom: 7px;
+  letter-spacing: 0.04em;
+  color: var(--accent);
+  text-decoration: none;
+}
+
+.work-link__text {
+  font-size: var(--fs-body);
+  text-shadow: 0 0 14px var(--accent-shadow);
+  transition: text-shadow 0.22s ease;
+}
+
+.work-link__line {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 1px;
+  background: var(--accent);
+  box-shadow: 0 0 9px var(--accent-shadow);
+  transform: scaleX(0);
+  transform-origin: center;
+  transition: transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.work-link:hover .work-link__line,
+.work-link:focus-visible .work-link__line {
+  transform: scaleX(1);
+}
+
+.work-link:hover .work-link__text,
+.work-link:focus-visible .work-link__text {
+  text-shadow: 0 0 26px var(--accent-shadow);
+}
+
 .work-side {
   display: grid;
   gap: clamp(16px, 2.5vh, 36px);

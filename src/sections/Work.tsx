@@ -27,6 +27,15 @@ export function Work() {
             <li>awwwards 2024</li>
             <li>frontend build</li>
           </ul>
+          <a
+            className="work-link"
+            href="https://www.cuewigs.com"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <span className="work-link__text">visit cuewigs &#8599;</span>
+            <span className="work-link__line" aria-hidden="true" />
+          </a>
           <div className="work-side">
             <div>
               <p className="work-side__label">current</p>

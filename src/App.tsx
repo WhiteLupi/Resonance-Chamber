@@ -341,8 +341,10 @@ function App() {
           judgement stays with me.
         </p>
         <p>
-          Selected work: cuewigs — a motion-led marketing site, GSAP-driven;
-          Awwwards Developer Award and Site of the Day, 2024. Currently at Pirxey
+          Selected work:{' '}
+          <a href="https://www.cuewigs.com" tabIndex={-1}>cuewigs</a> — a
+          motion-led marketing site, GSAP-driven; Awwwards Developer Award and
+          Site of the Day, 2024. Currently at Pirxey
           / Widelab, working across frontend, interface quality, product UI, and
           design systems.
         </p>
