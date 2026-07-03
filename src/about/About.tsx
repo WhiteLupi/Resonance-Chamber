@@ -1,4 +1,3 @@
-import { useRef } from 'react';
 import { Inscription } from './Inscription';
 import { useDwell } from './useDwell';
 import { BgBreath } from './BgBreath';
@@ -8,7 +7,6 @@ import './about.css';
 // right, facets below. The middle of row 1 stays intentionally open for the
 // travelling seal (journey keyframe x:47).
 export function About() {
-  const inscriptionRef = useRef<HTMLDivElement>(null);
   const phase = useDwell();
 
   return (
@@ -16,7 +14,7 @@ export function About() {
       <div className="about-stage">
         <BgBreath active={phase.v4} />
         <div className="practice-top">
-          <Inscription ref={inscriptionRef} phase={phase} />
+          <Inscription phase={phase} />
           <aside className="practice-aside">
             <p className="practice-aside__label">building with ai</p>
             <p className="practice-aside__copy">

@@ -95,13 +95,17 @@ const HERO_PERF_DEFAULTS = {
   profile: false,
 };
 
+type HeroPerfBoolKey =
+  | 'enableBloom' | 'enableComets' | 'enableSonarRings'
+  | 'enableChargePulse' | 'enableParallax' | 'profile';
+
 const readHeroPerf = () => {
   const config = { ...HERO_PERF_DEFAULTS };
   const params = new URLSearchParams(window.location.search);
-  const readBool = (key: keyof typeof HERO_PERF_DEFAULTS) => {
-    const value = params.get(`hero-${String(key)}`);
-    if (value === '0' || value === 'false') config[key] = false as never;
-    if (value === '1' || value === 'true') config[key] = true as never;
+  const readBool = (key: HeroPerfBoolKey) => {
+    const value = params.get(`hero-${key}`);
+    if (value === '0' || value === 'false') config[key] = false;
+    if (value === '1' || value === 'true') config[key] = true;
   };
   readBool('enableBloom');
   readBool('enableComets');
@@ -936,7 +940,10 @@ export function startHero(host: HTMLElement): HeroScene {
   // interactions. Triggered after the post-lock announcement ring.
   let nextIdleRingAt = Infinity;
   const IDLE_RING_INTERVAL = 12.5;
+  // window.__heroPerf inspection is opt-in via ?hero-profile=1 — no global
+  // side effects on normal visits.
   const syncPerfDebug = (extra?: Record<string, unknown>) => {
+    if (!HERO_PERF.profile) return;
     perfDebug.__heroPerf = {
       tier: runtimeTier,
       phase: perfPhase,

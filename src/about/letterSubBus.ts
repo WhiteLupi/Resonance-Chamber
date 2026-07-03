@@ -24,7 +24,6 @@ const lines = new Map<number, number[]>();
 const holdTimers = new Map<CharKey, number>();
 const exitTimers = new Map<CharKey, number>();
 
-let schedTimer: number | null = null;
 let running = false;
 
 function k(li: number, ci: number): CharKey { return `${li}-${ci}`; }
@@ -94,7 +93,7 @@ function autoTick() {
     }
   }
   const delay = SCHEDULER_BASE_MS + (Math.random() - 0.5) * SCHEDULER_JITTER_MS;
-  schedTimer = window.setTimeout(autoTick, delay);
+  window.setTimeout(autoTick, delay);
 }
 
 export const letterSubBus = {
@@ -112,10 +111,6 @@ export const letterSubBus = {
     if (running) return;
     running = true;
     // Fire one shortly after activation so even fast scrollers see the swap.
-    schedTimer = window.setTimeout(autoTick, 400);
-  },
-  stop() {
-    running = false;
-    if (schedTimer != null) { window.clearTimeout(schedTimer); schedTimer = null; }
+    window.setTimeout(autoTick, 400);
   },
 };

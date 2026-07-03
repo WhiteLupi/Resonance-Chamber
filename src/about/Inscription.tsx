@@ -1,4 +1,3 @@
-import { forwardRef } from 'react';
 import type { DwellPhase } from './useDwell';
 import { LetterSub } from './LetterSub';
 
@@ -10,9 +9,9 @@ const LINES: string[] = [
 
 type Props = { phase: DwellPhase };
 
-export const Inscription = forwardRef<HTMLDivElement, Props>(function Inscription({ phase }, ref) {
+export function Inscription({ phase }: Props) {
   return (
-    <div ref={ref} className="inscription">
+    <div className="inscription">
       {LINES.map((line, lineIdx) => (
         <p key={lineIdx} className="inscription__line" data-line={lineIdx}>
           <span className="inscription__copy">
@@ -25,4 +24,4 @@ export const Inscription = forwardRef<HTMLDivElement, Props>(function Inscriptio
       ))}
     </div>
   );
-});
+}
