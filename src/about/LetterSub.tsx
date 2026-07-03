@@ -193,7 +193,18 @@ export function LetterSub({
       else pendingTimers.set(charIdx, window.setTimeout(fire, delay));
     };
 
+    // The reconcile loop reads every char's rect each frame — that's the
+    // price of being bulletproof against scroll-under-cursor, but it must be
+    // paid only while the inscription is actually on screen. `active` never
+    // flips back off, so without this gate three loops would keep measuring
+    // ~200 rects/frame for the rest of the session, even down at Contact.
+    let onScreen = false;
+
     const tick = () => {
+      if (!onScreen) {
+        raf = 0;
+        return;
+      }
       const container = containerRef.current;
       if (container) {
         const r2 = HOVER_RADIUS_PX * HOVER_RADIUS_PX;
@@ -235,11 +246,18 @@ export function LetterSub({
       raf = requestAnimationFrame(tick);
     };
 
+    const io = new IntersectionObserver(([entry]) => {
+      onScreen = entry.isIntersecting;
+      if (onScreen && !raf) raf = requestAnimationFrame(tick);
+      // leaving the viewport lets the running tick see the flag and stop
+    });
+    if (containerRef.current) io.observe(containerRef.current);
+
     window.addEventListener('pointermove', onPointerMove, { passive: true });
     document.addEventListener('pointerout', onPointerOut);
-    raf = requestAnimationFrame(tick);
 
     return () => {
+      io.disconnect();
       cancelAnimationFrame(raf);
       window.removeEventListener('pointermove', onPointerMove);
       document.removeEventListener('pointerout', onPointerOut);
