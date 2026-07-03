@@ -1086,7 +1086,9 @@ export function startHero(host: HTMLElement): HeroScene {
     if (locked) {
       charge = 1;
     } else if (clickHeld) {
-      charge = Math.min(1, charge + dt / HOLD_FILL_S);
+      // Reduced motion: the visitor asked for calm, not endurance — a single
+      // press wakes the engine instead of a 2-second sustained hold.
+      charge = REDUCED_MOTION ? 1 : Math.min(1, charge + dt / HOLD_FILL_S);
     } else {
       charge = Math.max(0, charge - dt / RELEASE_FALL_S);
     }
