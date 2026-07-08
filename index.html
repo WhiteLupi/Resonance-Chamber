@@ -13,34 +13,48 @@
     <meta name="author" content="Kasia Walter" />
     <meta name="robots" content="index, follow" />
     <meta name="theme-color" content="#000000" />
+    <meta name="color-scheme" content="dark" />
+    <link rel="canonical" href="https://kasiawalter.it/" />
+    <link rel="manifest" href="/site.webmanifest" />
 
-    <!-- Open Graph / social + agent preview. TODO(deploy): add /og-cover.png
-         (1200×630) and set og:url + canonical to the real domain. -->
+    <!-- Open Graph / social + agent preview. og-cover.png is 1200×630. -->
     <meta property="og:type" content="profile" />
+    <meta property="og:site_name" content="Kasia Walter" />
+    <meta property="og:locale" content="en_US" />
+    <meta property="og:url" content="https://kasiawalter.it/" />
     <meta property="og:title" content="Kasia Walter — Frontend & Motion Engineer" />
     <meta
       property="og:description"
       content="Interfaces that carry feeling: motion, structure, and problem-solving with React, TypeScript, and WebGL. Awwwards-recognised."
     />
-    <meta property="og:image" content="/og-cover.png" />
+    <meta property="og:image" content="https://kasiawalter.it/og-cover.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Kasia Walter — Frontend & Motion Engineer" />
     <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:url" content="https://kasiawalter.it/" />
     <meta name="twitter:title" content="Kasia Walter — Frontend & Motion Engineer" />
     <meta
       name="twitter:description"
       content="Interfaces that carry feeling: motion, structure, and problem-solving with React, TypeScript, and WebGL."
     />
-    <meta name="twitter:image" content="/og-cover.png" />
+    <meta name="twitter:image" content="https://kasiawalter.it/og-cover.png" />
+    <meta name="twitter:image:alt" content="Kasia Walter — Frontend & Motion Engineer" />
 
     <!-- Structured identity for search + AI agents. Carries the CONCRETE facts
-         (role, skills, award, contact) that the visual layer keeps poetic.
-         TODO(confirm): jobTitle wording, worksFor, add `url` on deploy. -->
+         (role, skills, award, contact) that the visual layer keeps poetic. -->
     <script type="application/ld+json">
       {
         "@context": "https://schema.org",
         "@type": "ProfilePage",
+        "url": "https://kasiawalter.it/",
+        "inLanguage": "en",
+        "dateModified": "2026-07-08",
         "mainEntity": {
           "@type": "Person",
+          "@id": "https://kasiawalter.it/#kasia",
           "name": "Kasia Walter",
+          "url": "https://kasiawalter.it/",
           "jobTitle": "Frontend & Motion Engineer",
           "description": "I build interfaces that carry feeling. My work sits where motion, structure, and problem-solving meet — using frontend to shape products that feel clearer, calmer, and more alive. AI is part of the process, not the point: a tool for exploring, structuring, and shipping, while judgement stays with me.",
           "email": "mailto:bronowickakasia@gmail.com",
@@ -58,9 +72,15 @@
           ],
           "sameAs": ["https://www.linkedin.com/in/kasiawalter"],
           "award": "Awwwards Developer Award & Site of the Day — cuewigs, 2024",
+          "subjectOf": {
+            "@type": "CreativeWork",
+            "name": "cuewigs",
+            "url": "https://www.cuewigs.com",
+            "description": "Motion-led marketing site, GSAP-driven. Awwwards Developer Award & Site of the Day, 2024."
+          },
           "worksFor": {
             "@type": "Organization",
-            "name": "Pirxey / Widelab"
+            "name": "Pirxey"
           }
         }
       }
@@ -75,6 +95,43 @@
   </head>
   <body style="background:#000000">
     <div id="root"></div>
+    <noscript>
+      <main>
+        <h1>Kasia Walter — Frontend &amp; Motion Engineer</h1>
+
+        <section aria-label="About">
+          <h2>About</h2>
+          <p>I build interfaces that carry feeling.</p>
+          <p>My work sits where motion, structure, and problem-solving meet — using frontend to shape products that feel clearer, calmer, and more alive.</p>
+          <p>AI is part of the process, not the point: a tool for exploring, structuring, and shipping, while judgement stays with me.</p>
+        </section>
+
+        <section aria-label="Craft">
+          <h2>Frontend as medium, tuned across five bands</h2>
+          <ul>
+            <li><strong>Motion</strong> — animation used as meaning: pacing, tension, feedback, and release. (webgl · glsl · scroll choreography)</li>
+            <li><strong>Interface</strong> — React systems that stay clear under real product constraints. (react · typescript · design systems)</li>
+            <li><strong>Interaction</strong> — micro-signals that reduce friction and make intent legible. (gesture · easing · states · polish)</li>
+            <li><strong>Repair</strong> — finding what feels off, then tightening flow, structure, and experience. (debugging · refinement · UX friction)</li>
+            <li><strong>Direction</strong> — using AI agents without giving away authorship, taste, or the final call. (ai workflows · judgement · systems thinking)</li>
+          </ul>
+        </section>
+
+        <section aria-label="Work">
+          <h2>Work</h2>
+          <p>
+            <a href="https://www.cuewigs.com">cuewigs</a> — a motion-led marketing site, GSAP-driven. Awwwards Developer Award and Site of the Day, 2024.
+          </p>
+        </section>
+
+        <section aria-label="Contact">
+          <h2>Contact</h2>
+          <p>Open to thoughtful product and frontend work.</p>
+          <p>Email: <a href="mailto:bronowickakasia@gmail.com">bronowickakasia@gmail.com</a></p>
+          <p>LinkedIn: <a href="https://www.linkedin.com/in/kasiawalter">linkedin.com/in/kasiawalter</a></p>
+        </section>
+      </main>
+    </noscript>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
