@@ -201,12 +201,18 @@ function App() {
     // Travelling seal (spec 2026-06-10): the route moves through the empty
     // spaces in each section. App interpolates section keyframes from scroll
     // position; glScene smooths the target per frame.
-    type Key = { id: string; x: number; y: number; s: number; o: number; r: number };
+    // `hold` keeps the seal parked on a key through the first fraction of its
+    // outgoing segment — the transition to the NEXT key begins only after
+    // that much of the scroll span has passed. Hero uses it for the ritual;
+    // work uses it so the seal stays docked left while the case copy is
+    // still on screen instead of drifting toward contact from the first
+    // scrolled pixel.
+    type Key = { id: string; x: number; y: number; s: number; o: number; r: number; hold?: number };
     const KEYS: Key[] = [
-      { id: 'hero', x: 50, y: 50, s: 1.00, o: 1.00, r: 0 },
+      { id: 'hero', x: 50, y: 50, s: 1.00, o: 1.00, r: 0, hold: 0.45 },
       { id: 'about', x: 61, y: 42, s: 0.66, o: 0.50, r: 40 },
       { id: 'skills', x: 60, y: 52, s: 0.85, o: 0.38, r: 85 },
-      { id: 'work', x: 30, y: 50, s: 1.05, o: 0.95, r: 130 },
+      { id: 'work', x: 30, y: 50, s: 1.05, o: 0.95, r: 130, hold: 0.55 },
       // Contact: the seal settles in the open air above the closing line —
       // large and present for the farewell, not shrunk into the footer.
       { id: 'contact', x: 52, y: 42, s: 0.88, o: 0.85, r: 170 },
@@ -216,7 +222,7 @@ function App() {
     // x:115 exit) turns into a visible side-to-side swim between sections.
     // The seal breathes along the centre axis instead: scale, height, glow.
     const KEYS_MOBILE: Key[] = [
-      { id: 'hero', x: 50, y: 50, s: 1.00, o: 1.00, r: 0 },
+      { id: 'hero', x: 50, y: 50, s: 1.00, o: 1.00, r: 0, hold: 0.45 },
       { id: 'about', x: 50, y: 24, s: 0.62, o: 0.10, r: 40 },
       { id: 'skills', x: 50, y: 42, s: 0.72, o: 0.02, r: 85 },
       { id: 'work', x: 50, y: 18, s: 0.65, o: 0.65, r: 130 },
@@ -281,14 +287,9 @@ function App() {
         const nr = next.el.getBoundingClientRect();
         if (r.top <= mid && nr.top > mid) {
           let raw = Math.min(1, Math.max(0, (mid - r.top) / (nr.top - r.top)));
-          // Hold the seal dead-centre through the first part of the HERO track
-          // (the hold ritual + the word rising); only then let it begin the
-          // journey toward About. Without this it drifts up-right from the very
-          // first pixel of scroll, so the centred hero seal looks like it wanders
-          // off for no reason.
-          if (secs[i].k.id === 'hero') {
-            const HERO_HOLD = 0.45;
-            raw = Math.max(0, (raw - HERO_HOLD) / (1 - HERO_HOLD));
+          const hold = secs[i].k.hold ?? 0;
+          if (hold > 0) {
+            raw = Math.max(0, (raw - hold) / (1 - hold));
           }
           const t = ease(raw);
           const x = lerp(secs[i].k.x, next.k.x, t);

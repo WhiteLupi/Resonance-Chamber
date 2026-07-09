@@ -51,6 +51,15 @@ export function Work() {
               </p>
             </div>
             <div>
+              <p className="work-side__label">ai practice</p>
+              <p className="work-copy">
+                I write my own agent skills &mdash; including a
+                design-direction skill &mdash; and run agents with
+                persistent memory across sessions. This site was built
+                that way.
+              </p>
+            </div>
+            <div>
               <p className="work-side__label">focus</p>
               <p className="work-copy">
                 Particle systems, concept-art-driven visuals, living
