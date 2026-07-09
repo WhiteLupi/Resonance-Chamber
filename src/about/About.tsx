@@ -24,9 +24,11 @@ export function About() {
               lives in the inscription's third voice; repeating it here wasted
               the column. */}
           <aside className="practice-aside">
-            <p className="practice-aside__label">currently</p>
+            <p className="practice-aside__label">since 2022</p>
             <p className="practice-aside__copy">
-              At Pirxey / Widelab I work across frontend, interface quality,
+              Four years building for the web: two of motion-led sites
+              (Webflow, GSAP), two of React product engineering. Currently
+              at Pirxey / Widelab &mdash; frontend, interface quality,
               product UI, and design systems.
             </p>
           </aside>

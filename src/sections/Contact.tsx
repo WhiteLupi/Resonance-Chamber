@@ -45,7 +45,8 @@ export function Contact() {
               decoration. */}
           <p className="channel-status">
             <span className="channel-status__dot" aria-hidden="true" />
-            open to thoughtful product and frontend work
+            open to motion-led product and frontend work &middot; EU remote
+            &middot; based in Poland
           </p>
         </div>
       </div>

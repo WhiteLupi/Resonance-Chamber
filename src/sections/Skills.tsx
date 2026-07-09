@@ -15,7 +15,7 @@ const BANDS: Band[] = [
   {
     name: 'MOTION',
     desc: 'Animation used as meaning: pacing, tension, feedback, and release.',
-    tags: 'webgl · glsl · scroll choreography',
+    tags: 'gsap · lenis · webgl · scroll choreography',
   },
   {
     name: 'INTERFACE',

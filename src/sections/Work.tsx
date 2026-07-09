@@ -40,8 +40,8 @@ export function Work() {
             <div>
               <p className="work-side__label">focus</p>
               <p className="work-copy">
-                Visual polish, living motion, systems designers actually
-                want to use, and products that don&rsquo;t exclude people.
+                Particle systems, concept-art-driven visuals, living
+                motion &mdash; and products that don&rsquo;t exclude people.
               </p>
             </div>
           </div>
