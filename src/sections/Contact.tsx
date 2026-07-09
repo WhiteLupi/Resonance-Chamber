@@ -25,8 +25,8 @@ export function Contact() {
           clearer, stranger, or more alive.
         </h3>
         <div className="channel-panel">
-          <a className="channel-cta" href="mailto:bronowickakasia@gmail.com">
-            <span className="channel-cta__text">bronowickakasia@gmail.com</span>
+          <a className="channel-cta" href="mailto:kasia.walter.it@gmail.com">
+            <span className="channel-cta__text">kasia.walter.it@gmail.com</span>
             <span className="channel-cta__line" aria-hidden="true" />
           </a>
           <ul className="channel-nodes">

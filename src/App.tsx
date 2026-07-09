@@ -354,7 +354,7 @@ function App() {
               tab order means the first Tab lands on the HOLD button instead of
               an invisible focus ring. */}
           Contact:{' '}
-          <a href="mailto:bronowickakasia@gmail.com" tabIndex={-1}>bronowickakasia@gmail.com</a>
+          <a href="mailto:kasia.walter.it@gmail.com" tabIndex={-1}>kasia.walter.it@gmail.com</a>
           {' · '}
           <a href="https://www.linkedin.com/in/kasiawalter" tabIndex={-1}>LinkedIn</a>
         </p>
