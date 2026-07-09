@@ -206,9 +206,29 @@
   50%, 100%   { opacity: 0; }
 }
 
+/* Desktop: the left spine carries the section name — the eyebrow stays for
+   the heading outline only (visually clipped, sr-only pattern). Mobile swaps:
+   spine hidden, eyebrow visible at the top of the stage. */
+@media (min-width: 721px) {
+  .about-eyebrow {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+}
+
 @media (max-width: 720px) {
   .about-stage {
     padding: 80px 24px;
+    grid-template-rows: auto 1fr auto;
+  }
+  .about-eyebrow {
+    margin: 0;
+    align-self: start;
   }
   .practice-top {
     grid-template-columns: 1fr;

@@ -11,10 +11,12 @@ export function About() {
 
   return (
     <section className="about-section" id="about" aria-label="about">
-      {/* The visual thesis is split per-character for animation; give the
-          section a machine-readable title so the heading outline stays whole. */}
-      <h2 className="sr-only">About — the signal</h2>
       <div className="about-stage">
+        {/* The visual thesis is split per-character for animation; this h2
+            keeps the heading outline whole. Desktop hides it visually (the
+            left spine carries the name); mobile shows it as the section-top
+            eyebrow, same voice as the other sections. */}
+        <h2 className="section-eyebrow about-eyebrow">&mdash; THE SIGNAL</h2>
         <BgBreath active={phase.v4} />
         <div className="practice-top">
           <Inscription phase={phase} />

@@ -205,6 +205,12 @@
   50%      { opacity: 1; }
 }
 
+/* Mobile: the fixed spine collides with content on narrow screens — the same
+   name lives as a section-top eyebrow instead (.section-eyebrow per section). */
+@media (max-width: 720px) {
+  .section-header { display: none; }
+}
+
 /* === Charge indicator ===
    Sits centered with the seal (gl-stage canvas centers seal in viewport).
    Background ring is the always-on "engine outline" — a faint potential
