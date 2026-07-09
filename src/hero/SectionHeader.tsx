@@ -16,6 +16,7 @@ const SECTIONS = [
   { id: 'hero', label: 'THE ENGINE' },
   { id: 'about', label: 'THE SIGNAL' },
   { id: 'skills', label: 'THE CRAFT' },
+  { id: 'work', label: 'THE RECORD' },
   { id: 'contact', label: 'THE CHANNEL' },
 ];
 

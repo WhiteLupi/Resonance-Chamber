@@ -17,7 +17,8 @@
     <link rel="canonical" href="https://kasiawalter.it/" />
     <link rel="manifest" href="/site.webmanifest" />
 
-    <!-- Open Graph / social + agent preview. og-cover.png is 1200×630. -->
+    <!-- Open Graph / social + agent preview. og-cover.png is 2400×1260 (2× a
+         1200×630 card, so it stays sharp on retina unfurls). -->
     <meta property="og:type" content="profile" />
     <meta property="og:site_name" content="Kasia Walter" />
     <meta property="og:locale" content="en_US" />
@@ -28,8 +29,8 @@
       content="Interfaces that carry feeling: motion, structure, and problem-solving with React, TypeScript, and WebGL. Awwwards-recognised."
     />
     <meta property="og:image" content="https://kasiawalter.it/og-cover.png" />
-    <meta property="og:image:width" content="1200" />
-    <meta property="og:image:height" content="630" />
+    <meta property="og:image:width" content="2400" />
+    <meta property="og:image:height" content="1260" />
     <meta property="og:image:alt" content="Kasia Walter — Frontend & Motion Engineer" />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:url" content="https://kasiawalter.it/" />
@@ -47,9 +48,19 @@
       {
         "@context": "https://schema.org",
         "@type": "ProfilePage",
+        "@id": "https://kasiawalter.it/#page",
         "url": "https://kasiawalter.it/",
         "inLanguage": "en",
-        "dateModified": "2026-07-08",
+        "dateModified": "2026-07-09",
+        "isPartOf": {
+          "@type": "WebSite",
+          "@id": "https://kasiawalter.it/#website",
+          "url": "https://kasiawalter.it/",
+          "name": "Kasia Walter",
+          "inLanguage": "en",
+          "author": { "@id": "https://kasiawalter.it/#kasia" },
+          "publisher": { "@id": "https://kasiawalter.it/#kasia" }
+        },
         "mainEntity": {
           "@type": "Person",
           "@id": "https://kasiawalter.it/#kasia",
@@ -75,7 +86,8 @@
             "TypeScript",
             "Design systems",
             "Interaction design",
-            "AI-assisted workflows"
+            "AI-assisted workflows",
+            "Claude Code"
           ],
           "address": {
             "@type": "PostalAddress",
@@ -85,13 +97,19 @@
           "award": "Awwwards Developer Award & Site of the Day — cuewigs, 2024",
           "subjectOf": {
             "@type": "CreativeWork",
+            "@id": "https://kasiawalter.it/#cuewigs",
             "name": "cuewigs",
             "url": "https://www.cuewigs.com",
-            "description": "Motion-led marketing site — frontend and GSAP scroll choreography by Kasia Walter. Awwwards Developer Award & Site of the Day, February 2024."
+            "creator": { "@id": "https://kasiawalter.it/#kasia" },
+            "dateCreated": "2024-02",
+            "award": "Awwwards Developer Award & Site of the Day, February 2024",
+            "description": "Motion-led marketing site — frontend and GSAP scroll choreography by Kasia Walter, on a fully fluid vw/vh layout that holds at every resolution. Awwwards Developer Award & Site of the Day, February 2024."
           },
           "worksFor": {
             "@type": "Organization",
-            "name": "Pirxey"
+            "@id": "https://kasiawalter.it/#pirxey",
+            "name": "Pirxey",
+            "alternateName": "Widelab"
           }
         }
       }
@@ -121,11 +139,11 @@
         <section aria-label="Craft">
           <h2>Frontend as medium, tuned across five bands</h2>
           <ul>
-            <li><strong>Motion</strong> — animation used as meaning: pacing, tension, feedback, and release. (webgl · glsl · scroll choreography)</li>
+            <li><strong>Motion</strong> — animation used as meaning: pacing, tension, feedback, and release. (gsap · lenis · webgl · scroll choreography)</li>
             <li><strong>Interface</strong> — React systems that stay clear under real product constraints. (react · typescript · design systems)</li>
             <li><strong>Interaction</strong> — micro-signals that reduce friction and make intent legible. (gesture · easing · states · polish)</li>
             <li><strong>Repair</strong> — finding what feels off, then tightening flow, structure, and experience. (debugging · refinement · UX friction)</li>
-            <li><strong>Direction</strong> — using AI agents without giving away authorship, taste, or the final call. (ai workflows · judgement · systems thinking)</li>
+            <li><strong>Direction</strong> — using AI agents without giving away authorship, taste, or the final call. (claude code · agent workflows · judgement)</li>
           </ul>
         </section>
 

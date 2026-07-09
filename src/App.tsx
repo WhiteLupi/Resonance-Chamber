@@ -364,7 +364,7 @@ function App() {
           Contact:{' '}
           <a href="mailto:kasia.walter.it@gmail.com" tabIndex={-1}>kasia.walter.it@gmail.com</a>
           {' · '}
-          <a href="https://www.linkedin.com/in/kasiawalter" tabIndex={-1}>LinkedIn</a>
+          <a href="https://www.linkedin.com/in/kasia-walter" tabIndex={-1}>LinkedIn</a>
         </p>
       </header>
       <div ref={stageRef} className="gl-stage" aria-hidden="true" />
