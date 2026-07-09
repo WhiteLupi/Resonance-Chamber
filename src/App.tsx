@@ -211,12 +211,19 @@ function App() {
       // large and present for the farewell, not shrunk into the footer.
       { id: 'contact', x: 52, y: 42, s: 0.88, o: 0.85, r: 170 },
     ];
+    // The mobile route is a vertical spine — every keyframe sits at x:50. A
+    // phone viewport has no side room: any lateral keyframe (the old skills
+    // x:115 exit) turns into a visible side-to-side swim between sections.
+    // The seal breathes along the centre axis instead: scale, height, glow.
     const KEYS_MOBILE: Key[] = [
       { id: 'hero', x: 50, y: 50, s: 1.00, o: 1.00, r: 0 },
       { id: 'about', x: 50, y: 24, s: 0.62, o: 0.10, r: 40 },
-      { id: 'skills', x: 115, y: 42, s: 0.72, o: 0.02, r: 85 },
+      { id: 'skills', x: 50, y: 42, s: 0.72, o: 0.02, r: 85 },
       { id: 'work', x: 50, y: 18, s: 0.65, o: 0.65, r: 130 },
-      { id: 'contact', x: 90, y: 85, s: 0.32, o: 0.04, r: 170 },
+      // The journey ENDS centred above the closing block — on a phone the old
+      // exit toward the bottom-right corner read as the seal escaping sideways
+      // instead of settling for the farewell.
+      { id: 'contact', x: 50, y: 30, s: 0.55, o: 0.60, r: 170 },
     ];
     const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
     const ease = (t: number) => (t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2);

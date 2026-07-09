@@ -16,7 +16,12 @@ export function Work() {
           <h3 className="work-title">cuewigs</h3>
           <p className="work-copy">
             A motion-led marketing site &mdash; I built the frontend and its
-            GSAP scroll choreography, tuned for rhythm, contrast, and feel.
+            GSAP scroll choreography, translating the designer&rsquo;s brief
+            into motion with rhythm, contrast, and feel.
+          </p>
+          <p className="work-copy">
+            The whole layout is fluid &mdash; type, spacing, and sizing run
+            on vw/vh and hold at every resolution, across width and height.
           </p>
           <p className="work-copy">
             Awwwards Developer Award and Site of the Day, February 2024.
@@ -37,6 +42,14 @@ export function Work() {
           </a>
           {/* "current" moved to the About aside — one fact, one home. */}
           <div className="work-side">
+            <div>
+              <p className="work-side__label">also shipped</p>
+              <p className="work-copy">
+                React and Next.js product apps, design system work for
+                product teams, a run of Webflow and WordPress builds, and
+                HTML email templates.
+              </p>
+            </div>
             <div>
               <p className="work-side__label">focus</p>
               <p className="work-copy">

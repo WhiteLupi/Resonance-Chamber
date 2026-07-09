@@ -496,7 +496,9 @@
     min-height: 0;
   }
   .work-stage {
-    min-height: 40vh;
+    /* Just enough sky for the docked seal — 40vh left a black hole between
+       the eyebrow and the case copy on phones. */
+    min-height: 30vh;
   }
   .channel-grid {
     flex-direction: column;

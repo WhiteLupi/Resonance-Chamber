@@ -6,7 +6,7 @@ import './sections.css';
 type Node = { label: string; href: string; glyph: ShapeKind };
 
 const NODES: Node[] = [
-  { label: 'LINKEDIN', href: 'https://www.linkedin.com/in/kasiawalter', glyph: 'square' },
+  { label: 'LINKEDIN', href: 'https://www.linkedin.com/in/kasia-walter', glyph: 'square' },
 ];
 
 export function Contact() {
