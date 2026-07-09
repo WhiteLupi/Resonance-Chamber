@@ -35,7 +35,7 @@ const BANDS: Band[] = [
   {
     name: 'DIRECTION',
     desc: 'Using AI agents without giving away authorship, taste, or the final call.',
-    tags: 'ai workflows · judgement · systems thinking',
+    tags: 'claude code · agent workflows · judgement',
   },
 ];
 

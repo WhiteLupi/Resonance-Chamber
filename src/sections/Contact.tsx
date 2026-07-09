@@ -48,6 +48,13 @@ export function Contact() {
             open to motion-led product and frontend work &middot; EU remote
             &middot; based in Poland
           </p>
+          {/* The colophon answers the question every visitor will ask of an
+              AI-era portfolio before they ask it — the DIRECTION band's claim,
+              proven by the page itself. */}
+          <p className="channel-colophon">
+            this site: react + three.js, built by directing AI agents
+            &mdash; every diff reviewed
+          </p>
         </div>
       </div>
     </section>
