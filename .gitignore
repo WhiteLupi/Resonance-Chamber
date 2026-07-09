@@ -65,6 +65,7 @@ wide-*.png
 .claude/
 .playwright-mcp/
 .superpowers/
+.vercel/
 
 # working artifacts — local only, not for the public repo
 notes/
