@@ -429,6 +429,16 @@
   .hero-inscription__bottom {
     font-size: clamp(44px, 14vw, 96px);
   }
+  /* The plate lands where full-width text flows (Skills bands, Work copy) —
+     on narrow screens the chamber framing yields to legibility. */
+  .signature {
+    display: none;
+  }
+  /* The charge ring is a fixed 138px radius; 66% of a phone viewport lands
+     inside the arc. Drop the word below the ring like the focus rule does. */
+  .hero-prompt {
+    top: calc(50% + 168px);
+  }
 }
 
 
@@ -750,9 +760,14 @@
     display: none;
   }
   .cockpit-navbar__center {
-    gap: 14px;
+    justify-content: space-between;
+    gap: 10px;
     font-size: 10px;
     letter-spacing: 0.2em;
+  }
+  /* Finger-sized targets: the label stays small, the touchable box doesn't. */
+  .cockpit-navbar__link {
+    padding: 14px 4px;
   }
 }
 

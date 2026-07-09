@@ -233,11 +233,10 @@
   .practice-top {
     grid-template-columns: 1fr;
   }
+  /* Stacked under the inscription the aside reads as a repeat of its third
+     voice (both say "AI is a tool, judgement stays human") — desktop earns it
+     as a parallel column, mobile doesn't. */
   .practice-aside {
-    justify-self: start;
-    border-left: none;
-    border-top: 1px solid var(--teal-dim);
-    padding-left: 0;
-    padding-top: 16px;
+    display: none;
   }
 }
