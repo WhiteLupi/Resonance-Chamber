@@ -20,11 +20,14 @@ export function About() {
         <BgBreath active={phase.v4} />
         <div className="practice-top">
           <Inscription phase={phase} />
+          {/* The concrete fact next to the manifesto — the AI stance already
+              lives in the inscription's third voice; repeating it here wasted
+              the column. */}
           <aside className="practice-aside">
-            <p className="practice-aside__label">building with ai</p>
+            <p className="practice-aside__label">currently</p>
             <p className="practice-aside__copy">
-              A tool for exploring, structuring, and shipping. Judgement,
-              taste, and direction stay human.
+              At Pirxey / Widelab I work across frontend, interface quality,
+              product UI, and design systems.
             </p>
           </aside>
         </div>

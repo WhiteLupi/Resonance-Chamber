@@ -15,12 +15,11 @@ export function Work() {
         <div className="work-info">
           <h3 className="work-title">cuewigs</h3>
           <p className="work-copy">
-            A motion-led marketing site built with attention to rhythm,
-            contrast, and feel.
+            A motion-led marketing site &mdash; I built the frontend and its
+            GSAP scroll choreography, tuned for rhythm, contrast, and feel.
           </p>
           <p className="work-copy">
-            GSAP-driven motion &mdash; Awwwards Developer Award and Site of the
-            Day, February 2024.
+            Awwwards Developer Award and Site of the Day, February 2024.
           </p>
           <ul className="work-chips">
             <li>gsap motion</li>
@@ -36,14 +35,8 @@ export function Work() {
             <span className="work-link__text">visit cuewigs &#8599;</span>
             <span className="work-link__line" aria-hidden="true" />
           </a>
+          {/* "current" moved to the About aside — one fact, one home. */}
           <div className="work-side">
-            <div>
-              <p className="work-side__label">current</p>
-              <p className="work-copy">
-                At Pirxey / Widelab I work across frontend, interface
-                quality, product UI, and design systems.
-              </p>
-            </div>
             <div>
               <p className="work-side__label">focus</p>
               <p className="work-copy">
