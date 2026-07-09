@@ -442,6 +442,27 @@
   .section { padding: 88px 22px; }
   .section-heading { margin-bottom: 40px; }
   .channel-nodes { gap: 18px; }
+  /* Every section name starts at the same 22px gutter — centered eyebrows
+     (a leftover of the desktop place-items) read as random indents when the
+     copy below them is left-aligned. */
+  .section-eyebrow {
+    justify-self: start;
+    align-self: flex-start;
+  }
+  /* The craft register is full-bleed by design (hairlines edge to edge) —
+     restore that under the generic .section mobile padding, and let bands
+     carry the shared gutter themselves. */
+  .craft-section {
+    padding-left: 0;
+    padding-right: 0;
+  }
+  .craft-eyebrow {
+    padding: 0 22px;
+  }
+  .craft-band {
+    padding-left: 22px;
+    padding-right: 22px;
+  }
 }
 
 @media (min-width: 761px) {

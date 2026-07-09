@@ -222,8 +222,10 @@
 }
 
 @media (max-width: 720px) {
+  /* One mobile gutter (22px) and one vertical rhythm (88px) across every
+     section — matches the .section mobile padding in sections.css. */
   .about-stage {
-    padding: 80px 24px;
+    padding: 88px 22px;
     grid-template-rows: auto 1fr auto;
   }
   .about-eyebrow {
