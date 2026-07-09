@@ -109,5 +109,3 @@ export function createSonarRings(enabled: boolean, parent: THREE.Object3D) {
 
   return { trigger, update, dispose };
 }
-
-export type SonarRings = ReturnType<typeof createSonarRings>;

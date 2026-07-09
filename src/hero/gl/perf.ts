@@ -1,6 +1,6 @@
 export type HeroQualityTier = 'full' | 'balanced' | 'safe';
 
-export type HeroTierSettings = {
+type HeroTierSettings = {
   startupCapMax: number;
   settledCapMax: number;
   parallaxScale: number;
@@ -146,5 +146,3 @@ export function createTierGovernor(
     sample,
   };
 }
-
-export type TierGovernor = ReturnType<typeof createTierGovernor>;

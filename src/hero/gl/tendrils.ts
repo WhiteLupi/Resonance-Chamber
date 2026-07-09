@@ -474,5 +474,3 @@ export function createTendrilField(parent: THREE.Object3D, lineRes: THREE.Vector
 
   return { update, applyVisibility, setResolution, dispose };
 }
-
-export type TendrilField = ReturnType<typeof createTendrilField>;

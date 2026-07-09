@@ -169,5 +169,3 @@ export function createComets(enabled: boolean, parent: THREE.Object3D) {
 
   return { update, setOpacity, dispose };
 }
-
-export type Comets = ReturnType<typeof createComets>;
