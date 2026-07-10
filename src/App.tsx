@@ -287,11 +287,16 @@ function App() {
         const nr = next.el.getBoundingClientRect();
         if (r.top <= mid && nr.top > mid) {
           let raw = Math.min(1, Math.max(0, (mid - r.top) / (nr.top - r.top)));
-          const hold = secs[i].k.hold ?? 0;
+          // Mobile has no "hold to charge" indicator and the seal is only a
+          // faint backdrop behind the text — so a keyframe hold or a per-segment
+          // ease reads as the scroll STICKING, not as intent. On mobile the seal
+          // tracks scroll 1:1 (no hold, linear) for uniform motion; desktop keeps
+          // the ritual holds and the eased settle between keys.
+          const hold = mobile ? 0 : (secs[i].k.hold ?? 0);
           if (hold > 0) {
             raw = Math.max(0, (raw - hold) / (1 - hold));
           }
-          const t = ease(raw);
+          const t = mobile ? raw : ease(raw);
           const x = lerp(secs[i].k.x, next.k.x, t);
           const y = lerp(secs[i].k.y, next.k.y, t);
           const s = lerp(secs[i].k.s, next.k.s, t);
