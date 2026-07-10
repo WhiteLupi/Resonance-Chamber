@@ -617,10 +617,14 @@
   opacity: 0.28;
 }
 
+/* The hint is the cursor's tail: the ring itself pins to the pointer, and this
+   drifts behind it by --trail-x/--trail-y (the eased position minus the live
+   one, written per frame in Cursor.tsx). Precise target, soft wake. */
 .cockpit-cursor__hint {
   position: absolute;
   top: 50%; left: 50%;
-  transform: translate(-50%, -50%);
+  transform: translate(-50%, -50%)
+    translate3d(var(--trail-x, 0px), var(--trail-y, 0px), 0);
   display: flex;
   flex-direction: column;
   align-items: center;

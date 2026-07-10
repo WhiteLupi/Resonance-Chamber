@@ -43,13 +43,21 @@ function PointerCursor({ locked, overCore }: { locked: boolean; overCore: boolea
     const ease = 0.22;
 
     let raf = 0;
-    // Ease toward the pointer, then idle out once converged (sub-pixel) — the
-    // same rest-and-wake pattern as the parallax vars in App. A moving mouse
-    // wakes the loop again.
+    // The ring sits ON the pointer — it is a targeting reticle, and easing it
+    // read as a laggy mouse, especially while the GPU was saturated. Only the
+    // tail (the hint) keeps the eased position, published as an offset the CSS
+    // applies to it. Written together so the two never disagree within a frame.
+    const paint = () => {
+      el.style.transform = `translate3d(${tx}px, ${ty}px, 0) translate(-50%, -50%)`;
+      el.style.setProperty('--trail-x', `${(cx - tx).toFixed(2)}px`);
+      el.style.setProperty('--trail-y', `${(cy - ty).toFixed(2)}px`);
+    };
+    // Ease the tail toward the pointer, then idle out once converged (sub-pixel)
+    // — the same rest-and-wake pattern as the parallax vars in App.
     const tick = () => {
       cx += (tx - cx) * ease;
       cy += (ty - cy) * ease;
-      el.style.transform = `translate3d(${cx}px, ${cy}px, 0) translate(-50%, -50%)`;
+      paint();
       if (Math.abs(tx - cx) > 0.1 || Math.abs(ty - cy) > 0.1) {
         raf = requestAnimationFrame(tick);
       } else {
@@ -59,9 +67,10 @@ function PointerCursor({ locked, overCore }: { locked: boolean; overCore: boolea
     const onMove = (e: MouseEvent) => {
       tx = e.clientX;
       ty = e.clientY;
+      paint();
       if (!raf) raf = requestAnimationFrame(tick);
     };
-    raf = requestAnimationFrame(tick);
+    paint();
 
     const onOver = (e: MouseEvent) => {
       const target = e.target as HTMLElement | null;
