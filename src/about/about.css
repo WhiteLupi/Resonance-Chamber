@@ -222,15 +222,28 @@
 }
 
 @media (max-width: 720px) {
+  /* No sticky pin on phones. On desktop the 200vh section pins the stage and
+     spends the extra 100vh of scroll dwelling on the reveal — but the reveal
+     itself finishes on APPROACH (--p hits 1 before the pin even starts), so on
+     mobile that dwell was a full screen of scroll where nothing moved and the
+     seal is nearly invisible: it read as the scroll freezing. Flow the section
+     normally instead — the --p-driven reveal is unchanged (it keys off scroll
+     position, not the pin), the copy just scrolls continuously past. */
+  .about-section {
+    height: auto;
+  }
   /* One mobile gutter (22px) across every section. The TOP rhythm is larger
-     here than the shared 88px: this stage is sticky-pinned, so its eyebrow
-     sits at a fixed viewport offset the whole time — and the fixed .void-ceiling
-     paints solid black down to ~14vh (see cockpit.css). At 88px the eyebrow was
-     entirely under that band and read as invisible ("THE SIGNAL" fading out).
-     Clear the ceiling so the section name is actually legible. */
+     here than the shared 88px because the fixed .void-ceiling paints solid black
+     down to ~14vh (see cockpit.css); at 88px the eyebrow sat entirely under that
+     band and read as invisible ("THE SIGNAL" fading out). Clear the ceiling. */
   .about-stage {
+    position: static;
+    height: auto;
+    min-height: 100vh;
+    align-content: center;
     padding: clamp(128px, 18vh, 168px) 22px 88px;
-    grid-template-rows: auto 1fr auto;
+    grid-template-rows: auto auto auto;
+    row-gap: clamp(28px, 6vh, 56px);
   }
   .about-eyebrow {
     margin: 0;
