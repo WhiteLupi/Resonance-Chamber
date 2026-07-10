@@ -100,11 +100,18 @@ export function startHero(host: HTMLElement): HeroScene {
     antialias: !HERO_PERF.enableBloom,
     alpha: false,
   });
-  let initialTier: HeroQualityTier = HERO_PERF.enableComets && window.devicePixelRatio >= 2 ? 'balanced' : 'full';
+  // Start conservative where the machine tells us it will struggle: a dense
+  // display multiplies every fill, and a small core count usually travels with a
+  // weak integrated GPU. The governor can only walk DOWN, so guessing `full` on
+  // a slow laptop costs it seconds of stutter before it recovers; guessing
+  // `balanced` costs a fast one almost nothing.
+  const modestCpu = (navigator.hardwareConcurrency ?? 8) <= 4;
+  let initialTier: HeroQualityTier =
+    (HERO_PERF.enableComets && window.devicePixelRatio >= 2) || modestCpu ? 'balanced' : 'full';
   if (!HERO_PERF.enableComets && !HERO_PERF.enableSonarRings && !HERO_PERF.enableChargePulse) {
     initialTier = 'safe';
   }
-  const governor = createTierGovernor(initialTier, (reason) => {
+  const governor = createTierGovernor(initialTier, MIN_FRAME_S * 1000, (reason) => {
     setRenderPixelRatio(perfPhase);
     refreshLineResolutions();
     syncPerfDebug({ downgraded: true, downgradeReason: reason });
@@ -370,6 +377,7 @@ export function startHero(host: HTMLElement): HeroScene {
   // Loop
   const clock = new THREE.Clock();
   let lastT = clock.getElapsedTime();
+  let lastRawT = lastT;
   let raf = 0;
   let perfPhase: 'startup' | 'steady' | 'locked' = 'startup';
   let qualityRamp = 0;
@@ -405,15 +413,21 @@ export function startHero(host: HTMLElement): HeroScene {
   const loop = () => {
     raf = requestAnimationFrame(loop);
     const t = clock.getElapsedTime();
+    // Every tick, rendered or not, tells us how fast this display runs.
+    governor.observeRefresh((t - lastRawT) * 1000);
+    lastRawT = t;
     // Frame-rate cap: bail before any work — no camera math, no root flexing,
     // no bloom. On a 60Hz panel this passes every frame; on 120Hz it drops
     // every other one, and the scene looks identical.
     if (t - lastT < MIN_FRAME_S) return;
-    const dt = Math.min(0.05, t - lastT);
+    const sinceLast = t - lastT;
+    // Physics gets a clamped step so a stall can't teleport the scene; the
+    // governor gets the real one, because the stall is exactly what it hunts.
+    const dt = Math.min(0.05, sinceLast);
     lastT = t;
     frameCount += 1;
     const tier = governor.settings;
-    governor.sample(dt * 1000, t);
+    governor.sample(sinceLast * 1000, t);
 
     if (perfPhase === 'startup' && t >= STARTUP_QUALITY_S) {
       perfPhase = 'steady';
@@ -505,7 +519,9 @@ export function startHero(host: HTMLElement): HeroScene {
     if (!locked && charge >= LOCK_THRESHOLD) {
       charge = 1;
       fireLock();
-      governor.resetWindow('post-lock');
+      // Lock is where the scene gets heavy — the tendrils finish growing and the
+      // draw count roughly quadruples. Judge the new load, not the old one.
+      governor.resetWindow('post-lock', t);
       perfPhase = 'locked';
       settleRenderQuality();
       // Announce activation with one final ring — the engine just turned on.
@@ -595,6 +611,7 @@ export function startHero(host: HTMLElement): HeroScene {
     }
     if (raf) return;
     lastT = clock.getElapsedTime();
+    lastRawT = lastT;
     if (nextIdleRingAt !== Infinity) nextIdleRingAt = lastT + IDLE_RING_INTERVAL;
     raf = requestAnimationFrame(loop);
   };

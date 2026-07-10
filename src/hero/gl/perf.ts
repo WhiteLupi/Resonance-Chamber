@@ -99,42 +99,105 @@ export const readHeroPerf = (): HeroPerf => {
   return config;
 };
 
-// Runtime quality governor — samples frame times during the first seconds and
-// walks the tier down (full → balanced → safe) when the budget is blown. Tiers
-// only ever degrade; recovering upward would make the scene visibly pump.
+// Every machine stutters here while shaders compile — judging it would condemn
+// fast hardware on its first breath.
+const WARMUP_MS = 600;
+// A fresh tier changes the frame cost; give it time to show what it can do
+// before deciding whether it, too, is too slow.
+const GRACE_MS = 800;
+// Roughly two seconds at the 60fps cap. Long enough that one hitch (a GC pause,
+// a background tab waking) cannot condemn the scene, short enough to react.
+const WINDOW_FRAMES = 120;
+const MIN_SAMPLES = 30;
+// Judged against what THIS display can deliver, not against absolute numbers.
+const SLOW_FACTOR = 1.35;
+const STALL_FACTOR = 1.8;
+const STALL_LIMIT = 3;
+const SLOW_SHARE = 0.25;
+
+// Runtime quality governor — watches frame times for the WHOLE session and walks
+// the tier down (full → balanced → safe) when the budget is blown. Tiers only
+// ever degrade; recovering upward would make the scene visibly pump.
+//
+// It samples forever, on purpose. An earlier version stopped at t=4.5s, which is
+// before most visitors finish the two-second hold — and the scene roughly
+// quadruples its draw calls at lock, when the tendrils finish growing. A laptop
+// that coasts through the idle seal can still drown in the grown one, so the
+// window keeps sliding.
+//
+// Thresholds are relative because the loop caps rendering by skipping rAF ticks:
+// the interval between rendered frames is a multiple of the display's refresh —
+// 16.7ms on a 60Hz or 120Hz panel, but 20ms at 100Hz and 26.7ms at 75Hz. Fixed
+// thresholds called a healthy 75Hz display "slow" on every single frame.
 export function createTierGovernor(
   initialTier: HeroQualityTier,
+  targetFrameMs: number,
   onDowngrade: (reason: string) => void,
 ) {
   let tier = initialTier;
-  const stats = { samples: 0, over24: 0, over32: 0, maxDt: 0, degrades: 0, lastReason: 'init' };
-
-  const resetWindow = (reason: string) => {
-    stats.samples = 0;
-    stats.over24 = 0;
-    stats.over32 = 0;
-    stats.maxDt = 0;
-    stats.lastReason = reason;
+  let expectedMs = targetFrameMs;
+  let graceUntilMs = 0;
+  const refreshSamples: number[] = [];
+  const stats = {
+    samples: 0, slow: 0, stalls: 0, maxDt: 0,
+    degrades: 0, lastReason: 'init', expectedMs,
   };
 
-  const degradeTo = (nextTier: HeroQualityTier, reason: string) => {
+  const resetWindow = (reason: string, t?: number) => {
+    stats.samples = 0;
+    stats.slow = 0;
+    stats.stalls = 0;
+    stats.maxDt = 0;
+    stats.lastReason = reason;
+    if (t !== undefined) graceUntilMs = t * 1000 + GRACE_MS;
+  };
+
+  // rAF fires at the display's refresh rate whether or not we render, so the
+  // interval between ticks IS the refresh period. Take the MEDIAN of the first
+  // batch, never the minimum: rAF jitters, and a single short tick would shrink
+  // the expected frame time and make the governor condemn a healthy display.
+  // 60 ticks is under a second everywhere, and the warmup ignores that window.
+  const REFRESH_SAMPLES = 60;
+  const observeRefresh = (rawDtMs: number) => {
+    if (refreshSamples.length >= REFRESH_SAMPLES) return;
+    if (rawDtMs < 4 || rawDtMs > 100) return; // tab switch, debugger, hidden tab
+    refreshSamples.push(rawDtMs);
+    if (refreshSamples.length < REFRESH_SAMPLES) return;
+    const refreshMs = [...refreshSamples].sort((a, b) => a - b)[REFRESH_SAMPLES >> 1];
+    // We render on the first tick past targetFrameMs, so that multiple of the
+    // refresh is what a healthy frame costs on this display.
+    const ticksPerFrame = Math.max(1, Math.ceil((targetFrameMs - 1) / refreshMs));
+    expectedMs = refreshMs * ticksPerFrame;
+    stats.expectedMs = Number(expectedMs.toFixed(1));
+  };
+
+  const degradeTo = (nextTier: HeroQualityTier, reason: string, t: number) => {
     if (HERO_TIER_ORDER.indexOf(nextTier) <= HERO_TIER_ORDER.indexOf(tier)) return;
     tier = nextTier;
     stats.degrades += 1;
-    resetWindow(reason);
+    resetWindow(reason, t);
     onDowngrade(reason);
   };
 
   const sample = (dtMs: number, t: number) => {
-    if (t > 4.5) return;
+    const tMs = t * 1000;
+    if (tMs < WARMUP_MS || tMs < graceUntilMs) return;
     stats.samples += 1;
-    if (dtMs > 24) stats.over24 += 1;
-    if (dtMs > 32) stats.over32 += 1;
+    if (dtMs > expectedMs * STALL_FACTOR) stats.stalls += 1;
+    else if (dtMs > expectedMs * SLOW_FACTOR) stats.slow += 1;
     stats.maxDt = Math.max(stats.maxDt, dtMs);
-    if (tier === 'full' && (stats.over32 >= 1 || stats.over24 >= 4)) {
-      degradeTo('balanced', `startup-drop:${dtMs.toFixed(1)}ms`);
-    } else if (tier === 'balanced' && stats.samples >= 45 && (stats.over32 >= 1 || stats.over24 >= 6)) {
-      degradeTo('safe', `persistent-drop:${dtMs.toFixed(1)}ms`);
+    if (stats.samples < MIN_SAMPLES) return;
+
+    const struggling =
+      stats.stalls >= STALL_LIMIT ||
+      (stats.slow + stats.stalls) / stats.samples >= SLOW_SHARE;
+    if (struggling) {
+      const next = HERO_TIER_ORDER[HERO_TIER_ORDER.indexOf(tier) + 1];
+      // Already on the floor: keep watching, but there is nowhere left to go.
+      if (next) degradeTo(next, `slow-frames:${stats.maxDt.toFixed(1)}ms`, t);
+      else resetWindow('at-floor', t);
+    } else if (stats.samples >= WINDOW_FRAMES) {
+      resetWindow('window-roll');
     }
   };
 
@@ -143,6 +206,7 @@ export function createTierGovernor(
     get settings() { return HERO_TIER_SETTINGS[tier]; },
     stats,
     resetWindow,
+    observeRefresh,
     sample,
   };
 }
