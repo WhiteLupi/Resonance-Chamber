@@ -43,7 +43,12 @@ const HERO_TIER_SETTINGS: Record<HeroQualityTier, HeroTierSettings> = {
   },
   safe: {
     startupCapMax: 0.76,
-    settledCapMax: 0.82,
+    // Held level with startup, not raised. The composer's target now follows the
+    // pixel ratio (it used to be frozen at the startup value, which quietly made
+    // this number decorative), so climbing to 0.82 after settling would mean a
+    // machine already too slow for `balanced` gets handed 16% more pixels the
+    // moment it stops struggling. `safe` is where we stop asking for more.
+    settledCapMax: 0.76,
     parallaxScale: 0,
     bloomScale: 0.38,
     pulseScale: 0.62,

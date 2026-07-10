@@ -112,8 +112,10 @@ export function startHero(host: HTMLElement): HeroScene {
     initialTier = 'safe';
   }
   const governor = createTierGovernor(initialTier, MIN_FRAME_S * 1000, (reason) => {
-    setRenderPixelRatio(perfPhase);
-    refreshLineResolutions();
+    // Full settle, not just the canvas: the composer's target has to shrink with
+    // it, or the downgrade renders exactly as many pixels as before and buys the
+    // struggling machine nothing.
+    settleRenderQuality();
     syncPerfDebug({ downgraded: true, downgradeReason: reason });
   });
   const getPixelRatioCap = (phase: 'startup' | 'steady' | 'locked') => {
@@ -404,8 +406,24 @@ export function startHero(host: HTMLElement): HeroScene {
     const px = renderer.getPixelRatio();
     roots.setResolution(viewW * px, viewH * px);
   };
+  // The composer owns a render target the renderer's pixel ratio never touched:
+  // sized once at construction, it stayed there. So the scene kept rasterizing
+  // at the startup ratio while the canvas moved to the tier's — into a target
+  // too big (wasted fill) or too small (an upscale blur) — and every pixel-ratio
+  // downgrade the governor issued was a no-op. Re-sizing it here is what gives
+  // `balanced` and `safe` an actual lever on fill rate.
+  //
+  // setSize feeds `width * pixelRatio` to every pass, so bloom tracks the ratio
+  // too. That is what it did at construction, before an onResize disagreed and
+  // pinned it to CSS pixels.
+  const syncComposerScale = () => {
+    if (!composer) return;
+    composer.setPixelRatio(renderer.getPixelRatio());
+    composer.setSize(viewW, viewH);
+  };
   const settleRenderQuality = () => {
     setRenderPixelRatio(perfPhase);
+    syncComposerScale();
     refreshLineResolutions();
   };
   syncPerfDebug();
@@ -621,8 +639,7 @@ export function startHero(host: HTMLElement): HeroScene {
     const s = measure();
     viewW = s.w; viewH = s.h;
     renderer.setSize(viewW, viewH);
-    composer?.setSize(viewW, viewH);
-    bloom?.setSize(viewW, viewH);
+    syncComposerScale();
     camera.aspect = viewW / viewH;
     cameraDirty = true;
     camera.updateProjectionMatrix();
