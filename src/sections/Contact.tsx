@@ -25,28 +25,40 @@ export function Contact() {
           clearer, stranger, or more alive.
         </h3>
         <div className="channel-panel">
-          <a className="channel-cta" href="mailto:kasia.walter.it@gmail.com">
-            <span className="channel-cta__text">kasia.walter.it@gmail.com</span>
-            <span className="channel-cta__line" aria-hidden="true" />
-          </a>
-          <ul className="channel-nodes">
+          <ul className="channel-links">
+            <li>
+              <a className="channel-link" href="mailto:kasia.walter.it@gmail.com">
+                <span className="channel-link__text">kasia.walter.it@gmail.com</span>
+                <span className="channel-link__line" aria-hidden="true" />
+              </a>
+            </li>
             {NODES.map((n) => (
               <li key={n.label}>
-                <a className="channel-node" href={n.href} target="_blank" rel="noreferrer">
-                  <svg className="channel-node__glyph" viewBox="0 0 30 30" aria-hidden="true">
+                <a
+                  className="channel-link channel-link--second"
+                  href={n.href}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  <svg className="channel-link__glyph" viewBox="0 0 30 30" aria-hidden="true">
                     <ShapeSvg kind={n.glyph} />
                   </svg>
-                  <span>{n.label}</span>
+                  <span className="channel-link__text">{n.label}</span>
+                  <span className="channel-link__line" aria-hidden="true" />
                 </a>
               </li>
             ))}
           </ul>
           {/* The availability line is real content — only the pulsing dot is
-              decoration. */}
+              decoration. Broken across two lines: one long uppercase run at
+              0.4em tracking read as texture, not as a sentence. */}
           <p className="channel-status">
             <span className="channel-status__dot" aria-hidden="true" />
-            open to motion-led product and frontend work &middot; EU remote
-            &middot; based in Poland
+            <span>
+              open to motion-led product &amp; frontend work
+              <br />
+              EU remote &middot; based in Poland
+            </span>
           </p>
           {/* The colophon answers the question every visitor will ask of an
               AI-era portfolio before they ask it — the DIRECTION band's claim,

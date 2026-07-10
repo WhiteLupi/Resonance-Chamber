@@ -210,7 +210,7 @@
   color: var(--teal-soft);
 }
 
-/* Live-site link — same filament grammar as .channel-cta, body-sized. */
+/* Live-site link — same filament grammar as .channel-link, body-sized. */
 .work-link {
   position: relative;
   display: inline-block;
@@ -316,99 +316,109 @@
   text-align: right;
 }
 
-/* The one bright filament — email as the page's final focal point. */
-.channel-cta {
+/* Two peer channels, not a bright filament and a grey caption. Both carry the
+   signal colour and both wear their underline at rest — a link that only
+   admits it is a link on hover is a link nobody clicks. LinkedIn steps down
+   by size and glow alone. */
+.channel-links {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: clamp(10px, 1vw, 20px);
+  margin: 0;
+  padding: 0;
+}
+
+.channel-link {
   position: relative;
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  gap: 11px;
   padding-bottom: 9px;
   letter-spacing: 0.02em;
   color: var(--accent);
   text-decoration: none;
 }
 
-.channel-cta__text {
+.channel-link__text {
   font-size: clamp(17px, 1.6vw, 32px);
   text-shadow: 0 0 16px var(--accent-shadow);
   transition: text-shadow 0.22s ease;
 }
 
-.channel-cta__line {
+.channel-link__line {
   position: absolute;
   left: 0;
   right: 0;
   bottom: 0;
   height: 1px;
   background: var(--accent);
-  box-shadow: 0 0 9px var(--accent-shadow);
-  transform: scaleX(0);
-  transform-origin: center;
-  transition: transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+  /* visible at rest, quiet; hover lights the filament and no longer has to
+     also announce that the thing was clickable */
+  opacity: 0.45;
+  transition: opacity 0.28s ease, box-shadow 0.28s ease;
 }
 
-.channel-cta:hover .channel-cta__line,
-.channel-cta:focus-visible .channel-cta__line {
-  transform: scaleX(1);
-}
-
-.channel-cta:hover .channel-cta__text,
-.channel-cta:focus-visible .channel-cta__text {
-  text-shadow: 0 0 28px var(--accent-shadow);
-}
-
-.channel-nodes {
-  list-style: none;
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-  gap: clamp(12px, 1.8vw, 36px);
-  margin: 1em 0 0;
-  padding: 0;
-}
-
-.channel-node {
-  display: inline-flex;
-  align-items: center;
-  gap: 9px;
-  font-size: 11px;
-  letter-spacing: 0.24em;
-  color: var(--fg-soft);
-  text-decoration: none;
-  transition: color 0.2s ease;
-}
-
-.channel-node__glyph {
-  width: 13px;
-  height: 13px;
-  color: var(--fg-faint);
-  transition: color 0.2s ease, filter 0.2s ease;
-}
-
-.channel-node:hover,
-.channel-node:focus-visible {
-  color: var(--accent);
+.channel-link:hover,
+.channel-link:focus-visible {
   outline: none;
 }
 
-.channel-node:hover .channel-node__glyph,
-.channel-node:focus-visible .channel-node__glyph {
-  color: var(--accent);
+.channel-link:hover .channel-link__line,
+.channel-link:focus-visible .channel-link__line {
+  opacity: 1;
+  box-shadow: 0 0 9px var(--accent-shadow);
+}
+
+.channel-link:hover .channel-link__text,
+.channel-link:focus-visible .channel-link__text {
+  text-shadow: 0 0 28px var(--accent-shadow);
+}
+
+/* Second channel: a step down, not a different species. */
+.channel-link--second .channel-link__text {
+  font-size: clamp(14px, 1.25vw, 25px);
+  letter-spacing: 0.14em;
+  text-shadow: 0 0 12px var(--accent-shadow);
+}
+
+.channel-link--second .channel-link__line {
+  opacity: 0.32;
+}
+
+.channel-link__glyph {
+  width: 0.78em;
+  height: 0.78em;
+  font-size: clamp(14px, 1.25vw, 25px);
+  color: currentColor;
+  transition: filter 0.2s ease;
+}
+
+.channel-link:hover .channel-link__glyph,
+.channel-link:focus-visible .channel-link__glyph {
   filter: drop-shadow(0 0 5px var(--accent-shadow));
 }
 
 .channel-status {
   display: inline-flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: flex-end;
+  text-align: right;
   gap: 10px;
-  margin: 64px 0 0;
-  font-size: 10px;
-  letter-spacing: 0.4em;
+  margin: 56px 0 0;
+  font-size: clamp(11px, 0.3vw + 9px, 14px);
+  line-height: 1.75;
+  letter-spacing: 0.18em;
   text-transform: uppercase;
   /* readable by AT now (was aria-hidden) — lift off the borderline-AA alpha */
-  color: rgba(170, 222, 205, 0.72);
+  color: rgba(170, 222, 205, 0.85);
 }
 
 .channel-status__dot {
+  flex: 0 0 auto;
+  /* the status is two lines now — pin the dot to the first one's optical centre */
+  margin-top: 0.62em;
   width: 6px;
   height: 6px;
   border-radius: 50%;
@@ -422,14 +432,16 @@
   50%      { opacity: 1;    transform: scale(1.15); }
 }
 
-/* Colophon — quieter than the status line: a maker's mark, not a message. */
+/* Colophon — quieter than the status line: a maker's mark, not a message.
+   Quiet, not illegible: 9px at 0.44 alpha measured 3.18:1, under AA. */
 .channel-colophon {
-  margin: 14px 0 0;
-  font-size: 9px;
-  letter-spacing: 0.3em;
+  margin: 16px 0 0;
+  font-size: clamp(10px, 0.22vw + 8.5px, 12px);
+  letter-spacing: 0.2em;
+  line-height: 1.7;
   text-transform: uppercase;
   text-align: right;
-  color: rgba(170, 222, 205, 0.44);
+  color: rgba(170, 222, 205, 0.62);
 }
 
 /* ============================ reveal on scroll ============================ */
@@ -451,7 +463,6 @@
 @media (max-width: 720px) {
   .section { padding: 88px 22px; }
   .section-heading { margin-bottom: 40px; }
-  .channel-nodes { gap: 18px; }
   /* Every section name starts at the same 22px gutter — centered eyebrows
      (a leftover of the desktop place-items) read as random indents when the
      copy below them is left-aligned. */
@@ -518,23 +529,28 @@
     max-width: 100%;
     text-align: left;
   }
-  .channel-cta__text {
+  .channel-link__text {
     overflow-wrap: anywhere;
   }
-  .channel-nodes {
-    justify-content: flex-start;
+  .channel-links {
+    align-items: flex-start;
+    gap: 2px;
+  }
+  /* The underline is pinned to the box bottom, so growing the box upward
+     buys a 44px tap target without moving a single pixel of the design.
+     Measured 30px / 26px before — both under the comfortable minimum. */
+  .channel-link {
+    padding-top: 18px;
   }
   .channel-status {
     justify-content: flex-start;
+    text-align: left;
     max-width: 100%;
-    font-size: 9px;
-    line-height: 1.7;
-    letter-spacing: 0.22em;
+    letter-spacing: 0.16em;
   }
   .channel-colophon {
     text-align: left;
-    letter-spacing: 0.22em;
-    line-height: 1.7;
+    letter-spacing: 0.18em;
   }
 }
 
