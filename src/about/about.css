@@ -222,10 +222,14 @@
 }
 
 @media (max-width: 720px) {
-  /* One mobile gutter (22px) and one vertical rhythm (88px) across every
-     section — matches the .section mobile padding in sections.css. */
+  /* One mobile gutter (22px) across every section. The TOP rhythm is larger
+     here than the shared 88px: this stage is sticky-pinned, so its eyebrow
+     sits at a fixed viewport offset the whole time — and the fixed .void-ceiling
+     paints solid black down to ~14vh (see cockpit.css). At 88px the eyebrow was
+     entirely under that band and read as invisible ("THE SIGNAL" fading out).
+     Clear the ceiling so the section name is actually legible. */
   .about-stage {
-    padding: 88px 22px;
+    padding: clamp(128px, 18vh, 168px) 22px 88px;
     grid-template-rows: auto 1fr auto;
   }
   .about-eyebrow {
@@ -235,11 +239,22 @@
   .practice-top {
     grid-template-columns: 1fr;
   }
+  /* The "since 2022" fact is a secondary voice, but on black it was reading as
+     washed-out mud: the label sat at the darkest teal and the divider was a
+     muddy mid-dark hairline that looked accidental. Lift the label to the
+     legible teal, warm the copy up a tier, and make the rule a clean faint
+     line instead of dirt. */
   .practice-aside {
     justify-self: start;
     border-left: none;
-    border-top: 1px solid var(--teal-dim);
+    border-top: 1px solid rgba(125, 169, 158, 0.22);
     padding-left: 0;
-    padding-top: 16px;
+    padding-top: 18px;
+  }
+  .practice-aside__label {
+    color: var(--teal-soft);
+  }
+  .practice-aside__copy {
+    color: var(--fg-strong);
   }
 }

@@ -635,8 +635,17 @@ export function startHero(host: HTMLElement): HeroScene {
   };
   document.addEventListener('visibilitychange', onVisibility);
 
+  // Mobile browsers collapse/expand their address bar as you scroll, which
+  // changes the visual viewport HEIGHT (and so host.clientHeight) without any
+  // real layout change. Since the seal's on-screen size is ∝ viewH, honouring
+  // that resize re-dollies the camera mid-scroll — the seal visibly jumps
+  // bigger exactly when the chrome hides. On narrow viewports we therefore
+  // freeze against height-only resizes: only a WIDTH change (rotation, a real
+  // window resize) re-measures. Desktop keeps reacting to everything.
+  const MOBILE_MAX_W = 760;
   const onResize = () => {
     const s = measure();
+    if (s.w === viewW && s.w <= MOBILE_MAX_W) return;
     viewW = s.w; viewH = s.h;
     renderer.setSize(viewW, viewH);
     syncComposerScale();
