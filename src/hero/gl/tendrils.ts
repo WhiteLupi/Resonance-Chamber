@@ -71,6 +71,12 @@ const dirFromSeed = (seed: number): THREE.Vector3 => {
 // Origin uses CORE_R / ROOTS_SCALE so roots stay anchored on the core surface
 // in world space (rootsGroup scales by ROOTS_SCALE; the origin scales with it,
 // but the core sits in tetraGroup at unscaled CORE_R).
+// CORE_TUCK pulls the base just inside that surface so it stays occluded by the
+// sphere at every phase of the breathing pulse. The core scales to 0.96 at the
+// bottom of its breath (glScene: 1 ± 0.04); anchored exactly on the surface, the
+// bases poked out from under the shrunk sphere as raw stubs. 0.9 sits under the
+// minimum with margin; the base tucks into the core, only the emerged length shows.
+const CORE_TUCK = 0.9;
 // A tendril spine is grown as a heading walk rather than a radial spoke: each
 // segment turns the growth direction by a per-tendril, per-step angle in both
 // perpendicular axes, so the path wanders in continuously changing directions
@@ -78,7 +84,7 @@ const dirFromSeed = (seed: number): THREE.Vector3 => {
 // outward bias keeps net growth away from the core; a faint downward bias lets
 // some settle without every tip curling the same way.
 const buildSpine = (dir: THREE.Vector3, lengthMul: number, swayBias: number): THREE.Vector3[] => {
-  const origin = dir.clone().multiplyScalar(CORE_R / ROOTS_SCALE);
+  const origin = dir.clone().multiplyScalar((CORE_R / ROOTS_SCALE) * CORE_TUCK);
   const STEPS = 6;
   const segLen = lengthMul / STEPS;
   const OUTWARD = 0.40;   // pull each new heading back toward radial — net growth out
