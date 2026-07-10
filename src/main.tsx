@@ -12,6 +12,20 @@ if ('scrollRestoration' in history) {
   history.scrollRestoration = 'manual'
 }
 
+// Facebook, Google and friends staple a click-id onto every link a visitor
+// follows out of their app (?fbclid=IwY2xjawS9…). Nothing here reads them, and
+// the canonical tag already collapses them for crawlers — but the address bar
+// is part of the composition. Scrub in place: replaceState, never a reload.
+const CLICK_IDS = [
+  'fbclid', 'gclid', 'gbraid', 'wbraid', 'dclid', 'msclkid',
+  'ttclid', 'twclid', 'yclid', 'igshid', 'li_fat_id', 'mc_cid', 'mc_eid',
+]
+const entryUrl = new URL(window.location.href)
+if (CLICK_IDS.some((id) => entryUrl.searchParams.has(id))) {
+  CLICK_IDS.forEach((id) => entryUrl.searchParams.delete(id))
+  history.replaceState(history.state, '', entryUrl.pathname + entryUrl.search + entryUrl.hash)
+}
+
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <App />
