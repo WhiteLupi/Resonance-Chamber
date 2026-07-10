@@ -280,7 +280,10 @@
 .channel-section {
   display: flex;
   flex-direction: column;
-  justify-content: flex-end;
+  /* The closing block hugs the bottom, but the eyebrow rides to the top like
+     every other section's. Under flex-end it sank to mid-section and landed
+     inside the docked seal's ring — teal on teal, unreadable. */
+  justify-content: space-between;
   padding: var(--sec-pad) var(--pad);
   /* The closing block rests at the page bottom, inside the fixed edge-void
      frame. The torn band's dense zone is fixed-pixel (~180px deep) and only

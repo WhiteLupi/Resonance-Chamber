@@ -1,9 +1,10 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32">
-  <!-- The site's first glyph (src/glyphs.ts: 'circle') — ring + core, the seal
-       reduced to a tab. Weights run heavier than ShapeSvg's 1.4-on-30: a
-       faithful scale puts the ring under 1px at 16px and it disappears. Void
-       baked in so the signal still reads on a light tab bar. -->
-  <rect width="32" height="32" fill="#000000"/>
-  <circle cx="16" cy="16" r="10" fill="none" stroke="#7ac4af" stroke-width="3"/>
-  <circle cx="16" cy="16" r="3.5" fill="#7ac4af"/>
+  <!-- The site's 'triangle' glyph (src/glyphs.ts) — outline + core, seated in a
+       black disc so the tile reads round on any tab bar. Proportions are tuned
+       for 16px, not scaled from ShapeSvg: at a faithful 1.4-on-30 stroke the
+       outline vanishes, and at the glyph's own dot radius the core swells shut
+       against the walls. Bigger triangle, thinner stroke, smaller core. -->
+  <circle cx="16" cy="16" r="16" fill="#000000"/>
+  <polygon points="16,5 26,25 6,25" fill="none" stroke="#7ac4af" stroke-width="2.2" stroke-linejoin="round"/>
+  <circle cx="16" cy="19.6" r="1.7" fill="#7ac4af"/>
 </svg>
