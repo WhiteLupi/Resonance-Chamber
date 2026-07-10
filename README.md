@@ -1,10 +1,11 @@
-# Kasia Walter — portfolio
+# Resonance Chamber — Kasia Walter
 
-Art-first portfolio built with React, TypeScript, Vite and Three.js.
+An art-first site built with React, TypeScript, Vite and Three.js.
+Part portfolio, part manifesto, part interactive piece.
 
-This project is not meant to read like a generic hiring template.
+It is not meant to read like a generic hiring template.
 Its center is motion, atmosphere, taste and a strong visual voice.
-The goal is to make the site feel like a small interactive piece, not just a list of skills.
+The goal is a small instrument you walk into, not a list of skills.
 
 ## Current direction
 
