@@ -18,6 +18,12 @@ const HOLD_FILL_S = 2.0;
 const RELEASE_FALL_S = 0.9;
 const STARTUP_QUALITY_S = 1.2;
 const QUALITY_RAMP_S = 0.8;
+// The chamber breathes on a ~1.25Hz sine and the comets drift; nothing here
+// resolves faster than the eye. On a 120Hz panel rAF fires twice as often as the
+// scene has anything new to say, and each extra frame pays the bloom's full
+// fullscreen-blur bill. Cap at 60. The 1ms slack matters: without it a 60Hz
+// display would miss the budget by a rounding hair every frame and halve to 30.
+const MIN_FRAME_S = 1 / 60 - 0.001;
 
 export type Journey = {
   /** seal position on screen, in viewport percent (50/50 = center) */
@@ -83,7 +89,17 @@ export function startHero(host: HTMLElement): HeroScene {
     host.style.opacity = '1';
   });
 
-  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false });
+  // With bloom on, the scene is rasterized into the composer's render target and
+  // the default framebuffer receives only a fullscreen quad — which has no
+  // interior edges for MSAA to resolve. `antialias: true` therefore bought a 4×
+  // multisampled backbuffer that smoothed nothing and cost a resolve every
+  // frame. The seal's edge never was antialiased; the bloom hides it. Ask the
+  // canvas for MSAA only when there is no composer, where it does real work.
+  const renderer = new THREE.WebGLRenderer({
+    canvas,
+    antialias: !HERO_PERF.enableBloom,
+    alpha: false,
+  });
   let initialTier: HeroQualityTier = HERO_PERF.enableComets && window.devicePixelRatio >= 2 ? 'balanced' : 'full';
   if (!HERO_PERF.enableComets && !HERO_PERF.enableSonarRings && !HERO_PERF.enableChargePulse) {
     initialTier = 'safe';
@@ -154,6 +170,23 @@ export function startHero(host: HTMLElement): HeroScene {
     ? new UnrealBloomPass(new THREE.Vector2(viewW, viewH), 0.32, 0.18, 0.18)
     : null;
   if (bloom) composer?.addPass(bloom);
+  if (bloom) {
+    // Every bloom target is a fullscreen blur — not one of them reads or writes
+    // depth, yet WebGLRenderTarget attaches a depth buffer by default. On a
+    // tile-based GPU (Apple silicon) each attachment is loaded into and stored
+    // out of tile memory per pass, so eleven unused depth buffers cost eleven
+    // round trips to VRAM every frame. Drop them before first use, while the
+    // GPU-side targets are still unallocated.
+    const bloomTargets = [
+      bloom.renderTargetBright,
+      ...bloom.renderTargetsHorizontal,
+      ...bloom.renderTargetsVertical,
+    ];
+    for (const rt of bloomTargets) {
+      rt.depthBuffer = false;
+      rt.stencilBuffer = false;
+    }
+  }
 
   const outerGroup = new THREE.Group();
   const tetraGroup = new THREE.Group();
@@ -370,7 +403,12 @@ export function startHero(host: HTMLElement): HeroScene {
   syncPerfDebug();
 
   const loop = () => {
+    raf = requestAnimationFrame(loop);
     const t = clock.getElapsedTime();
+    // Frame-rate cap: bail before any work — no camera math, no root flexing,
+    // no bloom. On a 60Hz panel this passes every frame; on 120Hz it drops
+    // every other one, and the scene looks identical.
+    if (t - lastT < MIN_FRAME_S) return;
     const dt = Math.min(0.05, t - lastT);
     lastT = t;
     frameCount += 1;
@@ -541,9 +579,26 @@ export function startHero(host: HTMLElement): HeroScene {
       renderer.render(scene, camera);
     }
     if (frameCount % 30 === 0) syncPerfDebug();
-    raf = requestAnimationFrame(loop);
   };
   raf = requestAnimationFrame(loop);
+
+  // A backgrounded tab still owns its GPU context, and rAF only reliably stalls
+  // when the tab is truly hidden — a window buried behind another on a second
+  // monitor keeps ticking. Park the loop outright. On resume, swallow the gap:
+  // lastT catches up so dt doesn't spike, and the idle heartbeat re-arms instead
+  // of firing a ring the instant the visitor comes back.
+  const onVisibility = () => {
+    if (document.hidden) {
+      cancelAnimationFrame(raf);
+      raf = 0;
+      return;
+    }
+    if (raf) return;
+    lastT = clock.getElapsedTime();
+    if (nextIdleRingAt !== Infinity) nextIdleRingAt = lastT + IDLE_RING_INTERVAL;
+    raf = requestAnimationFrame(loop);
+  };
+  document.addEventListener('visibilitychange', onVisibility);
 
   const onResize = () => {
     const s = measure();
