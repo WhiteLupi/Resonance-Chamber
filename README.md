@@ -49,22 +49,7 @@ The site should feel:
 - `src/hero/*` — opening scene, lock/reveal, signal language
 - `src/about/*` — manifesto / personal voice
 - `src/sections/*` — later sections like Skills and Contact
-- `notes/*` — working design notes and decision log
-- `public/*` — experiments / support pages
-
-## Design notes
-
-Useful internal notes:
-- `notes/hero-design-progress.md`
-- `notes/2026-05-27-portfolio-session.md`
-- `notes/deferred-ideas.md`
-
-## Current priorities
-
-1. Keep the whole site visually consistent with hero/about
-2. Strengthen `Skills` and `Contact` so they feel authored, not filler
-3. Preserve the artistic voice while keeping the portfolio readable
-4. Clean documentation and process notes so returning to the project is easy
+- `public/*` — static assets: fonts, favicon, OG cover, sitemap
 
 ## Local development
 
@@ -79,14 +64,6 @@ npm run dev
 npm run build
 npm run preview
 ```
-
-## Working style for future sessions
-
-Best workflow for this project:
-1. Start from a visual or emotional idea
-2. Decide whether it changes motion, layout, typography, copy or atmosphere
-3. Keep changes aligned with the art-first direction
-4. Test whether the new section still belongs to the same world as hero/about
 
 Short version:
 this portfolio should feel like one composed piece, not a beautiful intro plus ordinary sections.
