@@ -8,4 +8,7 @@ export const CORE_R = 0.18;
 // off-canvas, the engine feels bigger than the frame can contain. Text sits
 // over the upper/lower edges with strong text-shadow for legibility.
 export const ROOTS_SCALE = 1.6;
-export const BASE_COLOR = 0xdcd5cb;
+// Pure white — on the black void the tendrils read as living filaments, a
+// nervous system firing, rather than dusty grey thread. The warm off-white it
+// replaced (0xdcd5cb) settled toward "dead"; white is the spark of "Alive".
+export const BASE_COLOR = 0xffffff;
