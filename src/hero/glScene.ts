@@ -18,6 +18,13 @@ const HOLD_FILL_S = 2.0;
 const RELEASE_FALL_S = 0.9;
 const STARTUP_QUALITY_S = 1.2;
 const QUALITY_RAMP_S = 0.8;
+// The core is the engine's heart — it must read as ALIVE from the first frame to
+// the last, the same lit ball it is at the hero. As the seal travels and recedes
+// into a section, sceneVis·jVis still dims it for depth — but only down to this
+// floor. The light settles; it never goes out. Legibility over the copy comes
+// from the dark pools behind the text (about.css / sections.css), not from
+// snuffing the engine. (Kasia, 2026-07-11.)
+const CORE_GLOW_FLOOR = 0.72;
 // The chamber breathes on a ~1.25Hz sine and the comets drift; nothing here
 // resolves faster than the eye. On a 120Hz panel rAF fires twice as often as the
 // scene has anything new to say, and each extra frame pays the bloom's full
@@ -589,22 +596,28 @@ export function startHero(host: HTMLElement): HeroScene {
       }
     }
 
-    // Core breathing + emissive
+    // Core breathing + emissive. The seal's overall recede-into-backdrop dim is
+    // sceneVis·jVis; the CORE light (emissive + its halo + its bloom) is floored
+    // so it keeps glowing like the hero no matter how far the seal has travelled.
+    // The comets/roots/sonar below still fade on the full sceneVis·jVis — only
+    // the heart stays lit.
+    const sealVis = sceneVis * jVis;
+    const coreGlow = CORE_GLOW_FLOOR + (1 - CORE_GLOW_FLOOR) * sealVis;
     const pulseScale = HERO_PERF.enableChargePulse ? tier.pulseScale : 0;
     const chargeFx = HERO_PERF.enableChargePulse ? charge * pulseScale : 0;
     const breath = 1 + (HERO_PERF.enableChargePulse ? Math.sin(t * 1.25) * 0.04 * pulseScale : 0);
     coreMesh.scale.setScalar(breath);
-    coreMat.emissiveIntensity = (3.2 + chargeFx * 3.0 + (HERO_PERF.enableChargePulse ? Math.sin(t * 1.7) * 0.15 * pulseScale : 0)) * sceneVis * jVis;
+    coreMat.emissiveIntensity = (3.2 + chargeFx * 3.0 + (HERO_PERF.enableChargePulse ? Math.sin(t * 1.7) * 0.15 * pulseScale : 0)) * coreGlow;
 
     glowSprite.scale.setScalar((1.0 + chargeFx * 0.5) * breath);
-    haloMat.opacity = (0.50 + chargeFx * 0.18) * sceneVis * jVis;
+    haloMat.opacity = (0.50 + chargeFx * 0.18) * coreGlow;
 
-    sonar.update(t, breath, tier.sonarOpacity * sceneVis * jVis);
+    sonar.update(t, breath, tier.sonarOpacity * sealVis);
 
     const startupBloomMul = 0.65 + qualityRamp * 0.35;
-    if (bloom) bloom.strength = (0.32 + chargeFx * 0.20) * startupBloomMul * tier.bloomScale * sceneVis * jVis;
+    if (bloom) bloom.strength = (0.32 + chargeFx * 0.20) * startupBloomMul * tier.bloomScale * coreGlow;
 
-    comets.setOpacity(tier.cometOpacity * sceneVis * jVis);
+    comets.setOpacity(tier.cometOpacity * sealVis);
     roots.applyVisibility(charge, rootsVis, jVis);
 
     if (composer) {

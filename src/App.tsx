@@ -234,39 +234,12 @@ function App() {
     const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
     const ease = (t: number) => (t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2);
 
-    // The keyframe `o` is the brightness when the seal sits UNDER text; in
-    // open space it stays at full glow. Measured live against the text blocks
-    // on screen, so dimming only happens where the core would wash copy out —
-    // not on the empty stretches of the route.
-    const TEXT_BLOCKS =
-      '.inscription, .practice-aside, .craft-band__name, .craft-band__desc, ' +
-      '.craft-band__tags, .work-info, .channel-headline, .channel-panel, .section-eyebrow';
-    // Cached node list — these sections mount once and never unmount (the in-view
-    // class toggles in place), so re-querying the DOM tree every frame was pure
-    // waste. Refresh on resize, where layout can actually change.
-    let textBlocks: Element[] = [];
-    const refreshTextBlocks = () => {
-      textBlocks = Array.from(document.querySelectorAll(TEXT_BLOCKS));
-    };
-    const dimNearText = (x: number, y: number, s: number, baseO: number) => {
-      const vw = window.innerWidth;
-      const vh = window.innerHeight;
-      const cx = (x / 100) * vw;
-      const cy = (y / 100) * vh;
-      // Bright zone ≈ core + halo + dense root cluster, scales with the dolly.
-      const radius = s * vh * 0.3;
-      let overlap = 0;
-      for (const el of textBlocks) {
-        const r = el.getBoundingClientRect();
-        if (r.bottom < -40 || r.top > vh + 40 || r.width === 0) continue;
-        const dx = Math.max(r.left - cx, 0, cx - r.right);
-        const dy = Math.max(r.top - cy, 0, cy - r.bottom);
-        overlap = Math.max(overlap, 1 - Math.min(1, Math.hypot(dx, dy) / radius));
-        if (overlap >= 1) break;
-      }
-      return 1 - (1 - baseO) * overlap;
-    };
-
+    // The keyframe `o` is the seal's brightness in each section: full glow at the
+    // hero, settling as it recedes into a backdrop deeper in the page. It no
+    // longer dodges text per-frame — the core keeps a floored glow (CORE_GLOW_FLOOR
+    // in glScene) and legibility comes from the dark pools behind the copy. That
+    // deleted a getBoundingClientRect sweep over every text block on every scroll
+    // frame, which was fighting the GL loop (and the sonar wave) during scroll.
     const computeJourney = () => {
       const scene = sceneRef.current;
       if (!scene) return;
@@ -280,8 +253,7 @@ function App() {
         const r = secs[i].el.getBoundingClientRect();
         const next = secs[i + 1];
         if (!next) {
-          const k = secs[i].k;
-          scene.setJourney(mobile ? k : { ...k, o: dimNearText(k.x, k.y, k.s, k.o) });
+          scene.setJourney(secs[i].k);
           return;
         }
         const nr = next.el.getBoundingClientRect();
@@ -297,13 +269,11 @@ function App() {
             raw = Math.max(0, (raw - hold) / (1 - hold));
           }
           const t = mobile ? raw : ease(raw);
-          const x = lerp(secs[i].k.x, next.k.x, t);
-          const y = lerp(secs[i].k.y, next.k.y, t);
-          const s = lerp(secs[i].k.s, next.k.s, t);
-          const o = lerp(secs[i].k.o, next.k.o, t);
           scene.setJourney({
-            x, y, s,
-            o: mobile ? o : dimNearText(x, y, s, o),
+            x: lerp(secs[i].k.x, next.k.x, t),
+            y: lerp(secs[i].k.y, next.k.y, t),
+            s: lerp(secs[i].k.s, next.k.s, t),
+            o: lerp(secs[i].k.o, next.k.o, t),
             r: lerp(secs[i].k.r, next.k.r, t),
           });
           return;
@@ -321,21 +291,16 @@ function App() {
     const schedule = () => {
       if (!raf) raf = requestAnimationFrame(frame);
     };
-    const onResize = () => {
-      refreshTextBlocks();
-      schedule();
-    };
 
-    refreshTextBlocks();
     setProgress(0);
     computeProgress();
     computeJourney();
     window.addEventListener('scroll', schedule, { passive: true });
-    window.addEventListener('resize', onResize);
+    window.addEventListener('resize', schedule);
     return () => {
       if (raf) cancelAnimationFrame(raf);
       window.removeEventListener('scroll', schedule);
-      window.removeEventListener('resize', onResize);
+      window.removeEventListener('resize', schedule);
     };
   }, []);
 
