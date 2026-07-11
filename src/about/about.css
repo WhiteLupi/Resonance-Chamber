@@ -274,6 +274,25 @@
     position: relative;
     z-index: 3;
   }
+  /* ...and give it a scrim of its own — the travelling core passes right behind
+     "since 2022" (which had no pool), so on mobile the glow showed through the
+     text. Now it always sits on dark. */
+  .practice-aside::before {
+    content: '';
+    position: absolute;
+    z-index: -1;
+    inset: -16% -12%;
+    border-radius: 24px;
+    background: radial-gradient(
+      ellipse at center,
+      rgba(0, 0, 0, 0.9),
+      rgba(0, 0, 0, 0.8) 60%,
+      rgba(0, 0, 0, 0.5) 85%,
+      transparent 100%
+    );
+    filter: blur(30px);
+    pointer-events: none;
+  }
   .practice-aside__label {
     /* Was --teal-soft on black — legible but dim. Lift to the eyebrow's teal
        with a soft glow so it reads as a live filament, not washed mud. */

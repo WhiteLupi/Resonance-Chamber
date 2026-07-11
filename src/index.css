@@ -71,9 +71,14 @@
   --sec-pad: clamp(56px, 9vh, 150px);
   --content-safe-pad: clamp(28px, 3.8vw, 78px);
   --measure: 56ch;
-  --teal: #3d6e63;
-  --teal-soft: #7da99e;
-  --teal-dim: #28463f;
+  /* Teal type family — lifted for legibility over the LIVE seal (not just pure
+     black). The old --teal #3d6e63 measured ~3.5:1 on black (below AA) and
+     vanished entirely where a tendril or the core glow crossed it; --teal-soft
+     #7da99e receded next to the white copy. Both step up a tier, staying patina
+     (sea-teal / sage), never mint candy. --teal-dim stays a hairline-only ink. */
+  --teal: #5f9587;
+  --teal-soft: #a7d0c4;
+  --teal-dim: #2f5149;
 }
 
 * {
