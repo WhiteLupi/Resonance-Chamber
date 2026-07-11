@@ -94,6 +94,21 @@ export const readHeroPerf = (): HeroPerf => {
   readBool('enableChargePulse');
   readBool('enableParallax');
   readBool('profile');
+  // Mobile is the primary surface, and bloom is the whole cost: a fullscreen
+  // multi-pass blur that forced the canvas down to a sub-native pixel ratio
+  // (the pixeloza) and had to re-blur the fullscreen sonar wave every frame
+  // (the stutter). Drop it on phones — the core's glow comes from its additive
+  // halo instead (boosted in glScene) — and let the canvas render at native
+  // retina, capped at 2 (where 3 is imperceptibly sharper for 2.25× the fill).
+  // Bloom off also flips antialias:true on in glScene, so the core edge and the
+  // tendrils resolve clean. (detect-gpu will later split strong-mobile → this
+  // live path from weak-mobile → video; every phone gets the crisp engine here.)
+  const mobile = window.innerWidth <= 760 || matchMedia('(pointer: coarse)').matches;
+  if (mobile && params.get('hero-enableBloom') === null) {
+    config.enableBloom = false;
+    config.startupPixelRatioCap = 1.5;
+    config.settledPixelRatioCap = 2.0;
+  }
   if (params.get('hero-safe') === '1') {
     config.enableComets = false;
     config.enableSonarRings = false;

@@ -126,8 +126,13 @@ export function startHero(host: HTMLElement): HeroScene {
     syncPerfDebug({ downgraded: true, downgradeReason: reason });
   });
   const getPixelRatioCap = (phase: 'startup' | 'steady' | 'locked') => {
-    const tier = governor.settings;
     const baseCap = phase === 'startup' ? HERO_PERF.startupPixelRatioCap : HERO_PERF.settledPixelRatioCap;
+    // No bloom (mobile) → no fullscreen blur, so resolution is cheap: let the
+    // canvas hit its native cap and keep the core razor-sharp. The tier caps
+    // were tuned against bloom's fill and would needlessly clamp resolution
+    // here; the governor still throttles comet/root/sonar detail via the tier.
+    if (!HERO_PERF.enableBloom) return baseCap;
+    const tier = governor.settings;
     const tierCap = phase === 'startup' ? tier.startupCapMax : tier.settledCapMax;
     return Math.min(baseCap, tierCap);
   };
@@ -250,6 +255,15 @@ export function startHero(host: HTMLElement): HeroScene {
   const glowSprite = new THREE.Sprite(haloMat);
   glowSprite.scale.setScalar(1.1);
   tetraGroup.add(glowSprite);
+  // Without the bloom post-process (mobile), this additive halo is the ONLY
+  // thing that turns the core from a flat lit disc into a glowing orb — so
+  // fatten and brighten it to stand in for the blur that isn't there. The core
+  // emissive is pushed too (CORE_EMISSIVE_BOOST): with no HDR extraction the
+  // surface has to flood bright on its own, or the directional key leaves a
+  // shaded "half moon" terminator instead of a light source.
+  const HALO_SCALE = HERO_PERF.enableBloom ? 1.0 : 2.4;
+  const HALO_OPACITY = HERO_PERF.enableBloom ? 1.0 : 1.35;
+  const CORE_EMISSIVE_BOOST = HERO_PERF.enableBloom ? 1.0 : 1.7;
 
   const sonar = createSonarRings(HERO_PERF.enableSonarRings, tetraGroup);
 
@@ -607,10 +621,10 @@ export function startHero(host: HTMLElement): HeroScene {
     const chargeFx = HERO_PERF.enableChargePulse ? charge * pulseScale : 0;
     const breath = 1 + (HERO_PERF.enableChargePulse ? Math.sin(t * 1.25) * 0.04 * pulseScale : 0);
     coreMesh.scale.setScalar(breath);
-    coreMat.emissiveIntensity = (3.2 + chargeFx * 3.0 + (HERO_PERF.enableChargePulse ? Math.sin(t * 1.7) * 0.15 * pulseScale : 0)) * coreGlow;
+    coreMat.emissiveIntensity = (3.2 + chargeFx * 3.0 + (HERO_PERF.enableChargePulse ? Math.sin(t * 1.7) * 0.15 * pulseScale : 0)) * coreGlow * CORE_EMISSIVE_BOOST;
 
-    glowSprite.scale.setScalar((1.0 + chargeFx * 0.5) * breath);
-    haloMat.opacity = (0.50 + chargeFx * 0.18) * coreGlow;
+    glowSprite.scale.setScalar((1.0 + chargeFx * 0.5) * breath * HALO_SCALE);
+    haloMat.opacity = (0.50 + chargeFx * 0.18) * coreGlow * HALO_OPACITY;
 
     sonar.update(t, breath, tier.sonarOpacity * sealVis);
 
