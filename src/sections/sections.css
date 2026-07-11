@@ -520,9 +520,11 @@
     min-height: 0;
   }
   .work-stage {
-    /* Just enough sky for the docked seal — 40vh left a black hole between
-       the eyebrow and the case copy on phones. */
-    min-height: 30vh;
+    /* Just a band of sky for the docked seal (it sits at journey y:18, near the
+       eyebrow) — 30vh still read as a black hole between "SELECTED WORK" and
+       cuewigs. The seal overflows this box anyway; it doesn't need to be housed
+       by it, only kept clear of the case copy. */
+    min-height: 15vh;
   }
   .channel-grid {
     flex-direction: column;

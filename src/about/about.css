@@ -121,6 +121,11 @@
   --p-start: 0.78;
   --p-end: 0.86;
   --t: clamp(0, calc((var(--p, 0) - var(--p-start)) / (var(--p-end) - var(--p-start))), 1);
+  /* Ease-out on the rise instead of a linear scroll-scrub, which read as stiff:
+     the line lifts fast out of the dark, then decelerates into its resting line.
+     --rise = (1 - t)³ = the remaining travel, cubed → a soft settle. */
+  --inv: calc(1 - var(--t));
+  --rise: calc(var(--inv) * var(--inv) * var(--inv));
   overflow: clip;
   /* Internal mask breathing room keeps descenders/diacritics intact without
      increasing the outer chamber padding. */
@@ -140,8 +145,8 @@
   /* Rise from below the mask into view. 110% guarantees fully hidden at t=0.
      Emergence is pure OCCLUSION: the clip on .inscription__line hides the line
      and the copy slides up out of the dark, whole. No warp, no opacity fade —
-     the letters are never distorted. */
-  translate: 0 calc((1 - var(--t)) * 110%);
+     the letters are never distorted. Driven by the eased --rise, not raw t. */
+  translate: 0 calc(var(--rise) * 110%);
   will-change: translate;
 }
 
@@ -260,14 +265,28 @@
   .practice-aside {
     justify-self: start;
     border-left: none;
-    border-top: 1px solid rgba(125, 169, 158, 0.22);
+    border-top: 1px solid rgba(125, 169, 158, 0.28);
     padding-left: 0;
     padding-top: 18px;
+    /* Lift the fact onto its own layer, above the inscription (z-index 2): its
+       blurred dark box bleeds downward past the copy and was greying "since
+       2022" into a shadow. On top, the aside can't be washed out. */
+    position: relative;
+    z-index: 3;
   }
   .practice-aside__label {
-    color: var(--teal-soft);
+    /* Was --teal-soft on black — legible but dim. Lift to the eyebrow's teal
+       with a soft glow so it reads as a live filament, not washed mud. */
+    color: rgba(170, 222, 205, 0.9);
+    text-shadow: 0 0 12px rgba(122, 196, 175, 0.35);
   }
   .practice-aside__copy {
-    color: var(--fg-strong);
+    color: var(--fg-vault);
+  }
+  /* Hug the copy tighter at the bottom on mobile — the -18%/42px bleed reached
+     down over the aside; keep the legibility pool on the inscription itself. */
+  .inscription::after {
+    inset: -12% -8% -2%;
+    filter: blur(32px);
   }
 }
