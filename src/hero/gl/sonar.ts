@@ -11,11 +11,15 @@ import { ACCENT } from './constants';
 // (lowest current opacity) instead of the oldest by time — the user
 // notices ring-resets least when the swapped ring was already fading out.
 const RING_COUNT = 10;
-// Longer travel + bigger max scale so pulses reach viewport edges and
-// beyond — they dissolve into the walls of the room.
-const RING_DURATION = 9.0;
+// The pulse reaches the viewport edges and dissolves there. It used to travel
+// to 13× over 9s — but a screen-filling additive sprite is pure overdraw, and
+// with bloom on (desktop) every one of those frames pays the full fullscreen
+// blur over the giant quad, which is what stuttered when a ring fired mid-scroll.
+// 9× still clears a wide viewport, and the shorter life means the huge, faint
+// tail (which added cost without reading as motion) is gone.
+const RING_DURATION = 6.0;
 const RING_MIN_SCALE = 0.5;
-const RING_MAX_SCALE = 13.0;
+const RING_MAX_SCALE = 9.0;
 
 type Ring = {
   sprite: THREE.Sprite;
