@@ -234,12 +234,8 @@ function App() {
     const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
     const ease = (t: number) => (t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2);
 
-    // The keyframe `o` is the seal's brightness in each section: full glow at the
-    // hero, settling as it recedes into a backdrop deeper in the page. It no
-    // longer dodges text per-frame — the core keeps a floored glow (CORE_GLOW_FLOOR
-    // in glScene) and legibility comes from the dark pools behind the copy. That
-    // deleted a getBoundingClientRect sweep over every text block on every scroll
-    // frame, which was fighting the GL loop (and the sonar wave) during scroll.
+    // The keyframe `o` is the seal's brightness per section. Legibility over copy
+    // comes from the dark pools behind the text, so the seal need not dodge it.
     const computeJourney = () => {
       const scene = sceneRef.current;
       if (!scene) return;

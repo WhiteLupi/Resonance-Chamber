@@ -121,9 +121,7 @@
   --p-start: 0.78;
   --p-end: 0.86;
   --t: clamp(0, calc((var(--p, 0) - var(--p-start)) / (var(--p-end) - var(--p-start))), 1);
-  /* Ease-out on the rise instead of a linear scroll-scrub, which read as stiff:
-     the line lifts fast out of the dark, then decelerates into its resting line.
-     --rise = (1 - t)³ = the remaining travel, cubed → a soft settle. */
+  /* Ease-out on the rise (remaining travel cubed) — a soft settle, not a scrub. */
   --inv: calc(1 - var(--t));
   --rise: calc(var(--inv) * var(--inv) * var(--inv));
   overflow: clip;
@@ -268,15 +266,13 @@
     border-top: 1px solid rgba(125, 169, 158, 0.28);
     padding-left: 0;
     padding-top: 18px;
-    /* Lift the fact onto its own layer, above the inscription (z-index 2): its
-       blurred dark box bleeds downward past the copy and was greying "since
-       2022" into a shadow. On top, the aside can't be washed out. */
+    /* Above the inscription (z-index 2) so its blurred dark box can't bleed
+       down over "since 2022". */
     position: relative;
     z-index: 3;
   }
-  /* ...and give it a scrim of its own — the travelling core passes right behind
-     "since 2022" (which had no pool), so on mobile the glow showed through the
-     text. Now it always sits on dark. */
+  /* Own scrim: the travelling core passes behind "since 2022", which has no pool
+     of the inscription's. */
   .practice-aside::before {
     content: '';
     position: absolute;
@@ -294,16 +290,13 @@
     pointer-events: none;
   }
   .practice-aside__label {
-    /* Was --teal-soft on black — legible but dim. Lift to the eyebrow's teal
-       with a soft glow so it reads as a live filament, not washed mud. */
     color: rgba(170, 222, 205, 0.9);
     text-shadow: 0 0 12px rgba(122, 196, 175, 0.35);
   }
   .practice-aside__copy {
     color: var(--fg-vault);
   }
-  /* Hug the copy tighter at the bottom on mobile — the -18%/42px bleed reached
-     down over the aside; keep the legibility pool on the inscription itself. */
+  /* Hug the copy tighter so the box doesn't bleed down over the aside. */
   .inscription::after {
     inset: -12% -8% -2%;
     filter: blur(32px);

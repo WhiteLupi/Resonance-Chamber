@@ -16,9 +16,6 @@ type HeroTierSettings = {
 
 const HERO_TIER_SETTINGS: Record<HeroQualityTier, HeroTierSettings> = {
   full: {
-    // Ceilings raised so a retina phone (and retina desktop) can render the seal
-    // crisp instead of at the old 1.2 clamp. min(devicePixelRatio, HERO_PERF cap,
-    // this) still decides the real ratio, so a DPR-1 display is unaffected.
     startupCapMax: 1.5,
     settledCapMax: 2.0,
     parallaxScale: 1,
@@ -32,10 +29,6 @@ const HERO_TIER_SETTINGS: Record<HeroQualityTier, HeroTierSettings> = {
     rootUpdateStep: 1,
   },
   balanced: {
-    // Was 0.9 — sub-native, the source of the mobile pixeloza. A retina phone
-    // starts here (DPR≥2), so this is the number that actually rendered the
-    // focal point of the whole site. Lifted to crisp; `safe` remains the relief
-    // valve if the governor finds even this too heavy.
     startupCapMax: 1.4,
     settledCapMax: 1.75,
     parallaxScale: 0.42,
@@ -76,8 +69,8 @@ const HERO_PERF_DEFAULTS = {
   enableSonarRings: true,
   enableChargePulse: true,
   enableParallax: true,
-  startupPixelRatioCap: 1.0,
-  settledPixelRatioCap: 1.2,
+  startupPixelRatioCap: 1.3,
+  settledPixelRatioCap: 1.6,
   profile: false,
   mobile: false,
 };
@@ -102,19 +95,17 @@ export const readHeroPerf = (): HeroPerf => {
   readBool('enableChargePulse');
   readBool('enableParallax');
   readBool('profile');
-  // Mobile is the primary surface. KEEP bloom — the luminous glow (core AND the
-  // tendrils lifting to bright white) IS the look; dropping it left the seal
-  // flat and the filaments grey, which is not what we want. The pixeloza was
-  // never bloom itself, it was the 0.9 pixel-ratio cap bloom was forced to run
-  // under. So instead: bloom on, render SHARP (cap ~1.75 via the raised tier
-  // ceilings above). Strong phones carry bloom at this resolution; detect-gpu
-  // will send the ones that can't to the video fallback, and the governor drops
-  // to `safe` (0.76) as the live relief valve.
+  // Mobile drops bloom and renders at native resolution: bloom at a sharp pixel
+  // ratio is what a phone can't sustain (it downgrades the resolution to cope —
+  // the pixeloza). The shaded core no longer needs bloom to look good, so this
+  // stays crisp and smooth. The Apple-style video fallback (detect-gpu) is the
+  // richer upgrade path.
   const mobile = window.innerWidth <= 760 || matchMedia('(pointer: coarse)').matches;
   config.mobile = mobile;
   if (mobile) {
-    config.startupPixelRatioCap = 1.4;
-    config.settledPixelRatioCap = 1.75;
+    config.enableBloom = false;
+    config.startupPixelRatioCap = 1.5;
+    config.settledPixelRatioCap = 2.0;
   }
   if (params.get('hero-safe') === '1') {
     config.enableComets = false;

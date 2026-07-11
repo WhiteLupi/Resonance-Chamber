@@ -71,11 +71,8 @@
   --sec-pad: clamp(56px, 9vh, 150px);
   --content-safe-pad: clamp(28px, 3.8vw, 78px);
   --measure: 56ch;
-  /* Teal type family — lifted for legibility over the LIVE seal (not just pure
-     black). The old --teal #3d6e63 measured ~3.5:1 on black (below AA) and
-     vanished entirely where a tendril or the core glow crossed it; --teal-soft
-     #7da99e receded next to the white copy. Both step up a tier, staying patina
-     (sea-teal / sage), never mint candy. --teal-dim stays a hairline-only ink. */
+  /* Teal type family — legible over the live seal, patina (sea-teal / sage) not
+     mint. --teal-dim is a hairline-only ink. */
   --teal: #5f9587;
   --teal-soft: #a7d0c4;
   --teal-dim: #2f5149;
@@ -99,11 +96,8 @@ html, body {
   overflow-x: clip;
 }
 
-/* Both html AND body carry the void black. body alone left html transparent —
-   so during a reload repaint (and under a Vercel preview overlay) the browser's
-   default white could flash through the html box before body painted, framed by
-   the atmosphere shafts as "clouds/smoke". Paint the root too: no element can
-   fall through to white. */
+/* Both html and body carry the void black, so no un-painted layer can flash
+   white during a reload repaint. */
 html,
 body {
   background: var(--bg);

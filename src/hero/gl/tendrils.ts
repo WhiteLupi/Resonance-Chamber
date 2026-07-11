@@ -453,16 +453,15 @@ export function createTendrilField(parent: THREE.Object3D, lineRes: THREE.Vector
   const rootTintColor = new THREE.Color(BASE_COLOR);
   let lastRootTint = BASE_COLOR;
 
-  const applyVisibility = (charge: number, rootsVis: number, jVis: number) => {
+  // brightnessMul lifts the filaments toward opaque white where there is no
+  // bloom to glow them (mobile) so they read as white, not grey thread.
+  const applyVisibility = (charge: number, rootsVis: number, jVis: number, brightnessMul = 1) => {
     const tintTarget = charge > 0.01
       ? rootTintColor.copy(rootBaseColor).lerp(rootAccentColor, charge * 0.4).getHex()
       : BASE_COLOR;
     for (const m of rootMats) {
       if (tintTarget !== lastRootTint) m.color.setHex(tintTarget);
-      // Roots use rootsVis (high floor) not sceneVis — the tendrils stay alive
-      // behind the about text instead of fading to a pale ghost. Only the core /
-      // bloom / halo dim hard (they're what washes the text out).
-      m.opacity = (rootBaseOpacity.get(m) ?? 0.8) * rootsVis * (0.05 + 0.95 * jVis);
+      m.opacity = Math.min(1, (rootBaseOpacity.get(m) ?? 0.8) * rootsVis * (0.05 + 0.95 * jVis) * brightnessMul);
     }
     lastRootTint = tintTarget;
   };

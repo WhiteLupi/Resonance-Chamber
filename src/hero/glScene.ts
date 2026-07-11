@@ -18,12 +18,9 @@ const HOLD_FILL_S = 2.0;
 const RELEASE_FALL_S = 0.9;
 const STARTUP_QUALITY_S = 1.2;
 const QUALITY_RAMP_S = 0.8;
-// The core is the engine's heart — it must read as ALIVE from the first frame to
-// the last, the same lit ball it is at the hero. As the seal travels and recedes
-// into a section, sceneVis·jVis still dims it for depth — but only down to this
-// floor. The light settles; it never goes out. Legibility over the copy comes
-// from the dark pools behind the text (about.css / sections.css), not from
-// snuffing the engine. (Kasia, 2026-07-11.)
+// Floor for how far the travelling seal may dim: the core settles toward a
+// backdrop but never goes out. Legibility over copy comes from the dark pools
+// behind the text, not from snuffing the core.
 const CORE_GLOW_FLOOR = 0.72;
 // The chamber breathes on a ~1.25Hz sine and the comets drift; nothing here
 // resolves faster than the eye. On a 120Hz panel rAF fires twice as often as the
@@ -127,10 +124,7 @@ export function startHero(host: HTMLElement): HeroScene {
   });
   const getPixelRatioCap = (phase: 'startup' | 'steady' | 'locked') => {
     const baseCap = phase === 'startup' ? HERO_PERF.startupPixelRatioCap : HERO_PERF.settledPixelRatioCap;
-    // No bloom (mobile) → no fullscreen blur, so resolution is cheap: let the
-    // canvas hit its native cap and keep the core razor-sharp. The tier caps
-    // were tuned against bloom's fill and would needlessly clamp resolution
-    // here; the governor still throttles comet/root/sonar detail via the tier.
+    // No bloom → resolution is cheap; skip the tier's fill-tuned pixel-ratio clamp.
     if (!HERO_PERF.enableBloom) return baseCap;
     const tier = governor.settings;
     const tierCap = phase === 'startup' ? tier.startupCapMax : tier.settledCapMax;
@@ -159,24 +153,16 @@ export function startHero(host: HTMLElement): HeroScene {
   const camera = new THREE.PerspectiveCamera(42, viewW / viewH, 0.1, 100);
   camera.position.set(0, 0, 9.0);
 
-  // Ambient-dominant so the core sphere reads as a SYMMETRIC glowing orb: its
-  // bright centroid stays at the geometric centre (= the charge ring's centre)
-  // regardless of the parallax camera orbit. Strong directional key/rim used to
-  // throw the lit hemisphere — and the bloom riding it — off toward the light,
-  // so the ball looked shoved sideways inside the ring. These lights only touch
-  // the core (roots/comets are Line2/points, unlit), so flattening is safe.
-  // Both lights sit on the Z axis (dead in front / dead behind) so there is
-  // ZERO left/right or up/down bias: the core's lit disc is radially symmetric
-  // and its bright centroid stays exactly on the geometric centre = the charge
-  // ring's centre. The old off-axis key (2,3,4) threw a CONSTANT highlight to
-  // the upper-right (amplified by bloom), so the ball read as shoved that way
-  // no matter where the mouse was. Ambient dominates; these only touch the core.
-  scene.add(new THREE.AmbientLight(0xffffff, 0.78));
-  const keyLight = new THREE.DirectionalLight(0xffffff, 0.18);
-  keyLight.position.set(0, 0, 6);
+  // Off-axis key + low ambient give the core a lit hemisphere and a shadow side,
+  // so it reads as a sphere and the parallax orbit sweeps the shading across it.
+  // A teal rim from behind the shadow side is the "alive" energy edge. Lights
+  // only touch the core (roots/comets are Line2/points, unlit).
+  scene.add(new THREE.AmbientLight(0xffffff, 0.42));
+  const keyLight = new THREE.DirectionalLight(0xffffff, 0.9);
+  keyLight.position.set(-3.5, 4, 5);
   scene.add(keyLight);
-  const rimLight = new THREE.DirectionalLight(ACCENT, 0.15);
-  rimLight.position.set(0, 0, -6);
+  const rimLight = new THREE.DirectionalLight(ACCENT, 1.4);
+  rimLight.position.set(3.5, -2.5, -4);
   scene.add(rimLight);
 
   const composer = HERO_PERF.enableBloom ? new EffectComposer(renderer) : null;
@@ -255,15 +241,6 @@ export function startHero(host: HTMLElement): HeroScene {
   const glowSprite = new THREE.Sprite(haloMat);
   glowSprite.scale.setScalar(1.1);
   tetraGroup.add(glowSprite);
-  // Without the bloom post-process (mobile), this additive halo is the ONLY
-  // thing that turns the core from a flat lit disc into a glowing orb — so
-  // fatten and brighten it to stand in for the blur that isn't there. The core
-  // emissive is pushed too (CORE_EMISSIVE_BOOST): with no HDR extraction the
-  // surface has to flood bright on its own, or the directional key leaves a
-  // shaded "half moon" terminator instead of a light source.
-  const HALO_SCALE = HERO_PERF.enableBloom ? 1.0 : 2.4;
-  const HALO_OPACITY = HERO_PERF.enableBloom ? 1.0 : 1.35;
-  const CORE_EMISSIVE_BOOST = HERO_PERF.enableBloom ? 1.0 : 1.7;
 
   const sonar = createSonarRings(HERO_PERF.enableSonarRings, tetraGroup);
 
@@ -610,35 +587,30 @@ export function startHero(host: HTMLElement): HeroScene {
       }
     }
 
-    // Core breathing + emissive. The seal's overall recede-into-backdrop dim is
-    // sceneVis·jVis; the CORE light (emissive + its halo + its bloom) is floored
-    // so it keeps glowing like the hero no matter how far the seal has travelled.
-    // The comets/roots/sonar below still fade on the full sceneVis·jVis — only
-    // the heart stays lit.
     const sealVis = sceneVis * jVis;
     const coreGlow = CORE_GLOW_FLOOR + (1 - CORE_GLOW_FLOOR) * sealVis;
-    // Tendrils are the nervous system — bloom lifts them to bright WHITE, but
-    // their opacity followed the journey brightness (jVis) down to ~0.1 behind
-    // the About copy, so there was nothing for bloom to catch and they read grey.
-    // On mobile floor it so the filaments stay present and luminous; the text
-    // scrims carry legibility now, not tendril-dimming.
-    const rootJVis = HERO_PERF.mobile ? Math.max(jVis, 0.5) : jVis;
+    // On mobile the tendrils keep a floor + brightness boost so they read white
+    // without bloom, rather than dimming to grey (scrims carry legibility).
+    const rootJVis = HERO_PERF.mobile ? Math.max(jVis, 0.6) : jVis;
     const pulseScale = HERO_PERF.enableChargePulse ? tier.pulseScale : 0;
     const chargeFx = HERO_PERF.enableChargePulse ? charge * pulseScale : 0;
     const breath = 1 + (HERO_PERF.enableChargePulse ? Math.sin(t * 1.25) * 0.04 * pulseScale : 0);
     coreMesh.scale.setScalar(breath);
-    coreMat.emissiveIntensity = (3.2 + chargeFx * 3.0 + (HERO_PERF.enableChargePulse ? Math.sin(t * 1.7) * 0.15 * pulseScale : 0)) * coreGlow * CORE_EMISSIVE_BOOST;
+    // Low idle emissive keeps the core shaded; charging (chargeFx) swells it.
+    coreMat.emissiveIntensity = (1.6 + chargeFx * 3.0 + (HERO_PERF.enableChargePulse ? Math.sin(t * 1.7) * 0.15 * pulseScale : 0)) * coreGlow;
 
-    glowSprite.scale.setScalar((1.0 + chargeFx * 0.5) * breath * HALO_SCALE);
-    haloMat.opacity = (0.50 + chargeFx * 0.18) * coreGlow * HALO_OPACITY;
+    glowSprite.scale.setScalar((1.0 + chargeFx * 0.5) * breath);
+    haloMat.opacity = (0.28 + chargeFx * 0.18) * coreGlow;
 
     sonar.update(t, breath, tier.sonarOpacity * sealVis);
 
+    // Low bloom — enough to glow the white tendrils and the teal rim without
+    // washing the shaded core flat.
     const startupBloomMul = 0.65 + qualityRamp * 0.35;
-    if (bloom) bloom.strength = (0.32 + chargeFx * 0.20) * startupBloomMul * tier.bloomScale * coreGlow;
+    if (bloom) bloom.strength = (0.20 + chargeFx * 0.22) * startupBloomMul * tier.bloomScale * coreGlow;
 
     comets.setOpacity(tier.cometOpacity * sealVis);
-    roots.applyVisibility(charge, rootsVis, rootJVis);
+    roots.applyVisibility(charge, rootsVis, rootJVis, HERO_PERF.mobile ? 1.8 : 1);
 
     if (composer) {
       composer.render();

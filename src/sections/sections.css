@@ -66,8 +66,7 @@
   font-size: var(--fs-small);
   letter-spacing: 0.32em;
   text-transform: uppercase;
-  /* Small + wide-tracked + uppercase = thin strokes; at 0.82 it read as a faint
-     watermark. Nearly opaque, with a stronger glow so the section name holds. */
+  /* Small, wide-tracked, thin strokes — needs near-full opacity + glow to hold. */
   color: rgba(190, 234, 219, 0.96);
   text-shadow: 0 0 16px rgba(122, 196, 175, 0.6);
 }
@@ -141,8 +140,7 @@
   font-size: var(--fs-small);
   letter-spacing: 0.14em;
   white-space: nowrap;
-  /* Quiet metadata, but it was fading out entirely over the live backdrop.
-     Lift it to a legible teal — still a step below the desc, not illegible. */
+  /* Quiet metadata — a step below the desc, but still legible over the seal. */
   color: rgba(159, 201, 189, 0.9);
   transition: color 0.3s ease;
 }
@@ -522,18 +520,13 @@
     min-height: 0;
   }
   .work-stage {
-    /* Desktop docks the seal in this empty left column, away from the copy. On a
-       phone there is no side column — the seal is a full-bleed backdrop — so this
-       reserved band only pushed "SELECTED WORK" far above cuewigs (the "długo
-       długo nic"). Drop it: the eyebrow sits right on the title. */
+    /* No side column on a phone — the seal is a full-bleed backdrop — so this
+       dock band only separated the eyebrow from cuewigs. Drop it. */
     display: none;
   }
 
-  /* The seal is a LIVE, glowing full-bleed backdrop on mobile, so every text
-     block needs a dependable dark scrim beneath it — the soft desktop pools
-     leaked the core straight through the copy. Deepen and tighten them so the
-     text always sits on dark, and give the bare eyebrows a dark halo of their
-     own (they live outside any pool). */
+  /* Reliable dark scrim under every text block (the seal is a full-bleed live
+     backdrop here), and a dark halo for the eyebrows, which sit outside any pool. */
   .work-info::before,
   .channel-grid::before,
   .section-inner::before,

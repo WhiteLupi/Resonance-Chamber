@@ -11,12 +11,9 @@ import { ACCENT } from './constants';
 // (lowest current opacity) instead of the oldest by time — the user
 // notices ring-resets least when the swapped ring was already fading out.
 const RING_COUNT = 10;
-// The pulse reaches the viewport edges and dissolves there. It used to travel
-// to 13× over 9s — but a screen-filling additive sprite is pure overdraw, and
-// with bloom on (desktop) every one of those frames pays the full fullscreen
-// blur over the giant quad, which is what stuttered when a ring fired mid-scroll.
-// 9× still clears a wide viewport, and the shorter life means the huge, faint
-// tail (which added cost without reading as motion) is gone.
+// A screen-filling additive sprite is pure overdraw (and bloom re-blurs it every
+// frame), so the pulse is kept modest: 9× clears a wide viewport and the 6s life
+// drops the huge faint tail that cost fill without reading as motion.
 const RING_DURATION = 6.0;
 const RING_MIN_SCALE = 0.5;
 const RING_MAX_SCALE = 9.0;
