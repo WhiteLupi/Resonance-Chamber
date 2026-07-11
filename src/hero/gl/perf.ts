@@ -16,8 +16,11 @@ type HeroTierSettings = {
 
 const HERO_TIER_SETTINGS: Record<HeroQualityTier, HeroTierSettings> = {
   full: {
-    startupCapMax: 1.0,
-    settledCapMax: 1.2,
+    // Ceilings raised so a retina phone (and retina desktop) can render the seal
+    // crisp instead of at the old 1.2 clamp. min(devicePixelRatio, HERO_PERF cap,
+    // this) still decides the real ratio, so a DPR-1 display is unaffected.
+    startupCapMax: 1.5,
+    settledCapMax: 2.0,
     parallaxScale: 1,
     bloomScale: 1,
     pulseScale: 1,
@@ -29,8 +32,12 @@ const HERO_TIER_SETTINGS: Record<HeroQualityTier, HeroTierSettings> = {
     rootUpdateStep: 1,
   },
   balanced: {
-    startupCapMax: 1.0,
-    settledCapMax: 0.9,
+    // Was 0.9 — sub-native, the source of the mobile pixeloza. A retina phone
+    // starts here (DPR≥2), so this is the number that actually rendered the
+    // focal point of the whole site. Lifted to crisp; `safe` remains the relief
+    // valve if the governor finds even this too heavy.
+    startupCapMax: 1.4,
+    settledCapMax: 1.75,
     parallaxScale: 0.42,
     bloomScale: 0.7,
     pulseScale: 0.82,
@@ -72,6 +79,7 @@ const HERO_PERF_DEFAULTS = {
   startupPixelRatioCap: 1.0,
   settledPixelRatioCap: 1.2,
   profile: false,
+  mobile: false,
 };
 
 export type HeroPerf = typeof HERO_PERF_DEFAULTS;
@@ -94,20 +102,19 @@ export const readHeroPerf = (): HeroPerf => {
   readBool('enableChargePulse');
   readBool('enableParallax');
   readBool('profile');
-  // Mobile is the primary surface, and bloom is the whole cost: a fullscreen
-  // multi-pass blur that forced the canvas down to a sub-native pixel ratio
-  // (the pixeloza) and had to re-blur the fullscreen sonar wave every frame
-  // (the stutter). Drop it on phones — the core's glow comes from its additive
-  // halo instead (boosted in glScene) — and let the canvas render at native
-  // retina, capped at 2 (where 3 is imperceptibly sharper for 2.25× the fill).
-  // Bloom off also flips antialias:true on in glScene, so the core edge and the
-  // tendrils resolve clean. (detect-gpu will later split strong-mobile → this
-  // live path from weak-mobile → video; every phone gets the crisp engine here.)
+  // Mobile is the primary surface. KEEP bloom — the luminous glow (core AND the
+  // tendrils lifting to bright white) IS the look; dropping it left the seal
+  // flat and the filaments grey, which is not what we want. The pixeloza was
+  // never bloom itself, it was the 0.9 pixel-ratio cap bloom was forced to run
+  // under. So instead: bloom on, render SHARP (cap ~1.75 via the raised tier
+  // ceilings above). Strong phones carry bloom at this resolution; detect-gpu
+  // will send the ones that can't to the video fallback, and the governor drops
+  // to `safe` (0.76) as the live relief valve.
   const mobile = window.innerWidth <= 760 || matchMedia('(pointer: coarse)').matches;
-  if (mobile && params.get('hero-enableBloom') === null) {
-    config.enableBloom = false;
-    config.startupPixelRatioCap = 1.5;
-    config.settledPixelRatioCap = 2.0;
+  config.mobile = mobile;
+  if (mobile) {
+    config.startupPixelRatioCap = 1.4;
+    config.settledPixelRatioCap = 1.75;
   }
   if (params.get('hero-safe') === '1') {
     config.enableComets = false;

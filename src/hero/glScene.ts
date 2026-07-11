@@ -617,12 +617,12 @@ export function startHero(host: HTMLElement): HeroScene {
     // the heart stays lit.
     const sealVis = sceneVis * jVis;
     const coreGlow = CORE_GLOW_FLOOR + (1 - CORE_GLOW_FLOOR) * sealVis;
-    // Tendrils are the nervous system — they must read as WHITE filaments, not a
-    // grey ghost. Their opacity followed the journey brightness (jVis), which
-    // drops to ~0.1 behind the About copy and greyed them out. On mobile (no
-    // bloom, where there's no glow to carry them either) floor it so they stay
-    // bright; the text scrims carry legibility now, not tendril-dimming.
-    const rootJVis = HERO_PERF.enableBloom ? jVis : Math.max(jVis, 0.85);
+    // Tendrils are the nervous system — bloom lifts them to bright WHITE, but
+    // their opacity followed the journey brightness (jVis) down to ~0.1 behind
+    // the About copy, so there was nothing for bloom to catch and they read grey.
+    // On mobile floor it so the filaments stay present and luminous; the text
+    // scrims carry legibility now, not tendril-dimming.
+    const rootJVis = HERO_PERF.mobile ? Math.max(jVis, 0.5) : jVis;
     const pulseScale = HERO_PERF.enableChargePulse ? tier.pulseScale : 0;
     const chargeFx = HERO_PERF.enableChargePulse ? charge * pulseScale : 0;
     const breath = 1 + (HERO_PERF.enableChargePulse ? Math.sin(t * 1.25) * 0.04 * pulseScale : 0);
