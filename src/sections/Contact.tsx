@@ -65,7 +65,7 @@ export function Contact() {
               proven by the page itself. */}
           <p className="channel-colophon">
             this site: react + three.js, built by directing AI agents
-            &mdash; every diff reviewed
+            &mdash; method and review are mine
           </p>
         </div>
       </div>

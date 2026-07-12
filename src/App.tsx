@@ -308,10 +308,11 @@ function App() {
       <header className="sr-only">
         <h1>Kasia Walter — Frontend &amp; Motion Engineer</h1>
         <p>
-          Frontend and motion engineer. I write the engines — WebGL, shaders,
-          scroll choreography — and the React systems under them that hold when
-          the product gets real. I direct AI agents and review every diff; the
-          design-direction methodology I use is one I wrote myself.
+          Frontend and motion engineer. I build the layer you feel before you
+          read a word. Something is wrong and nobody can name it yet — that is
+          the moment I am for; I go under the surface and fix the structure, not
+          the symptom. AI moved the bottleneck from typing to judgement, and
+          judgement is the part I am good at.
         </p>
         <p>
           Selected work:{' '}
@@ -319,13 +320,15 @@ function App() {
           the frontend: the GSAP implementation, the responsive system, the
           performance. Awwwards Developer Award, February 2024, which Awwwards
           gives to the developer, plus Site of the Day the same month. This site
-          — a WebGL engine written from scratch in Three.js and my own shaders.
+          — a real-time engine written from scratch in Three.js, my own GLSL, and
+          TypeScript, sharing a render loop with a React app.
         </p>
         <p>
-          Four years of production web — two in GSAP motion, two in React and
-          Next. Now at Pirxey / Widelab: frontend, AI engineering, design systems
-          in code. Open to frontend and motion engineering roles; EU remote,
-          based in Poland.
+          Four years of production web at Pirxey / Widelab: web developer first,
+          motion-led sites in GSAP; React developer since 2024, product apps and
+          design systems in code. React, TypeScript, Next.js, Redux Toolkit, RTK
+          Query, React Hook Form, Zod, Storybook. Open to frontend and motion
+          engineering roles; EU remote, based in Poland.
         </p>
         <p>
           {/* tabIndex -1: these exist for machines; the same links are real,

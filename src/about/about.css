@@ -21,7 +21,7 @@
   top: 0;
   height: 100vh;
   display: grid;
-  grid-template-rows: 1fr auto;
+  grid-template-rows: 1fr;
   align-items: center;
   padding: var(--sec-pad) max(var(--pad), var(--content-safe-pad));
   overflow: hidden;
@@ -66,23 +66,6 @@
 }
 
 /* Row 2: facets across the full width. */
-.practice-facets {
-  list-style: none;
-  display: flex;
-  flex-wrap: wrap;
-  gap: clamp(12px, 2vw, 40px);
-  margin: 0;
-  padding: clamp(16px, 3vh, 40px) 0 0;
-  border-top: 1px solid var(--teal-dim);
-  opacity: clamp(0, calc((var(--p, 0) - 0.86) / 0.1), 1);
-}
-
-.practice-facets li {
-  color: var(--teal-soft);
-  font-size: var(--fs-small);
-  letter-spacing: 0.12em;
-}
-
 /* the single bounding box around all three sentences. Font size lives HERE
    (not on the copy) so the ch-based measure tracks the rendered text — with
    the size on the child, 52ch resolved against the 16px wrapper and squeezed
@@ -249,7 +232,7 @@
     min-height: 100vh;
     align-content: center;
     padding: clamp(128px, 18vh, 168px) 22px 88px;
-    grid-template-rows: auto auto auto;
+    grid-template-rows: auto auto;
     row-gap: clamp(28px, 6vh, 56px);
   }
   .about-eyebrow {

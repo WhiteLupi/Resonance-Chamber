@@ -51,38 +51,29 @@ export function Work() {
           <article className="work-entry">
             <h3 className="work-title">this site</h3>
             <p className="work-copy">
-              A WebGL engine written from scratch: a shaded core lit off-axis,
-              tendrils reaching out of it, a sonar pulse, comets, and a charge
-              mechanic that locks the chamber. Three.js and my own shaders
-              &mdash; no library did this.
+              A real-time engine sharing a render loop with a React app: Three.js
+              and my own GLSL &mdash; a shaded core, tendrils, a sonar pulse, and
+              a charge mechanic that gates the page. Written from scratch, in
+              TypeScript, no library did this.
             </p>
             <p className="work-copy">
-              It stays smooth on a mid-range phone because I made it: GPU
-              tiering, bloom dropped where it costs too much, native-resolution
-              rendering, and a frame budget every effect has to pay into.
+              It holds on a mid-range phone because I made it hold. The GPU is
+              tiered and effects are dropped by cost, not by guess. Scroll work
+              is rAF-coalesced and layout is read once a frame, so the DOM never
+              fights the render loop for the budget.
             </p>
             <p className="work-copy">
-              Built by directing AI agents with persistent memory &mdash; every
-              diff reviewed by me. You are looking at the proof of the last band.
+              It also degrades: reduced motion switches the engine off and the
+              page still reads. Built by directing AI agents with persistent
+              memory &mdash; against a method and a review I wrote myself.
             </p>
             <ul className="work-chips">
               <li>three.js</li>
               <li>glsl</li>
+              <li>typescript</li>
               <li>perf engineering</li>
-              <li>agent-directed build</li>
             </ul>
           </article>
-
-          <div className="work-side">
-            <div>
-              <p className="work-side__label">also</p>
-              <p className="work-copy">
-                React and Next.js product apps. Design systems built in code from
-                a designer&rsquo;s visual language &mdash; the token architecture
-                and component API underneath. Four years of production web.
-              </p>
-            </div>
-          </div>
         </div>
       </div>
     </section>

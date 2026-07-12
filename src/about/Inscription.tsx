@@ -3,8 +3,8 @@ import { LetterSub } from './LetterSub';
 
 const LINES: string[] = [
   'Frontend and motion engineer. I build the layer you feel before you read a word.',
-  'I write the engines — WebGL, shaders, scroll choreography — and the React systems under them that hold when the product gets real.',
-  'I direct AI agents the way I direct motion: explore wide, cut hard, keep authorship. The methodology is mine — I wrote it, and I review every diff.',
+  'Something is wrong and nobody can name it yet. That is the moment I am for — I go under the surface and fix the structure, not the symptom.',
+  'AI moved the bottleneck from typing to judgement. Judgement is the part I am good at.',
 ];
 
 type Props = { phase: DwellPhase };
