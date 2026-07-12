@@ -3,9 +3,9 @@ import { useDwell } from './useDwell';
 import { BgBreath } from './BgBreath';
 import './about.css';
 
-// Practice grid (spec 2026-06-10): inscription as left thesis, aside on the
-// right, facets below. The middle of row 1 stays intentionally open for the
-// travelling seal (journey keyframe x:47).
+// Practice grid: inscription as left thesis, aside on the right. The middle of
+// row 1 stays intentionally open for the travelling seal (journey keyframe
+// x:47).
 export function About() {
   const phase = useDwell();
 
@@ -20,25 +20,22 @@ export function About() {
         <BgBreath active={phase.v4} />
         <div className="practice-top">
           <Inscription phase={phase} />
-          {/* The concrete fact next to the manifesto — the AI stance already
-              lives in the inscription's third voice; repeating it here wasted
-              the column. */}
+          {/* The only place on the page that says I am employed, where, and for
+              how long. Everything else here is stance; this is the record. */}
           <aside className="practice-aside">
             <p className="practice-aside__label">since 2022</p>
             <p className="practice-aside__copy">
-              Four years building for the web: two of motion-led sites
-              (Webflow, GSAP), two of React and Next.js product apps.
-              Currently at Pirxey / Widelab &mdash; frontend, interface
-              quality, product UI, and design systems.
+              Four years of production web, all of it at Pirxey / Widelab.
+            </p>
+            <p className="practice-aside__copy">
+              Web developer first &mdash; motion-led sites in GSAP.
+            </p>
+            <p className="practice-aside__copy">
+              React developer since 2024 &mdash; product apps and design systems
+              in code.
             </p>
           </aside>
         </div>
-        <ul className="practice-facets" aria-label="practice facets">
-          <li>motion as meaning</li>
-          <li>frontend as medium</li>
-          <li>systems with taste</li>
-          <li>tools that stay human</li>
-        </ul>
       </div>
     </section>
   );

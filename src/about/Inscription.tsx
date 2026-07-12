@@ -2,9 +2,9 @@ import type { DwellPhase } from './useDwell';
 import { LetterSub } from './LetterSub';
 
 const LINES: string[] = [
-  'I build interfaces that carry feeling.',
-  'My work sits where motion, structure, and problem-solving meet — using frontend to shape products that feel clearer, calmer, and more alive.',
-  'AI is part of the process, not the point: a tool for exploring, structuring, and shipping, while judgement stays with me.',
+  'Frontend and motion engineer. I build the layer you feel before you read a word.',
+  'Something is wrong and nobody can name it yet. That is the moment I am for — I go under the surface and fix the structure, not the symptom.',
+  'AI moved the bottleneck from typing to judgement. Judgement is the part I am good at.',
 ];
 
 type Props = { phase: DwellPhase };

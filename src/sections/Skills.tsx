@@ -13,29 +13,29 @@ type Band = {
 
 const BANDS: Band[] = [
   {
-    name: 'MOTION',
-    desc: 'Animation used as meaning: pacing, tension, feedback, and release.',
-    tags: 'gsap · lenis · webgl · scroll choreography',
-  },
-  {
     name: 'INTERFACE',
-    desc: 'React systems that stay clear under real product constraints.',
-    tags: 'react · typescript · design systems',
+    desc: 'React and TypeScript product apps: typed forms and validation, client and server state, components documented so the next person can use them. Design systems in code — tokens and component APIs.',
+    tags: 'react · typescript · next · rtk query · zod · storybook',
   },
   {
-    name: 'INTERACTION',
-    desc: 'Micro-signals that reduce friction and make intent legible.',
-    tags: 'gesture · easing · states · polish',
+    name: 'MOTION',
+    desc: 'I write the engine, not the tween. Shaders, particle systems, and scroll choreography — and the render loop they have to share with the app.',
+    tags: "awwwards developer award '24 · webgl · glsl · gsap",
   },
   {
     name: 'REPAIR',
-    desc: 'Finding what feels off, then tightening flow, structure, and experience.',
-    tags: 'debugging · refinement · UX friction',
+    desc: 'I find what feels wrong before anyone can name it, then fix the structure underneath instead of the symptom. Frame budgets, GPU tiers, layout read once a frame — the work that decides whether it holds on a cheap phone.',
+    tags: 'perf budgets · gpu tiers · frame time',
+  },
+  {
+    name: 'INTERACTION',
+    desc: 'The micro-signals: easing, state, feedback. What tells you the machine heard you.',
+    tags: 'gesture · easing · state · polish',
   },
   {
     name: 'DIRECTION',
-    desc: 'Using AI agents without giving away authorship, taste, or the final call.',
-    tags: 'claude code · agent workflows · judgement',
+    desc: 'I run AI agents with persistent memory, against a method I wrote myself — and I built the review they answer to. What ships is my call.',
+    tags: 'design direction · agent skills · judgement',
   },
 ];
 

@@ -20,9 +20,9 @@ export function Contact() {
         className={`channel-grid${inView ? ' is-in' : ''}`}
       >
         <h3 className="channel-headline">
-          Need something
+          Looking for a team where motion
           <br />
-          clearer, stranger, or more alive.
+          is engineering, not decoration.
         </h3>
         <div className="channel-panel">
           <ul className="channel-links">
@@ -55,7 +55,7 @@ export function Contact() {
           <p className="channel-status">
             <span className="channel-status__dot" aria-hidden="true" />
             <span>
-              open to motion-led product &amp; frontend work
+              open to frontend &amp; motion engineering roles
               <br />
               EU remote &middot; based in Poland
             </span>
@@ -65,7 +65,7 @@ export function Contact() {
               proven by the page itself. */}
           <p className="channel-colophon">
             this site: react + three.js, built by directing AI agents
-            &mdash; every diff reviewed
+            &mdash; method and review are mine
           </p>
         </div>
       </div>
