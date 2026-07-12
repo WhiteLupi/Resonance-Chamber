@@ -308,19 +308,24 @@ function App() {
       <header className="sr-only">
         <h1>Kasia Walter — Frontend &amp; Motion Engineer</h1>
         <p>
-          I build interfaces that carry feeling. My work sits where motion,
-          structure, and problem-solving meet — using frontend to shape products
-          that feel clearer, calmer, and more alive. AI is part of the process,
-          not the point: a tool for exploring, structuring, and shipping, while
-          judgement stays with me.
+          Frontend and motion engineer. I write the engines — WebGL, shaders,
+          scroll choreography — and the React systems under them that hold when
+          the product gets real. I direct AI agents and review every diff; the
+          design-direction methodology I use is one I wrote myself.
         </p>
         <p>
           Selected work:{' '}
-          <a href="https://www.cuewigs.com" tabIndex={-1}>cuewigs</a> — a
-          motion-led marketing site, GSAP-driven; Awwwards Developer Award and
-          Site of the Day, 2024. Currently at Pirxey
-          / Widelab, working across frontend, interface quality, product UI, and
-          design systems.
+          <a href="https://www.cuewigs.com" tabIndex={-1}>cuewigs</a> — I wrote
+          the frontend: the GSAP implementation, the responsive system, the
+          performance. Awwwards Developer Award, February 2024, which Awwwards
+          gives to the developer, plus Site of the Day the same month. This site
+          — a WebGL engine written from scratch in Three.js and my own shaders.
+        </p>
+        <p>
+          Four years of production web — two in GSAP motion, two in React and
+          Next. Now at Pirxey / Widelab: frontend, AI engineering, design systems
+          in code. Open to frontend and motion engineering roles; EU remote,
+          based in Poland.
         </p>
         <p>
           {/* tabIndex -1: these exist for machines; the same links are real,

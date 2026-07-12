@@ -61,6 +61,10 @@
   color: var(--fg-soft);
 }
 
+.practice-aside__copy + .practice-aside__copy {
+  margin-top: 0.75em;
+}
+
 /* Row 2: facets across the full width. */
 .practice-facets {
   list-style: none;

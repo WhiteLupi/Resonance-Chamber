@@ -1,9 +1,9 @@
 import { useInView } from './useInView';
 import './sections.css';
 
-// "SELECTED WORK" - showcase (spec 2026-06-10). The left grid column is
-// intentionally empty: the travelling seal docks there (journey keyframe work:
-// x 30, brightness 0.95) and becomes the living motion preview.
+// "SELECTED WORK" — the left grid column is intentionally empty: the travelling
+// seal docks there (journey keyframe work: x 30, brightness 0.95) and becomes
+// the living motion preview.
 export function Work() {
   const { ref, inView } = useInView<HTMLDivElement>();
 
@@ -13,57 +13,73 @@ export function Work() {
       <div ref={ref} className={`work-grid${inView ? ' is-in' : ''}`}>
         <div className="work-stage" aria-hidden="true" />
         <div className="work-info">
-          <h3 className="work-title">cuewigs</h3>
-          <p className="work-copy">
-            A motion-led marketing site &mdash; I built the frontend and its
-            GSAP scroll choreography, translating the designer&rsquo;s brief
-            into motion with rhythm, contrast, and feel.
-          </p>
-          <p className="work-copy">
-            The whole layout is fluid &mdash; type, spacing, and sizing run
-            on vw/vh and hold at every resolution, across width and height.
-          </p>
-          <p className="work-copy">
-            Awwwards Developer Award and Site of the Day, February 2024.
-          </p>
-          <ul className="work-chips">
-            <li>gsap motion</li>
-            <li>awwwards 2024</li>
-            <li>frontend build</li>
-          </ul>
-          <a
-            className="work-link"
-            href="https://www.cuewigs.com"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <span className="work-link__text">visit cuewigs &#8599;</span>
-            <span className="work-link__line" aria-hidden="true" />
-          </a>
-          {/* "current" moved to the About aside — one fact, one home. */}
+          <article className="work-entry">
+            <h3 className="work-title">cuewigs</h3>
+            <p className="work-copy">
+              I wrote the frontend. The design and the motion spec came from the
+              designer; every line that made it run is mine &mdash; the GSAP
+              implementation, the responsive system, the performance.
+            </p>
+            <p className="work-copy">
+              The layout scales as one continuous system: everything in rem, the
+              root font-size interpolated against the viewport, so nothing jumps
+              between breakpoints. That one was my call.
+            </p>
+            <p className="work-copy">
+              <strong className="work-award">
+                Awwwards Developer Award, February 2024.
+              </strong>{' '}
+              Awwwards gives that one to the developer. Site of the Day the same
+              month.
+            </p>
+            <ul className="work-chips">
+              <li>awwwards developer award &rsquo;24</li>
+              <li>gsap</li>
+              <li>frontend build</li>
+            </ul>
+            <a
+              className="work-link"
+              href="https://www.cuewigs.com"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <span className="work-link__text">visit cuewigs &#8599;</span>
+              <span className="work-link__line" aria-hidden="true" />
+            </a>
+          </article>
+
+          <article className="work-entry">
+            <h3 className="work-title">this site</h3>
+            <p className="work-copy">
+              A WebGL engine written from scratch: a shaded core lit off-axis,
+              tendrils reaching out of it, a sonar pulse, comets, and a charge
+              mechanic that locks the chamber. Three.js and my own shaders
+              &mdash; no library did this.
+            </p>
+            <p className="work-copy">
+              It stays smooth on a mid-range phone because I made it: GPU
+              tiering, bloom dropped where it costs too much, native-resolution
+              rendering, and a frame budget every effect has to pay into.
+            </p>
+            <p className="work-copy">
+              Built by directing AI agents with persistent memory &mdash; every
+              diff reviewed by me. You are looking at the proof of the last band.
+            </p>
+            <ul className="work-chips">
+              <li>three.js</li>
+              <li>glsl</li>
+              <li>perf engineering</li>
+              <li>agent-directed build</li>
+            </ul>
+          </article>
+
           <div className="work-side">
             <div>
-              <p className="work-side__label">also shipped</p>
+              <p className="work-side__label">also</p>
               <p className="work-copy">
-                React and Next.js product apps, design system work for
-                product teams, a run of Webflow and WordPress builds, and
-                HTML email templates.
-              </p>
-            </div>
-            <div>
-              <p className="work-side__label">ai practice</p>
-              <p className="work-copy">
-                I write my own agent skills &mdash; including a
-                design-direction skill &mdash; and run agents with
-                persistent memory across sessions. This site was built
-                that way.
-              </p>
-            </div>
-            <div>
-              <p className="work-side__label">focus</p>
-              <p className="work-copy">
-                Particle systems, concept-art-driven visuals, living
-                motion &mdash; and products that don&rsquo;t exclude people.
+                React and Next.js product apps. Design systems built in code from
+                a designer&rsquo;s visual language &mdash; the token architecture
+                and component API underneath. Four years of production web.
               </p>
             </div>
           </div>

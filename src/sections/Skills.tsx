@@ -14,28 +14,28 @@ type Band = {
 const BANDS: Band[] = [
   {
     name: 'MOTION',
-    desc: 'Animation used as meaning: pacing, tension, feedback, and release.',
-    tags: 'gsap · lenis · webgl · scroll choreography',
+    desc: 'I write the engine, not the tween. Shaders, particle systems, and scroll choreography, timed so the page has a pulse.',
+    tags: "awwwards developer award '24 · webgl · glsl · gsap",
   },
   {
     name: 'INTERFACE',
-    desc: 'React systems that stay clear under real product constraints.',
-    tags: 'react · typescript · design systems',
+    desc: 'React and TypeScript systems that survive real product pressure. Design systems in code: tokens, component APIs, and the discipline that keeps them from rotting.',
+    tags: 'react · typescript · next · design systems',
   },
   {
     name: 'INTERACTION',
-    desc: 'Micro-signals that reduce friction and make intent legible.',
-    tags: 'gesture · easing · states · polish',
+    desc: 'The micro-signals: easing, state, feedback. What tells you the machine heard you.',
+    tags: 'gesture · easing · state · polish',
   },
   {
     name: 'REPAIR',
-    desc: 'Finding what feels off, then tightening flow, structure, and experience.',
-    tags: 'debugging · refinement · UX friction',
+    desc: 'I find what feels wrong before anyone can name it, then fix the structure underneath instead of the symptom. Frame budgets, GPU tiers — the things that decide whether it feels alive on a cheap phone.',
+    tags: 'perf budgets · gpu tiers · frame time',
   },
   {
     name: 'DIRECTION',
-    desc: 'Using AI agents without giving away authorship, taste, or the final call.',
-    tags: 'claude code · agent workflows · judgement',
+    desc: 'I run AI agents with persistent memory and review every diff. The design-direction methodology I use is one I wrote myself.',
+    tags: 'design direction · agent skills · judgement',
   },
 ];
 

@@ -6,8 +6,7 @@ type HeroProps = {
 
 // Seal as the central glyph of one carved sentence. Canvas paints the seal +
 // roots behind; the inscription is the single word "alive" — a stance, not a
-// medium — which the About thesis later pays off ("…clearer, calmer, and more
-// alive"). The signature sits at the base. Pre-lock interaction is discoverable
+// medium. The signature sits at the base. Pre-lock interaction is discoverable
 // from the cursor's over-ball "hold" affordance; holding Enter charges the same
 // ritual from the keyboard (App's lock gate listens window-wide). The prompt is
 // a real button so AT users find a labelled control, and focusing it reveals

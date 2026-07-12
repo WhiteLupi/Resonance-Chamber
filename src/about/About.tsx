@@ -26,18 +26,25 @@ export function About() {
           <aside className="practice-aside">
             <p className="practice-aside__label">since 2022</p>
             <p className="practice-aside__copy">
-              Four years building for the web: two of motion-led sites
-              (Webflow, GSAP), two of React and Next.js product apps.
-              Currently at Pirxey / Widelab &mdash; frontend, interface
-              quality, product UI, and design systems.
+              Four years of production web &mdash; two in GSAP motion, two in
+              React and Next.
+            </p>
+            <p className="practice-aside__copy">
+              Awwwards Developer Award, 2024. For the build.
+            </p>
+            <p className="practice-aside__copy">
+              Now at Pirxey / Widelab: frontend, AI engineering, design systems
+              in code.
             </p>
           </aside>
         </div>
+        {/* The methodology stays unnamed until its repo is public — a name
+            nobody can look up carries nothing. */}
         <ul className="practice-facets" aria-label="practice facets">
-          <li>motion as meaning</li>
-          <li>frontend as medium</li>
-          <li>systems with taste</li>
-          <li>tools that stay human</li>
+          <li>awwwards developer award &rsquo;24</li>
+          <li>custom webgl engines</li>
+          <li>react + typescript</li>
+          <li>my own design-direction method</li>
         </ul>
       </div>
     </section>

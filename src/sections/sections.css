@@ -176,12 +176,23 @@
   min-height: clamp(320px, 56vh, 640px);
 }
 
+.work-entry + .work-entry {
+  margin-top: clamp(20px, 3vh, 44px);
+  border-top: 1px solid var(--teal-dim);
+  padding-top: clamp(20px, 3vh, 44px);
+}
+
 .work-title {
   margin: 0 0 0.5em;
   font-size: var(--fs-band);
   font-weight: 400;
   letter-spacing: 0.06em;
   color: var(--fg-vault);
+}
+
+.work-award {
+  color: var(--fg-vault);
+  font-weight: 400;
 }
 
 .work-copy {
