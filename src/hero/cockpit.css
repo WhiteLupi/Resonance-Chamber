@@ -134,7 +134,7 @@
 .section-header {
   position: fixed;
   top: 50%;
-  left: 38px;
+  left: 26px;
   z-index: 9;
   translate: 0 -50%;
   pointer-events: none;
@@ -149,7 +149,7 @@
 .section-header::before {
   content: '';
   position: absolute;
-  left: -15px;
+  left: -8px;
   top: 50%;
   translate: 0 -50%;
   width: 1px;
