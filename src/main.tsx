@@ -26,6 +26,12 @@ if (CLICK_IDS.some((id) => entryUrl.searchParams.has(id))) {
   history.replaceState(history.state, '', entryUrl.pathname + entryUrl.search + entryUrl.hash)
 }
 
+// The first response ships a plain-text copy of this page inside #root (see
+// index.html) so text extractors that drop <noscript> and JSON-LD still read
+// something. A JS-capable browser hides it before paint; remove it here so the
+// node is gone for good and React starts from an empty container.
+document.getElementById('prerender')?.remove()
+
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <App />
