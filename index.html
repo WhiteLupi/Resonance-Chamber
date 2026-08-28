@@ -102,7 +102,6 @@
             "Claude Code",
             "AI-assisted development",
             "WebGL",
-            "GLSL",
             "Three.js",
             "GSAP",
             "Lenis",
@@ -240,7 +239,7 @@
           <li><strong>Testing and code quality</strong> — Jest, Vitest, React Testing Library, Playwright, Cypress, peer code review.</li>
           <li><strong>Performance</strong> — frame budgets, GPU tiers, render optimisation, mobile performance, layout read once a frame.</li>
           <li><strong>Accessibility</strong> — semantic HTML, focus management, reduced-motion paths, screen-reader support.</li>
-          <li><strong>Motion and graphics</strong> — GSAP, Three.js, WebGL, GLSL shaders, Lenis, scroll choreography.</li>
+          <li><strong>Motion and graphics</strong> — GSAP, Three.js, WebGL, Lenis, scroll choreography.</li>
         </ul>
 
         <h2>Selected work</h2>
@@ -248,7 +247,7 @@
           <strong><a href="https://www.cuewigs.com">cuewigs</a></strong> — I wrote the frontend. The GSAP implementation, the responsive system and the performance are mine; the design and the motion spec came from the designer. The layout scales as one continuous system: everything in rem, the root font-size interpolated against the viewport, so nothing jumps between breakpoints. That one was my call. Awwwards Developer Award and Site of the Day, February 2024 — Awwwards gives that one to the developer.
         </p>
         <p>
-          <strong>kasiawalter.it</strong> — this site. A real-time engine sharing a render loop with a React app: Three.js and my own GLSL, written from scratch in TypeScript. It holds on a mid-range phone because I made it hold — the GPU is tiered and effects are dropped by cost, scroll work is rAF-coalesced, and layout is read once a frame. Reduced motion switches the engine off and the page still reads. Built by directing AI agents with persistent memory, every diff reviewed by me.
+          <strong>kasiawalter.it</strong> — this site. A real-time engine sharing a render loop with a React app: Three.js and TypeScript, written from scratch — custom geometry, additive sprite and line rendering, bloom post-processing. It holds on a mid-range phone because I made it hold — the GPU is tiered and effects are dropped by cost, scroll work is rAF-coalesced, and layout is read once a frame. Reduced motion switches the engine off and the page still reads. Built by directing AI agents with persistent memory, every diff reviewed by me.
         </p>
         <p>
           <strong>Design-direction methodology</strong> — an agent skill of my own, written in my own time and used in production work: research in four lenses, a semantic brief with an approval gate, reverse-reading as the selection step, and blind subagents generating competing directions. Nobody assigned it. I wrote it because directing agents without a method produces confident, generic work.

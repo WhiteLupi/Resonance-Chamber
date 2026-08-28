@@ -52,9 +52,9 @@ export function Work() {
             <h3 className="work-title">this site</h3>
             <p className="work-copy">
               A real-time engine sharing a render loop with a React app: Three.js
-              and my own GLSL &mdash; a shaded core, tendrils, a sonar pulse, and
-              a charge mechanic that gates the page. Written from scratch, in
-              TypeScript, no library did this.
+              and TypeScript &mdash; a core, tendrils, a sonar pulse, and a charge
+              mechanic that gates the page. Custom geometry, additive sprite and
+              line rendering, bloom post-processing, written from scratch.
             </p>
             <p className="work-copy">
               It holds on a mid-range phone because I made it hold. The GPU is
@@ -69,7 +69,7 @@ export function Work() {
             </p>
             <ul className="work-chips">
               <li>three.js</li>
-              <li>glsl</li>
+              <li>webgl</li>
               <li>typescript</li>
               <li>perf engineering</li>
             </ul>

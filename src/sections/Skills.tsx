@@ -19,8 +19,8 @@ const BANDS: Band[] = [
   },
   {
     name: 'MOTION',
-    desc: 'I write the engine, not the tween. Shaders, particle systems, and scroll choreography — and the render loop they have to share with the app.',
-    tags: "awwwards developer award '24 · webgl · glsl · gsap",
+    desc: 'I write the engine, not the tween. Particle systems, custom geometry, and scroll choreography — and the render loop they have to share with the app.',
+    tags: "awwwards developer award '24 · webgl · three.js · gsap",
   },
   {
     name: 'REPAIR',

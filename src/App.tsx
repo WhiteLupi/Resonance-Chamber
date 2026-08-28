@@ -320,7 +320,7 @@ function App() {
           the frontend: the GSAP implementation, the responsive system, the
           performance. Awwwards Developer Award, February 2024, which Awwwards
           gives to the developer, plus Site of the Day the same month. This site
-          — a real-time engine written from scratch in Three.js, my own GLSL, and
+          — a real-time engine written from scratch in Three.js and
           TypeScript, sharing a render loop with a React app.
         </p>
         <p>
