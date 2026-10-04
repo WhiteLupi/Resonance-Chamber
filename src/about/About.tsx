@@ -25,14 +25,19 @@ export function About() {
           <aside className="practice-aside">
             <p className="practice-aside__label">since 2022</p>
             <p className="practice-aside__copy">
-              Four years of production web, all of it at Pirxey / Widelab.
+              4.5 years of production web, all of it at Pirxey / Widelab.
             </p>
             <p className="practice-aside__copy">
-              Web developer first &mdash; motion-led sites in GSAP.
+              Web developer first &mdash; 19 Webflow sites from Figma,
+              motion in GSAP.
             </p>
             <p className="practice-aside__copy">
-              React developer since 2024 &mdash; product apps and design systems
-              in code.
+              React developer from 2024 &mdash; a product SaaS and its
+              design system.
+            </p>
+            <p className="practice-aside__copy">
+              Since 2026 &mdash; Webflow, WordPress and HubSpot, built with AI
+              agents.
             </p>
           </aside>
         </div>

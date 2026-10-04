@@ -14,8 +14,8 @@ type Band = {
 const BANDS: Band[] = [
   {
     name: 'INTERFACE',
-    desc: 'React and TypeScript product apps: typed forms and validation, client and server state, components documented so the next person can use them. Design systems in code — tokens and component APIs.',
-    tags: 'react · typescript · next · rtk query · zod · storybook',
+    desc: 'React and TypeScript product apps: typed forms and validation, client and server state, components documented so the next person can use them. Webflow from Figma, with custom code shipped as a typed, versioned package.',
+    tags: 'react · typescript · webflow · rtk query · zod · storybook',
   },
   {
     name: 'MOTION',
@@ -34,8 +34,8 @@ const BANDS: Band[] = [
   },
   {
     name: 'DIRECTION',
-    desc: 'I run AI agents with persistent memory, against a method I wrote myself — and I built the review they answer to. What ships is my call.',
-    tags: 'design direction · agent skills · judgement',
+    desc: 'I run AI agents against a method I wrote myself, and I built the review they answer to. Deterministic code does the mechanics; models get language and judgement. What ships is my call.',
+    tags: 'claude code · codex · mcp · agent skills · judgement',
   },
 ];
 

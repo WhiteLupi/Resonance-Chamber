@@ -55,7 +55,7 @@ export function Contact() {
           <p className="channel-status">
             <span className="channel-status__dot" aria-hidden="true" />
             <span>
-              open to frontend &amp; motion engineering roles
+              open to frontend, webflow &amp; AI-assisted roles
               <br />
               EU remote &middot; based in Poland
             </span>

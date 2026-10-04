@@ -29,8 +29,8 @@ export function Work() {
               <strong className="work-award">
                 Awwwards Developer Award, February 2024.
               </strong>{' '}
-              Awwwards gives that one to the developer. Site of the Day the same
-              month.
+              Awwwards gives that one to the developer. Site of the Day and FWA
+              Site of the Day the same month.
             </p>
             <ul className="work-chips">
               <li>awwwards developer award &rsquo;24</li>
@@ -64,8 +64,9 @@ export function Work() {
             </p>
             <p className="work-copy">
               It also degrades: reduced motion switches the engine off and the
-              page still reads. Built by directing AI agents with persistent
-              memory &mdash; against a method and a review I wrote myself.
+              page still reads. I designed it myself by directing AI tools
+              through exploration, then built it with agents against a method
+              and a review I wrote myself.
             </p>
             <ul className="work-chips">
               <li>three.js</li>
