@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { ShapeSvg } from '../ShapeSvg';
 import { SHAPES } from '../glyphs';
+import './cursor.css';
 
 type Variant = 'default' | 'link' | 'hold' | 'charging' | 'wave';
 
@@ -102,17 +103,17 @@ function PointerCursor({ locked, overCore }: { locked: boolean; overCore: boolea
   }, []);
 
   return (
-    <div ref={ref} className={`cockpit-cursor cockpit-cursor--${variant}`}>
+    <div ref={ref} className={`cursor cursor--${variant}`}>
       <svg
         key={shapeIdx}
-        className="cockpit-cursor__shape"
+        className="cursor__shape"
         viewBox="0 0 30 30"
         aria-hidden="true"
       >
         <ShapeSvg kind={SHAPES[shapeIdx]} />
       </svg>
-      <span className="cockpit-cursor__hold" aria-hidden="true">hold</span>
-      <span className="cockpit-cursor__ripple" aria-hidden="true" />
+      <span className="cursor__hold" aria-hidden="true">hold</span>
+      <span className="cursor__ripple" aria-hidden="true" />
     </div>
   );
 }

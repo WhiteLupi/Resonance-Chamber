@@ -1,4 +1,4 @@
-import './cockpit.css';
+import './hero.css';
 
 type HeroProps = {
   locked: boolean;
