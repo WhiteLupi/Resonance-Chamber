@@ -97,42 +97,44 @@
   will-change: translate;
 }
 
-/* Letter substitution. During a swap an invisible copy of the letter holds
-   its slot, so the line never reflows; the letter falls out and the glyph
-   drops in from above. .ls-word holds a word together as one wrap unit. */
-.letter-sub {
-  display: inline;
-}
+/* Letter swaps: a letter falls out and a sign drops in from above, glowing
+   in the accent. The sign is the ::after of the same slot, so in monospace
+   the line never reflows. --d staggers a cascade (set per swap). */
 .ls-word {
   display: inline-block;
   white-space: nowrap;
 }
 .ls-ch {
-  display: inline-block;
-  vertical-align: baseline;
   position: relative;
+  display: inline-block;
 }
-.ls-ch__ghost {
-  visibility: hidden;
+.ls-ch__l,
+.ls-ch::after {
+  display: inline-block;
+  transition:
+    translate 0.24s cubic-bezier(0.2, 0.8, 0.2, 1) var(--d, 0s),
+    opacity 0.24s ease var(--d, 0s);
 }
-.ls-ch__letter,
-.ls-ch__glyph {
+.ls-ch::after {
+  content: attr(data-sign);
   position: absolute;
   inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  will-change: transform, opacity;
+  text-align: center;
+  color: var(--accent);
+  text-shadow:
+    0 0 6px var(--accent-shadow),
+    0 0 16px var(--accent-shadow);
+  opacity: 0;
+  translate: 0 -0.7em;
+  pointer-events: none;
 }
-.ls-svg {
-  width: 1ch;
-  height: 1ch;
-  overflow: visible;
-  color: inherit;
-  /* Phosphor halo — short core + long bloom. */
-  filter:
-    drop-shadow(0 0 2.5px var(--accent-shadow))
-    drop-shadow(0 0 7px var(--accent-shadow));
+.ls-ch.is-sign .ls-ch__l {
+  opacity: 0;
+  translate: 0 0.7em;
+}
+.ls-ch.is-sign::after {
+  opacity: 1;
+  translate: 0 0;
 }
 
 /* The blinking caret is the manifesto's single drop of accent. */
