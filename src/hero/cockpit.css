@@ -262,7 +262,8 @@
 .hero-inscription__bottom {
   position: absolute;
   left: calc(50% + 0.04 * min(100vw, var(--content-max)));
-  top: 50%;
+  /* A touch above the seal's centre line, into the open space. */
+  top: 45%;
   font-family: 'Boldonse', system-ui, sans-serif;
   font-weight: 400;
   font-size: clamp(40px, 6.4vw, 150px);

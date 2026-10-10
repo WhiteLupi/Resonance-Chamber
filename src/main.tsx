@@ -32,22 +32,6 @@ if (CLICK_IDS.some((id) => entryUrl.searchParams.has(id))) {
 // node is gone for good and React starts from an empty container.
 document.getElementById('prerender')?.remove()
 
-// TEMPORARY font comparison (?font=fraunces|instrument|newsreader). Remove
-// once a voice font is chosen and self-hosted.
-const FONT_TRIALS: Record<string, [string, string]> = {
-  fraunces: ['Fraunces:ital,opsz,wght@0,9..144,300..600;1,9..144,300..600', "'Fraunces', Georgia, serif"],
-  instrument: ['Instrument+Serif:ital@0;1', "'Instrument Serif', Georgia, serif"],
-  newsreader: ['Newsreader:ital,opsz,wght@0,6..72,300..600;1,6..72,300..600', "'Newsreader', Georgia, serif"],
-}
-const trial = FONT_TRIALS[new URLSearchParams(window.location.search).get('font') ?? '']
-if (trial) {
-  const link = document.createElement('link')
-  link.rel = 'stylesheet'
-  link.href = `https://fonts.googleapis.com/css2?family=${trial[0]}&display=swap`
-  document.head.appendChild(link)
-  document.documentElement.style.setProperty('--font-voice', trial[1])
-}
-
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <App />
