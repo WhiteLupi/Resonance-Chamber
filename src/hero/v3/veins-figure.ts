@@ -1,6 +1,6 @@
-// Build-time Lichtenberg figure: stochastic leaders that jitter, fork and avoid
-// each other (a cheap stand-in for dielectric breakdown), then get rounded
-// into veins. Pure data, no three.js, so it can be inspected outside the app.
+// Build-time vein figure: stochastic leaders that jitter, fork and avoid each
+// other (a Lichtenberg-like process), then get rounded into veins. Pure data,
+// no three.js, so it can be inspected outside the app.
 
 type V3 = [number, number, number];
 
@@ -12,16 +12,16 @@ export type Branch = {
   /** ribbon width in CSS px, per point */
   width: number[];
   order: number;
-  /** stable 0..1 random, drives flicker */
+  /** stable 0..1 random per branch */
   seed: number;
-  /** 0..1 how far this leader gets before the lock flash; never above its parent */
+  /** 0..1 vigour, never above its parent: weaker branches start growing later */
   reach: number;
 };
 
 export type Figure = { branches: Branch[]; maxDist: number; pointCount: number };
 
 export const FIGURE = {
-  seed: 7,
+  seed: 45,
   trunks: 18,
   /** ellipsoid the figure fills (before the Z squash); overflows the frame vertically */
   bounds: [2.45, 1.95, 1.5] as V3,

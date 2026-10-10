@@ -24,6 +24,44 @@ const MOBILE_MAX_W = 760;
 
 // Per-frame smoothing written as a rate, so 60Hz and 120Hz displays converge
 // identically. `perFrame` is the fraction covered in one 60Hz frame.
+// Frame guard: when frames keep missing the display's refresh, give up pixels
+// one step at a time. Never steps back up — a resolution that pumps reads as
+// flicker. Lines antialias in their shaders, so a lower ratio stays smooth.
+const PIXEL_RATIO_STEPS = [1.5, 1.25, 1];
+const GUARD_WARMUP_S = 1.5;
+const GUARD_WINDOW = 90;
+const GUARD_SLOW_SHARE = 0.3;
+
+function createFrameGuard(stepDown: () => boolean) {
+  const refresh: number[] = [];
+  let expectedMs = 0;
+  let quietUntil = GUARD_WARMUP_S;
+  let samples = 0;
+  let slow = 0;
+  let exhausted = false;
+  const reset = (t: number) => {
+    samples = 0;
+    slow = 0;
+    quietUntil = t + 1;
+  };
+  const sample = (ms: number, t: number) => {
+    if (exhausted || ms > 250) return;
+    // The median of the first ticks is this display's refresh period.
+    if (refresh.length < 60) {
+      refresh.push(ms);
+      if (refresh.length === 60) expectedMs = [...refresh].sort((a, b) => a - b)[30];
+      return;
+    }
+    if (t < quietUntil) return;
+    samples += 1;
+    if (ms > expectedMs * 1.5) slow += 1;
+    if (samples < GUARD_WINDOW) return;
+    if (slow / samples >= GUARD_SLOW_SHARE) exhausted = !stepDown();
+    reset(t);
+  };
+  return { sample, reset };
+}
+
 const smoothing = (perFrame: number, dt: number) => 1 - Math.pow(1 - perFrame, dt * 60);
 
 export function startHero(host: HTMLElement, createRoots: RootsFactory = createTendrilFieldV2): HeroScene {
@@ -55,7 +93,8 @@ export function startHero(host: HTMLElement, createRoots: RootsFactory = createT
   // The original look was tuned through a composer that wrote linear values
   // straight to the screen; matching that keeps the palette identical.
   renderer.outputColorSpace = THREE.LinearSRGBColorSpace;
-  const pixelRatio = () => Math.min(window.devicePixelRatio || 1, MAX_PIXEL_RATIO);
+  let pixelRatioCap = MAX_PIXEL_RATIO;
+  const pixelRatio = () => Math.min(window.devicePixelRatio || 1, pixelRatioCap);
 
   const measure = () => ({ w: host.clientWidth || window.innerWidth, h: host.clientHeight || window.innerHeight });
   let { w: viewW, h: viewH } = measure();
@@ -178,6 +217,14 @@ export function startHero(host: HTMLElement, createRoots: RootsFactory = createT
   let raf = 0;
   let nextIdleRingAt = Infinity;
   let frames = 0;
+  const frameGuard = createFrameGuard(() => {
+    const current = renderer.getPixelRatio();
+    const next = PIXEL_RATIO_STEPS.find((step) => step < current - 0.01);
+    if (next === undefined) return false;
+    pixelRatioCap = next;
+    applySize();
+    return true;
+  });
   let frameMsAvg = 0;
 
   const syncPerfDebug = () => {
@@ -190,6 +237,7 @@ export function startHero(host: HTMLElement, createRoots: RootsFactory = createT
       drawCalls: renderer.info.render.calls,
       triangles: renderer.info.render.triangles,
       frameMsAvg: Number(frameMsAvg.toFixed(2)),
+      pixelRatioCap,
     };
   };
 
@@ -221,6 +269,7 @@ export function startHero(host: HTMLElement, createRoots: RootsFactory = createT
     t += dt;
     frames += 1;
     frameMsAvg += (rawDt * 1000 - frameMsAvg) * 0.05;
+    frameGuard.sample(rawDt * 1000, t);
 
     const jl = smoothing(0.07, dt);
     journeyCur.x += (journeyTarget.x - journeyCur.x) * jl;
@@ -328,6 +377,7 @@ export function startHero(host: HTMLElement, createRoots: RootsFactory = createT
     }
     if (raf || disposed || !started) return;
     lastNow = performance.now();
+    frameGuard.reset(t);
     raf = requestAnimationFrame(loop);
   };
   document.addEventListener('visibilitychange', onVisibility);
