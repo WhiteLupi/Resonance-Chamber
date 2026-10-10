@@ -1,7 +1,6 @@
 import * as THREE from 'three';
 import { prefersReducedMotion } from '../../motion';
-import { ACCENT, BASE_COLOR, CORE_R, ROOTS_SCALE } from '../gl/constants';
-import type { RootsModule } from '../v2/roots';
+import { ACCENT, BASE_COLOR, CORE_R, ROOTS_SCALE } from './constants';
 import { buildFigure } from './veins-figure';
 import { packFigure, type VeinBuffers } from './veins-pack';
 
@@ -177,7 +176,7 @@ const fragmentShader = /* glsl */ `
   }
 `;
 
-export function createVeins(parent: THREE.Object3D): RootsModule {
+export function createVeins(parent: THREE.Object3D) {
   const geom = new THREE.BufferGeometry();
   // Bases tuck just under the core surface, hidden at the bottom of its breath.
   const baseRadius = (CORE_R / ROOTS_SCALE) * 0.9;
@@ -250,6 +249,9 @@ export function createVeins(parent: THREE.Object3D): RootsModule {
   });
   const mesh = new THREE.Mesh(geom, mat);
   mesh.frustumCulled = false;
+  // Drawn before the additive glows: veins combine with MAX, so a halo drawn
+  // first would out-shine the thin ones near the core and erase them.
+  mesh.renderOrder = -1;
   // A one-triangle stand-in keeps the mesh drawable, so its shader is compiled
   // with the rest before the first frame instead of on the first hold.
   fill({

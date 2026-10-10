@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { ACCENT } from '../gl/constants';
+import { ACCENT } from './constants';
 
 // Camera-facing quads whose falloff is computed per pixel, not sampled from a
 // 256px canvas texture — a ring scaled to fill the viewport stays sharp, and a
@@ -100,7 +100,7 @@ const ringFragment = /* glsl */ `
 
 type Ring = { mesh: THREE.Mesh; uniforms: { uOpacity: { value: number } }; active: boolean; startT: number };
 
-export function createSonarRingsV2(enabled: boolean, parent: THREE.Object3D) {
+export function createSonarRings(enabled: boolean, parent: THREE.Object3D) {
   const rings: Ring[] = [];
   const mats: THREE.ShaderMaterial[] = [];
   if (enabled) {

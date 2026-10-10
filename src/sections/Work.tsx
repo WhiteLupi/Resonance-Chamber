@@ -52,19 +52,20 @@ export function Work() {
             <h3 className="work-title">this site</h3>
             <p className="work-copy">
               A real-time engine sharing a render loop with a React app: Three.js
-              and TypeScript &mdash; a core, tendrils, a sonar pulse, and a charge
-              mechanic that gates the page. Custom geometry, additive sprite and
-              line rendering, bloom post-processing, written from scratch.
+              and TypeScript &mdash; a core, veins, a sonar pulse, and a charge
+              mechanic that gates the page. Custom GLSL: the veins grow, sway and
+              carry light on the GPU in a single draw call, written from scratch.
             </p>
             <p className="work-copy">
-              It holds on a mid-range phone because I made it hold. The GPU is
-              tiered and effects are dropped by cost, not by guess. Scroll work
+              It holds on a mid-range phone because I made it hold. The figure
+              grows in a worker, lines antialias in their shaders, and resolution
+              steps down only when frames really miss the refresh. Scroll work
               is rAF-coalesced and layout is read once a frame, so the DOM never
               fights the render loop for the budget.
             </p>
             <p className="work-copy">
-              It also degrades: reduced motion switches the engine off and the
-              page still reads. I designed it myself by directing AI tools
+              It also degrades: reduced motion stills the engine and the page
+              still reads. I designed it myself by directing AI tools
               through exploration, then built it with agents against a method
               and a review I wrote myself.
             </p>
