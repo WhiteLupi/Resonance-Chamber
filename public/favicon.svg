@@ -1,9 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32">
-  <!-- The site's 'triangle' glyph (src/glyphs.ts) — outline + core, seated in a
-       black disc so the tile reads round on any tab bar. Stroke and core run
-       heavier than ShapeSvg's 1.4-on-30: a faithful scale puts the outline
-       under 1px at 16px and it disappears. -->
-  <circle cx="16" cy="16" r="16" fill="#000000"/>
-  <polygon points="16,7 25,24 7,24" fill="none" stroke="#7ac4af" stroke-width="2.4" stroke-linejoin="round"/>
-  <circle cx="16" cy="19.5" r="2.1" fill="#7ac4af"/>
-</svg>

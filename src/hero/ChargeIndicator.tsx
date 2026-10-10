@@ -3,10 +3,6 @@
 // that the seal is interactive). The fill arc rises clockwise as charge
 // climbs from 0 to 1 (held via mouse/touch). Once the engine locks the
 // indicator dissolves — its work is done.
-//
-// No "HOLD TO TUNE" text — the ring itself is the prompt. If first-time
-// users still miss it, we'll add a single carved letter or breath pulse
-// later, but as a separate iteration.
 
 const RADIUS = 138;
 const CIRC = 2 * Math.PI * RADIUS;

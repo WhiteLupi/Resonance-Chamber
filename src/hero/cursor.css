@@ -1,0 +1,133 @@
+/* Custom cursor: a targeting ring that changes with what it is over. */
+
+.cursor {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 28px;
+  height: 28px;
+  pointer-events: none;
+  z-index: 9999;
+  transform: translate(-50%, -50%);
+  color: var(--fg-strong);
+  transition:
+    width 0.22s cubic-bezier(0.2, 0.8, 0.2, 1),
+    height 0.22s cubic-bezier(0.2, 0.8, 0.2, 1),
+    color 0.2s ease;
+  will-change: transform;
+}
+
+.cursor__shape {
+  width: 100%;
+  height: 100%;
+  display: block;
+  overflow: visible;
+  animation: cursor-shape-pop 0.55s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+@keyframes cursor-shape-pop {
+  0%   { opacity: 0; transform: scale(0.45) rotate(-22deg); filter: blur(2px); }
+  60%  { opacity: 1; transform: scale(1.08) rotate(0);     filter: blur(0); }
+  100% { opacity: 1; transform: scale(1) rotate(0);        filter: blur(0); }
+}
+
+.cursor--link {
+  width: 42px;
+  height: 42px;
+  color: var(--accent);
+}
+
+/* Pre-lock affordance: a wide teal ring (the dim rotating glyph) with the word
+   "hold" at its centre, gently breathing to read as "press me". Mirrors the
+   centre charge ring's language so cursor + seal say the same thing. */
+.cursor--hold {
+  width: 72px;
+  height: 72px;
+  color: var(--accent);
+}
+
+.cursor--hold .cursor__shape {
+  opacity: 0.3;
+  animation:
+    cursor-shape-pop 0.55s cubic-bezier(0.2, 0.8, 0.2, 1),
+    cursor-hold-breathe 2.2s ease-in-out infinite;
+}
+
+@keyframes cursor-hold-breathe {
+  0%, 100% { transform: scale(1);    opacity: 0.3; }
+  50%      { transform: scale(1.12); opacity: 0.55; }
+}
+
+/* Pressed: the ring contracts and brightens — the gesture is registering. */
+.cursor--charging {
+  width: 46px;
+  height: 46px;
+  color: var(--accent);
+}
+
+.cursor--charging .cursor__shape {
+  opacity: 0.6;
+}
+
+.cursor__hold {
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  font-family: 'Syne Mono', ui-monospace, monospace;
+  font-size: 8.5px;
+  letter-spacing: 0.34em;
+  /* letter-spacing pushes the last glyph; indent re-centres the word */
+  text-indent: 0.34em;
+  text-transform: lowercase;
+  white-space: nowrap;
+  color: var(--accent);
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  pointer-events: none;
+}
+
+.cursor--hold .cursor__hold {
+  opacity: 1;
+}
+
+/* Post-lock, over the ball: a "wave" cue — the rotating glyph is hidden (it
+   clashed with the pulse) and the cursor becomes one clean accent ring that
+   breathes, signalling the ball is live and a click broadcasts a wave. */
+.cursor--wave {
+  width: 50px;
+  height: 50px;
+  color: var(--accent);
+}
+
+.cursor--wave .cursor__shape {
+  opacity: 0;
+  /* kill the shape-pop animation too — it re-fires on every 7s glyph swap and
+     would otherwise flash the hidden glyph back to opacity 1 mid-pulse */
+  animation: none;
+}
+
+.cursor__ripple {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  border: 1px solid var(--accent);
+  transform: translate(-50%, -50%) scale(0.8);
+  opacity: 0;
+  pointer-events: none;
+}
+
+.cursor--wave .cursor__ripple {
+  animation: cursor-wave-pulse 1.8s ease-in-out infinite;
+}
+
+@keyframes cursor-wave-pulse {
+  0%, 100% { transform: translate(-50%, -50%) scale(0.8); opacity: 0.4; }
+  50%      { transform: translate(-50%, -50%) scale(1.1); opacity: 0.9; }
+}
+
+@media (hover: none), (pointer: coarse) {
+  .cursor { display: none; }
+}

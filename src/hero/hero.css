@@ -1,0 +1,405 @@
+/* The hero (question, HOLD prompt, charge ring) and the fixed frame around
+   every section: the section spine and the signature. */
+
+.hero-section {
+  /* Pointer events go through to the canvas for click-and-hold; the text
+     children re-enable pointer-events for selection. */
+  pointer-events: none;
+}
+
+/* Fixed to the viewport, so the question can rise without being clipped by
+   hero-section's overflow:hidden. */
+.hero-inscription {
+  position: fixed;
+  inset: 0;
+  z-index: 8;
+  pointer-events: none;
+  /* The rising question (scale + tracking at full --rise) pokes past the
+     viewport edge and gives the page a sideways scroll on narrow screens;
+     clipping at the fixed container (= viewport) costs nothing visually. */
+  overflow: hidden;
+  /* The question is gone before it reaches the navbar. */
+  opacity: calc(1 - clamp(0, (var(--p, 0) - 0.15) / 0.23, 1));
+  will-change: opacity;
+}
+
+/* Pre-lock prompt — single carved word centered just below the seal area.
+   Color pulses (not opacity, so we can tie base opacity to --charge — as
+   the user starts holding, the prompt fades out). Hidden post-lock. */
+.hero-prompt {
+  position: fixed;
+  top: 66%;
+  left: 50%;
+  z-index: 7;
+  translate: -50% -50%;
+  font-family: 'Syne Mono', ui-monospace, monospace;
+  font-weight: 400;
+  font-size: 11px;
+  letter-spacing: 0.62em;
+  text-transform: uppercase;
+  /* phosphor halo (teal light) + a small dark core for contrast on the seal */
+  text-shadow:
+    0 0 14px rgb(var(--accent-rgb) / 0.5),
+    0 0 4px rgba(0, 0, 0, 0.7);
+  /* As --charge climbs past ~0.05 the prompt fades — user has engaged. */
+  opacity: calc((1 - clamp(0, var(--charge, 0) * 20, 1)) * 0.9);
+  animation:
+    hero-prompt-arrive 1.4s ease-out 1.8s both,
+    hero-prompt-breathe 2.4s ease-in-out infinite 3.2s;
+  /* A real <button> now — the keyboard door into the ritual (hold Enter).
+     Pointer users still charge via the ball itself: pointer-events stays off
+     so the prompt never intercepts the canvas. */
+  background: none;
+  border: 0;
+  padding: 0;
+  pointer-events: none;
+  user-select: none;
+  will-change: color, opacity;
+}
+
+/* Focus affordance: no outline box — a rectangle would slice across the seal's
+   ring arc. The focused prompt drops just BELOW the arc into open air (the arc
+   sits at ~50% + 17vh of the seal's projected radius; 21vh clears it, and the
+   190px floor mirrors the seal's own min-size on short viewports), stops
+   breathing, holds steady-bright, and reveals the key hint. */
+.hero-prompt:focus-visible {
+  outline: none;
+  top: calc(50% + max(21vh, 190px));
+  animation: hero-prompt-arrive 0.3s ease-out both;
+}
+
+/* Sighted keyboard users need to know WHICH key to hold — reveal it only on
+   focus so the pointer encounter stays a single carved word. */
+.hero-prompt:focus-visible::after {
+  content: ' · ENTER';
+  color: rgb(var(--accent-rgb) / 0.6);
+}
+
+@keyframes hero-prompt-arrive {
+  from { color: rgb(var(--accent-rgb) / 0); }
+  to   { color: rgb(var(--accent-rgb) / 0.85); }
+}
+
+@keyframes hero-prompt-breathe {
+  0%, 100% { color: rgb(var(--accent-rgb) / 0.85); }
+  50%      { color: rgb(var(--accent-rgb) / 0.40); }
+}
+
+.hero-section--revealed .hero-prompt {
+  opacity: 0;
+  animation: none;
+  transition: opacity 0.6s ease-out;
+}
+
+/* Section marker — a faint living-light inscription running UP the left
+   margin (vertical spine), not a top HUD tape. Hidden pre-lock; reveals only
+   after the engine activates so the initial encounter is "seal + ring + HOLD"
+   with nothing else competing. The hairline beside it is the same phosphor
+   teal as the glyph swaps — a trace of light in living tissue, not chiselled
+   stone. */
+.section-header {
+  position: fixed;
+  top: 50%;
+  /* Hugs the content column, so on a wide screen the name sits by its copy. */
+  left: max(26px, calc((100vw - var(--content-max)) / 2 - 64px));
+  z-index: 9;
+  translate: 0 -50%;
+  /* Every length below is in em, so the whole spine scales with this. */
+  font-size: clamp(10px, 0.4vw + 5px, 16px);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 1.0s ease-out 0.4s;
+}
+
+/* The veins reach the screen edge; a soft dark pool keeps the name legible
+   where they cross behind it. */
+.section-header::after {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  inset: -3em -2.4em;
+  border-radius: 50%;
+  background: radial-gradient(ellipse at center, rgba(0, 0, 0, 0.9) 35%, rgba(0, 0, 0, 0.55) 65%, transparent 100%);
+  filter: blur(12px);
+  pointer-events: none;
+}
+
+.section-header--in { opacity: 1; }
+
+/* Living-light hairline — sits to the left of the vertical text, fading out
+   at both ends so it reads as a soft filament, not a ruled border. */
+.section-header::before {
+  content: '';
+  position: absolute;
+  left: -0.8em;
+  top: 50%;
+  translate: 0 -50%;
+  width: 1px;
+  height: 16.8em;
+  background: linear-gradient(
+    to bottom,
+    transparent,
+    rgb(var(--accent-rgb) / 0.55) 14%,
+    rgb(var(--accent-rgb) / 0.55) 86%,
+    transparent
+  );
+  animation: sh-breathe 7s ease-in-out infinite;
+}
+
+.section-header__inner {
+  position: relative;
+  width: 1.6em;
+  height: 19.2em;    /* reading length of the longest vertical title */
+  overflow: clip;
+}
+
+.section-header__slot {
+  position: absolute;
+  inset: 0;
+  /* read bottom-to-top along the spine */
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Syne Mono', ui-monospace, monospace;
+  font-weight: 400;
+  letter-spacing: 0.42em;
+  text-transform: uppercase;
+  /* teal light, not grey label — reads as a filament of the organism's glow */
+  color: rgba(190, 234, 219, 0.95);
+  text-shadow: 0 0 3px rgba(0, 0, 0, 1), 0 0 14px rgb(var(--accent-rgb) / 0.5);
+  white-space: nowrap;
+  /* Remounted (key=active) on each section change → slides up into place. The
+     hairline carries the steady breath; the label just arrives. */
+  animation: sh-enter 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
+  will-change: translate, opacity;
+}
+
+@keyframes sh-enter {
+  from { translate: 0 16px; opacity: 0; }
+  to   { translate: 0 0;    opacity: 1; }
+}
+
+@keyframes sh-breathe {
+  0%, 100% { opacity: 0.74; }
+  50%      { opacity: 1; }
+}
+
+/* Mobile: the fixed spine collides with content on narrow screens — the same
+   name lives as a section-top eyebrow instead (.section-eyebrow per section). */
+@media (max-width: 760px) {
+  .section-header { display: none; }
+}
+
+/* === Charge indicator ===
+   Sits centered with the seal (gl-stage canvas centers seal in viewport).
+   Background ring is the always-on "engine outline" — a faint potential
+   circle hinting that the seal is interactive. The fill rises clockwise
+   as --charge climbs (0→1) during hold. Locked → both fade out.
+   Slow idle breath on the base ring so it reads as alive, not static. */
+.charge-indicator {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  z-index: 6;
+  pointer-events: none;
+  translate: -50% -50%;
+  opacity: 0;
+  animation: charge-indicator-arrive 1.6s cubic-bezier(0.2, 0.8, 0.2, 1) 1.4s forwards;
+}
+
+@keyframes charge-indicator-arrive {
+  from { opacity: 0; scale: 0.92; }
+  to   { opacity: 1; scale: 1;    }
+}
+
+.charge-indicator--locked {
+  opacity: 0;
+  transition: opacity 0.9s ease-out;
+  animation: none;
+}
+
+.charge-indicator svg {
+  display: block;
+  /* clockwise from top: SVG circles start at 3 o'clock; rotating -90deg
+     puts the start at 12 so the arc fills the natural way. */
+  rotate: -90deg;
+}
+
+.charge-indicator__base {
+  fill: none;
+  stroke: rgb(var(--accent-rgb) / 0.32);
+  stroke-width: 1.2;
+  animation: charge-base-breath 3.0s ease-in-out infinite;
+}
+
+@keyframes charge-base-breath {
+  0%, 100% { stroke: rgb(var(--accent-rgb) / 0.28); stroke-width: 1; }
+  50%      { stroke: rgb(var(--accent-rgb) / 0.55); stroke-width: 1.4; }
+}
+
+.charge-indicator__fill {
+  fill: none;
+  stroke: rgb(var(--accent-rgb) / 1);
+  stroke-width: 2.6;
+  stroke-linecap: round;
+  filter: drop-shadow(0 0 6px rgb(var(--accent-rgb) / 0.8));
+  transition: stroke-dashoffset 0.08s linear;
+}
+
+/* The question — the only inscription. Hidden pre-lock; once the seal is
+   awake and drifts left, it stands in the right half. Three independent
+   layers of movement compose:
+   1. `translate` (CSS prop, scroll-driven) lift on --p
+   2. `scale`     (CSS prop, scroll-driven) grow on --p
+   3. `transform` (animation) float — independent life
+   The CSS properties translate/scale apply BEFORE `transform` so animation
+   doesn't fight them. */
+.hero-inscription__bottom {
+  position: absolute;
+  left: calc(50% + 0.04 * min(100vw, var(--content-max)));
+  /* A touch above the seal's centre line, into the open space. */
+  top: 45%;
+  font-family: 'Boldonse', system-ui, sans-serif;
+  font-weight: 400;
+  font-size: clamp(40px, 6.4vw, 150px);
+  letter-spacing: -0.012em;
+  /* "Alive" keeps its capital A — the Boldonse lowercase 'a' read as awkward. */
+  text-transform: none;
+  color: rgba(245, 244, 240, 0.94);
+  text-shadow:
+    0 0 28px rgba(4, 7, 10, 0.92),
+    0 0 60px rgb(var(--accent-deep-rgb) / 0.18);
+  white-space: nowrap;
+  translate: 0 -50%;
+  transform-origin: left center;
+  opacity: 0;
+  transition: opacity 0.8s ease 0.15s;
+  pointer-events: auto;
+  user-select: none;
+  will-change: translate, scale, transform;
+}
+
+.hero-section--revealed .hero-inscription__bottom {
+  opacity: 1;
+  /* Rises as the page scrolls and fades out before it reaches the navbar
+     (.hero-inscription opacity). Pure --p, so scrolling back reverses it. */
+  --rise: clamp(0, calc(var(--p, 0) / 0.85), 1);
+  translate: 0 calc(-50% - var(--rise) * 62vh);
+  scale: calc(1 + var(--rise) * 0.2);
+  letter-spacing: calc(-0.012em + var(--rise) * 0.12em);
+  /* Enters from the right at the pace of the camera's sideways move: it was
+     always there, just outside the frame, and the gaze arrives at it. */
+  animation:
+    hero-arrive 1.1s cubic-bezier(0.16, 1, 0.3, 1) both,
+    motion-float 11s ease-in-out 1.1s infinite;
+}
+
+@keyframes hero-arrive {
+  from { margin-left: 34vw; }
+  to   { margin-left: 0; }
+}
+
+.hero-inscription__lead {
+  position: relative;
+  display: block;
+  width: fit-content;
+  margin: 0 0 0.3em 0.08em;
+  font-family: 'Syne Mono', ui-monospace, monospace;
+  font-size: clamp(15px, 1.35vw, 26px);
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: rgba(240, 250, 246, 1);
+  text-shadow:
+    0 0 4px rgba(0, 0, 0, 1),
+    0 0 12px rgba(0, 0, 0, 0.95);
+}
+
+/* It sits right under the core's glow and over the densest veins; text-shadow
+   alone can't hold thin mono strokes there, so a soft dark pool backs it. */
+.hero-inscription__lead::before {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  inset: -70% -12%;
+  border-radius: 50%;
+  background: radial-gradient(ellipse at center, rgba(0, 0, 0, 0.92) 30%, rgba(0, 0, 0, 0.6) 62%, transparent 100%);
+  filter: blur(10px);
+}
+
+@keyframes motion-float {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-5px); }
+}
+
+/* Global signature — fixed bottom, persistent across all sections. No
+   scroll-driven fade or drift; it's a stamped plate on the chamber. */
+.signature {
+  position: fixed;
+  bottom: 26px;
+  left: 50%;
+  z-index: 9;
+  translate: -50% 0;
+  font-family: 'Syne Mono', ui-monospace, monospace;
+  font-weight: 400;
+  font-size: clamp(10px, 0.3vw + 6px, 14px);
+  letter-spacing: 0.42em;
+  text-transform: uppercase;
+  /* teal light, same language as the section marker — a touch dimmer since it
+     is persistent at the base across every section */
+  color: rgba(170, 222, 205, 0.6);
+  text-shadow:
+    0 0 12px rgb(var(--accent-rgb) / 0.38),
+    0 0 4px rgba(0, 0, 0, 0.6);
+  white-space: nowrap;
+  pointer-events: none;
+  user-select: none;
+  opacity: 0;
+  transition: opacity 1.0s ease-out 0.8s;
+}
+
+.signature::before {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  inset: -1.6em -1.2em;
+  border-radius: 50%;
+  background: radial-gradient(ellipse at center, rgba(0, 0, 0, 0.85) 30%, rgba(0, 0, 0, 0.5) 62%, transparent 100%);
+  filter: blur(12px);
+  pointer-events: none;
+}
+
+.signature--in { opacity: 1; }
+
+@media (max-width: 760px) {
+  /* No side room on a phone: the seal rises a little and the question sits
+     centred below it. */
+  .hero-inscription__bottom {
+    left: 50%;
+    top: auto;
+    bottom: 20vh;
+    font-size: clamp(44px, 14vw, 96px);
+    text-align: center;
+    translate: -50% 0;
+    transform-origin: center;
+  }
+  /* The seal doesn't travel sideways on a phone, so neither does the gaze. */
+  .hero-section--revealed .hero-inscription__bottom {
+    translate: -50% calc(var(--rise) * -78vh);
+    animation: motion-float 11s ease-in-out infinite;
+  }
+  .hero-inscription__lead {
+    margin-inline: auto;
+  }
+  /* The plate lands where full-width text flows —
+     on narrow screens the chamber framing yields to legibility. */
+  .signature {
+    display: none;
+  }
+  /* The charge ring is a fixed 138px radius; 66% of a phone viewport lands
+     inside the arc. Drop the word below the ring like the focus rule does. */
+  .hero-prompt {
+    top: calc(50% + 168px);
+  }
+}

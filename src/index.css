@@ -17,63 +17,38 @@
 }
 
 :root {
-  /* --p is the hero→about scroll progress, written by App.tsx (0..1).
-     All colors are color-mix lerps in OKLab keyed off it — one source of
-     truth, one room that dims continuously. No section boundary visible. */
+  /* Hero→about scroll progress (0..1), written by App.tsx. */
   --p: 0;
-  /* --dim is the visual transformation gate, written by App.tsx. It stays 0
-     until --p crosses ~0.55 (HUD animations have time to exit cleanly), then
-     ramps to 1 by --p = 1. Body bg, fg, accent, canvas clearColor and the
-     particle fade all key off this single value — one chapter-break event. */
-  --dim: 0;
 
-  /* Pure black void — the seal is the only light source. No warm tint
-     (read as "brudno"), no vignette darkening (read as "dirty"). Maximum
-     contrast for the engine's energy to do the work. */
-  --bg-hero: #000000;
-  --bg-vault: #000000;
-  --bg: var(--bg-vault);
+  /* Pure black void — the seal is the only light source. */
+  --bg: #000000;
 
-  /* Foreground text inverts as the bg darkens. Hero text falls into shadow,
-     about inscription emerges in warm parchment. */
-  --fg-hero: #141414;
-  --fg-vault: #e8e6e3;
-  --fg: color-mix(in srgb, var(--fg-hero), var(--fg-vault) calc(var(--dim, 0) * 100%));
+  --fg: #e8e6e3;
+  /* Text tiers for the fixed UI (navbar, cursor), legible over the veins. */
+  --fg-strong: rgba(232, 230, 227, 0.92);
+  --fg-soft: rgba(232, 230, 227, 0.62);
 
-  /* Muted variant for labels/hairlines — same lerp, lower contrast. */
-  --fg-muted: color-mix(in srgb, rgba(20, 20, 20, 0.5), rgba(232, 230, 227, 0.55) calc(var(--dim, 0) * 100%));
+  /* Interface teal as channels, so any rule can set its own alpha:
+     rgb(var(--accent-rgb) / 0.5). --accent-deep-rgb is the darker patina. */
+  --accent-rgb: 122 196 175;
+  --accent-deep-rgb: 61 110 99;
+  --accent: rgb(var(--accent-rgb));
+  --accent-shadow: rgb(var(--accent-rgb) / 0.7);
 
-  /* HUD text tiers — navbar/telemetry/cursor must keep contrast against the
-     darkening room. Same lerp at three opacity levels. */
-  --fg-strong: color-mix(in srgb, rgba(22, 22, 22, 0.85), rgba(232, 230, 227, 0.92) calc(var(--dim, 0) * 100%));
-  --fg-soft: color-mix(in srgb, rgba(22, 22, 22, 0.55), rgba(232, 230, 227, 0.62) calc(var(--dim, 0) * 100%));
-  --fg-faint: color-mix(in srgb, rgba(22, 22, 22, 0.28), rgba(232, 230, 227, 0.35) calc(var(--dim, 0) * 100%));
-
-  /* Accent teal: subdued on light, luminous on dark. Shadow tracks. */
-  --accent-low: rgb(61, 110, 99);
-  --accent-high: rgb(122, 196, 175);
-  --accent: color-mix(in srgb, var(--accent-low), var(--accent-high) calc(var(--dim, 0) * 100%));
-  --accent-shadow: color-mix(in srgb, rgba(61, 110, 99, 0.5), rgba(122, 196, 175, 0.7) calc(var(--dim, 0) * 100%));
-
-  /* ===== Fluid world tokens (spec 2026-06-10) =====
-     Wszystko płynne przez clamp(); sufity rosną aż do ~2000px szerokości
-     okna. Miara wiersza prozy ograniczona globalnie — szerokość wypełnia
-     kompozycja (kolumny, seal), nigdy rozciągnięty tekst. */
-  --pad: clamp(14px, 2vw, 56px);          /* boczny padding — małe przestrzenie */
-  --fs-hero: clamp(56px, 10vw, 224px);    /* TYLKO słowo "motion" (Boldonse);
-                                             hero zostaje jak jest — token czeka
-                                             na kalibrację w cockpit.css */
-  --fs-title: clamp(26px, 3.4vw, 74px);   /* tytuły sekcji */
-  --fs-band: clamp(20px, 2.8vw, 58px);    /* nazwy pasm THE CRAFT, tytuł Work */
-  --fs-body: clamp(15px, 0.6vw + 10px, 23px);
+  /* Fluid sizes: everything scales through clamp() up to ~2000px windows. */
+  --pad: clamp(14px, 2vw, 56px);
+  --fs-title: clamp(26px, 3.4vw, 74px);
+  /* The words that carry meaning: manifesto, values, the close. UI labels
+     stay in Syne Mono. */
+  --font-voice: 'Syne Mono', ui-monospace, monospace;
   --fs-small: clamp(11px, 0.4vw + 7px, 15px);
-  --gap-fluid: clamp(18px, 3vw, 72px);
   --sec-pad: clamp(56px, 9vh, 150px);
   --content-safe-pad: clamp(28px, 3.8vw, 78px);
-  --measure: 56ch;
-  /* Teal type family — legible over the live seal, patina (sea-teal / sage) not
-     mint. --teal-dim is a hairline-only ink. */
-  --teal: #5f9587;
+  /* Content column: on a wide screen the composition doesn't spread to the
+     edges. Must match CONTENT_MAX in App.tsx (seal positions). */
+  --content-max: 1600px;
+  --gutter: max(var(--pad), var(--content-safe-pad), calc((100vw - var(--content-max)) / 2));
+  /* Teal type family — patina, not mint. --teal-dim is a hairline-only ink. */
   --teal-soft: #a7d0c4;
   --teal-dim: #2f5149;
 }
@@ -87,8 +62,7 @@ html, body {
   padding: 0;
   color: var(--fg);
   font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
-  /* kill rubber-band over-scroll bounce; otherwise body bg shows above hero
-     without noise/vignette/canvas overlays, breaking the decayed-cockpit feel */
+  /* No rubber-band bounce: it would pull the page off the fixed canvas. */
   overscroll-behavior: none;
   /* The soft legibility pools (::before, inset -18%/-12%) intentionally bleed
      past their sections; clip keeps that paint without giving the page a
@@ -125,7 +99,7 @@ body {
 }
 
 /* Visitors who ask for calm get it everywhere at once: every keyframe loop
-   (breathing prompts, drifting dust, pulsing dots) collapses to its final
+   (breathing prompts, pulsing rings) collapses to its final
    frame and reveals become cuts. Scroll-driven properties (--p, --rise) are
    untouched — they move only when the visitor scrolls. JS motion sources gate
    separately on prefersReducedMotion (src/motion.ts). */
@@ -164,47 +138,19 @@ body {
 .hero-section {
   position: relative;
   width: 100%;
-  /* Tall scroll track: the seal + motion are fixed, so this height is pure
-     scroll distance over which the hero→about transition (--p) unfolds. ~2.4
-     screens gives the absorption + inscription room to breathe instead of
-     firing off in a third of a screen. Keep in sync with HERO_SPAN in App.tsx. */
+  /* Tall scroll track: the seal and the question are fixed, so this height is
+     pure scroll distance for the hero→about progress (--p). Keep in sync with
+     HERO_SPAN in App.tsx. */
   height: 240vh;
   z-index: 1;
   overflow: hidden;
 }
-
-/* Vignette removed — on pure black it had no surface to darken and read
-   as a muddy ellipse drawn on top of the void. The seal's bloom carries
-   the framing now. */
 
 .gl-stage {
   position: fixed;
   inset: 0;
   z-index: 0;
   opacity: 0;
-  /* Single intro fade-in; no scroll-driven fade — the seal stays sharp until
-     about's solid bg simply covers it. Same dark value on both sides means
-     the transition is invisible apart from the seal disappearing. */
+  /* Fades in once, when the engine can draw its first frame (glScene). */
   transition: opacity 0.6s ease-out;
-}
-
-.placeholder-section {
-  position: relative;
-  width: 100%;
-  height: 100vh;
-  z-index: 1;
-  display: grid;
-  place-items: center;
-  background:
-    radial-gradient(ellipse at 30% 20%, rgba(60, 60, 60, 0.4), transparent 60%),
-    radial-gradient(ellipse at 70% 80%, rgba(40, 40, 50, 0.3), transparent 60%),
-    #14141a;
-  color: rgba(220, 220, 220, 0.55);
-  font-family: 'Syne Mono', ui-monospace, monospace;
-  letter-spacing: 0.4em;
-  font-size: 13px;
-}
-
-.placeholder-section__label {
-  text-transform: uppercase;
 }
