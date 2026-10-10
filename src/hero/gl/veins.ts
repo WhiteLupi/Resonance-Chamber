@@ -148,11 +148,13 @@ const vertexShader = /* glsl */ `
 
 const fragmentShader = /* glsl */ `
   precision highp float;
+  #define EDGE_FADE_PX 90.0
   uniform vec3 uColor;
   uniform vec3 uTipColor;
   uniform float uOpacity;
   uniform float uPixelRatio;
   uniform float uGlowPx;
+  uniform vec2 uViewport;
 
   varying float vDist;
   varying float vHalf;
@@ -167,7 +169,11 @@ const fragmentShader = /* glsl */ `
     float core = clamp((vHalf - d) * uPixelRatio + 0.5, 0.0, 1.0);
     float outside = max(d - vHalf, 0.0) / uGlowPx;
     float glow = vGlow * exp(-outside * outside * 3.0);
-    float a = max(core, glow) * vAlpha * uOpacity;
+    // The veins thin out at the screen edge instead of being cut by it.
+    vec2 px = gl_FragCoord.xy / uPixelRatio;
+    vec2 edge = min(px, uViewport - px);
+    float fade = smoothstep(0.0, EDGE_FADE_PX, min(edge.x, edge.y));
+    float a = max(core, glow) * vAlpha * uOpacity * fade;
     if (a < 0.002) discard;
     vec3 col = mix(uColor, uTipColor, clamp(vTip, 0.0, 1.0));
     // A hot centre lifts the filament toward white, standing in for bloom.

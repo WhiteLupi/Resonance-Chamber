@@ -375,16 +375,6 @@ function App() {
         </p>
       </header>
       <div ref={stageRef} className="gl-stage" aria-hidden="true" />
-      <div className={`edge-void${locked ? ' edge-void--in' : ''}`} aria-hidden="true">
-        <span className="edge-void__edge edge-void__edge--top" />
-        <span className="edge-void__edge edge-void__edge--bottom" />
-        <span className="edge-void__edge edge-void__edge--left" />
-        <span className="edge-void__edge edge-void__edge--right" />
-      </div>
-      {/* Darkness over the space above the navbar — the question slides up into it
-          and vanishes by occlusion, intact. The ragged lower edge is a baked
-          alpha texture, not a live SVG filter. */}
-      <div className={`void-ceiling${locked ? ' void-ceiling--in' : ''}`} aria-hidden="true" />
       <ChargeIndicator locked={locked} />
       <SectionHeader locked={locked} />
       <Signature locked={locked} />

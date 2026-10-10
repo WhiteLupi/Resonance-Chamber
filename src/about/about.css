@@ -178,10 +178,8 @@
   .about-section {
     height: auto;
   }
-  /* One mobile gutter (22px) across every section. The TOP rhythm is larger
-     here than the shared 88px because the fixed .void-ceiling paints solid black
-     down to ~14vh (see cockpit.css); at 88px the eyebrow sat entirely under that
-     band and read as invisible (the eyebrow fading out). Clear the ceiling. */
+  /* One mobile gutter (22px) across every section; the larger top keeps the
+     eyebrow clear of the fixed navbar. */
   .about-stage {
     position: static;
     height: auto;

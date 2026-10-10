@@ -1,5 +1,5 @@
 /* Fixed UI over the canvas: hero question and prompt, charge ring, section
-   spine, signature, navbar, cursor and the void frame. */
+   spine, signature, navbar and cursor. */
 
 .hero-section {
   /* Pointer events go through to the canvas for click-and-hold; the text
@@ -21,7 +21,9 @@
      clipping at the fixed container (= viewport) costs nothing visually. */
   overflow: hidden;
   translate: calc(var(--mx, 0) * -12px) calc(var(--my, 0) * -8px);
-  will-change: translate;
+  /* The question is gone before it reaches the navbar. */
+  opacity: calc(1 - clamp(0, (var(--p, 0) - 0.15) / 0.23, 1));
+  will-change: translate, opacity;
 }
 
 /* Pre-lock prompt — single carved word centered just below the seal area.
@@ -283,9 +285,8 @@
 
 .hero-section--revealed .hero-inscription__bottom {
   opacity: 1;
-  /* Travels UP intact and slides into the darkness at the top (.void-ceiling),
-     where it's occluded. Pure --p, so scrolling back down it descends and
-     reforms. */
+  /* Rises as the page scrolls and fades out before it reaches the navbar
+     (.hero-inscription opacity). Pure --p, so scrolling back reverses it. */
   --rise: clamp(0, calc(var(--p, 0) / 0.85), 1);
   translate: 0 calc(-50% - var(--rise) * 62vh);
   scale: calc(1 + var(--rise) * 0.2);
@@ -360,6 +361,17 @@
   transition: opacity 1.0s ease-out 0.8s;
 }
 
+.signature::before {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  inset: -1.6em -1.2em;
+  border-radius: 50%;
+  background: radial-gradient(ellipse at center, rgba(0, 0, 0, 0.85) 30%, rgba(0, 0, 0, 0.5) 62%, transparent 100%);
+  filter: blur(12px);
+  pointer-events: none;
+}
+
 .signature--in { opacity: 1; }
 
 @media (max-width: 760px) {
@@ -395,9 +407,8 @@
 }
 
 
-/* Carved/etched. Legibility over the tendrils comes from the global .edge-void
-   frame (see App.tsx) darkening the screen perimeter; here just a faint teal
-   hairline below, suggesting an engraved seam in the wall. */
+/* A soft dark pool behind the links keeps them legible over the veins; a
+   faint teal hairline below. */
 .cockpit-navbar {
   position: fixed;
   top: 22px;
@@ -418,6 +429,17 @@
   transition:
     transform 0.75s cubic-bezier(0.2, 0.8, 0.2, 1),
     opacity 0.6s ease;
+}
+
+.cockpit-navbar::before {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  inset: -40% 8%;
+  border-radius: 50%;
+  background: radial-gradient(ellipse at center, rgba(0, 0, 0, 0.85) 30%, rgba(0, 0, 0, 0.5) 62%, transparent 100%);
+  filter: blur(16px);
+  pointer-events: none;
 }
 
 .cockpit-navbar::after {
@@ -703,130 +725,5 @@
   /* Finger-sized targets: the label stays small, the touchable box doesn't. */
   .cockpit-navbar__link {
     padding: 14px 4px;
-  }
-}
-
-/* === The void — darkness swallows the tendril tips on every edge, so the
-   organism dissolves into black at the perimeter while the lit core holds the
-   centre. The ragged boundaries are baked alpha textures captured from the
-   original SVG turbulence/displacement filter, so runtime only composites
-   static PNGs and opacity. */
-.edge-void {
-  position: fixed;
-  top: -8vh;
-  left: -3vw;
-  right: -3vw;
-  bottom: -8vh;
-  z-index: 4;
-  pointer-events: none;
-  opacity: 0;
-  transition: opacity 0.9s ease;
-}
-.edge-void--in {
-  opacity: 1;
-}
-
-.edge-void__edge {
-  position: absolute;
-  display: block;
-  pointer-events: none;
-}
-
-/* Baked tile: 2048×240, solid black for the first ~100px, torn over the next
-   ~110px. A plain solid strip backs the overscan + the tile's solid head, so
-   no soft gradient ever shows — black stays black up to the ragged boundary. */
-.edge-void__edge--top,
-.edge-void__edge--bottom {
-  left: 0;
-  right: 0;
-  height: 300px;
-  background:
-    linear-gradient(#000, #000) left top / 100% 60px no-repeat,
-    url('/void-edge-h.png') left 40px / 2048px 240px repeat-x;
-}
-
-.edge-void__edge--top {
-  top: 0;
-}
-
-.edge-void__edge--bottom {
-  bottom: 0;
-  transform: scaleY(-1);
-}
-
-/* Sides hug the viewport edge tighter than the horizontal bands — the torn
-   zone must end before the content-safe padding (~55px) so it only grazes
-   the about column with outer wisps, like the original live filter did. */
-.edge-void__edge--left,
-.edge-void__edge--right {
-  top: 0;
-  bottom: 0;
-  width: 200px;
-  background:
-    linear-gradient(#000, #000) left top / 24px 100% no-repeat,
-    url('/void-edge-v.png') left top / 200px 2048px repeat-y;
-}
-
-.edge-void__edge--left {
-  left: 0;
-}
-
-.edge-void__edge--right {
-  right: 0;
-  transform: scaleX(-1);
-}
-
-/* Short viewports: the horizontal bands are fixed-pixel (300px) while the
-   sections' safe padding scales with vh — on a low window the torn zone would
-   swallow nearly half the screen and drown the closing headline. Scale the
-   bands down (same baked texture at half size, like the mobile ceiling) so the
-   frame keeps its proportion to the room. */
-@media (max-height: 700px) {
-  .edge-void__edge--top,
-  .edge-void__edge--bottom {
-    height: 160px;
-    background:
-      linear-gradient(#000, #000) left top / 100% 30px no-repeat,
-      url('/void-edge-h.png') left 20px / 1024px 120px repeat-x;
-  }
-}
-
-/* Darkness at the top of the void — the space above (and behind) the navbar is
-   solid black so the question slides up INTO it and disappears, never visible
-   passing through the top. The lower boundary is the baked horizontal void
-   edge; no live filter. */
-.void-ceiling {
-  position: fixed;
-  top: -10vh;
-  left: -10vw;
-  right: -10vw;
-  /* fixed-depth ceiling: the torn boundary starts right under the navbar
-     (~80px) instead of tracking viewport height and sagging into the frame */
-  height: calc(10vh + 250px);
-  z-index: 9;
-  pointer-events: none;
-  /* solid black down to the baked torn band — the word is occluded by SOLID
-     darkness, never seen through a translucent haze */
-  background:
-    linear-gradient(#000, #000) left top / 100% calc(100% - 180px) no-repeat,
-    url('/void-edge-h.png') left bottom / 2048px 240px repeat-x;
-  opacity: 0;
-  transition: opacity 0.9s ease;
-}
-.void-ceiling--in { opacity: 1; }
-
-@media (max-width: 760px) {
-  .edge-void {
-    display: none;
-  }
-
-  .void-ceiling {
-    top: -6vh;
-    left: -8vw;
-    right: -8vw;
-    height: 20vh;
-    background:
-      linear-gradient(#000, #000) left top / 100% calc(100% - 80px) no-repeat,
-      url('/void-edge-h.png') left bottom / 1024px 120px repeat-x;
   }
 }

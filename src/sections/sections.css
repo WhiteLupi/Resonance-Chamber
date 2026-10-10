@@ -1,6 +1,6 @@
 /* Values ("WHAT I KEEP") + Contact ("THE TRUTH").
    Both live inside the same chamber as hero/about: transparent bg so the seal
-   stays visible, the fixed edge-void/signature frame them, and one instrument
+   stays visible, and one instrument
    (Syne Mono + phosphor teal, Boldonse for the words that carry weight)
    carries through. */
 
@@ -162,11 +162,8 @@
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  /* The closing block rests at the page bottom, inside the fixed edge-void
-     frame. The torn band's dense zone is fixed-pixel (~180px deep) and only
-     8vh of it hangs offscreen, so --sec-pad alone leaves the last line in
-     the black on anything but a tall window. */
-  padding-bottom: max(var(--sec-pad), calc(220px - 8vh));
+  /* The last line clears the fixed signature at the page bottom. */
+  padding-bottom: calc(var(--sec-pad) + 48px);
 }
 
 /* Centred under the seal, which settles high for the farewell. */
