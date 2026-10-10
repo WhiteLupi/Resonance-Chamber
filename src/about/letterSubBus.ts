@@ -1,6 +1,6 @@
 import { SHAPES, type ShapeKind } from '../glyphs';
 
-// Voice v2 — letter substitution bus.
+// Letter substitution bus.
 // Char state machine: idle → entering → held → exiting → idle. Hover-in-radius
 // keeps a char held indefinitely; when the radius leaves, it cascades back out.
 // Ambient scheduler triggers a single brief enter+exit cycle on a random char

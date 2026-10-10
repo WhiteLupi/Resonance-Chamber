@@ -10,9 +10,8 @@ import { Cursor } from './hero/Cursor'
 import { ChargeIndicator } from './hero/ChargeIndicator'
 import { SectionHeader } from './hero/SectionHeader'
 import { Signature } from './hero/Signature'
-import { progressStore } from './about/dwellStore'
 import { prefersReducedMotion } from './motion'
-import { ACCENT } from './hero/gl/constants'
+import { ACCENT, MOBILE_MAX_W } from './hero/gl/constants'
 
 function App() {
   const stageRef = useRef<HTMLDivElement>(null)
@@ -169,29 +168,17 @@ function App() {
     };
   }, []);
 
-  // Scroll-driven scene state — hero→about progress AND the travelling-seal
-  // journey — computed in ONE rAF-coalesced pass. These used to be two separate
-  // window 'scroll' listeners, each doing synchronous layout reads (the journey
-  // one re-ran querySelectorAll + getBoundingClientRect over every text block on
-  // EVERY scroll event). Lenis fires scroll densely, so that was many forced
-  // reflows per frame contending with the WebGL loop — the stutter felt while
-  // the seal rotates from about→work. Now scroll just flags a frame; we read
-  // layout at most once per rAF, and the text-block list is cached (refreshed on
-  // resize) instead of re-queried each time.
+  // Scroll-driven scene state — hero→about progress and the travelling-seal
+  // journey — in one rAF-coalesced pass. Lenis fires scroll densely; reading
+  // layout at most once per frame keeps it off the WebGL loop's budget.
   useEffect(() => {
     const root = document.documentElement;
 
     const setProgress = (p: number) => {
       const clamped = Math.max(0, Math.min(1, p));
-      progressStore.value = clamped;
-      // Vault-dark is the default room now — the seal lives in it from frame
-      // one, no hero→about transition. --dim stays pinned at 1 so every
-      // element that keys off it (fg, accent, hairlines) reads as vault-state
-      // immediately. --p still tracks scroll for the about-content reveal
-      // (inscription hairline, noise/vignette fade).
+      // --p drives the question's rise and the manifesto's reveal in CSS.
       sceneRef.current?.setProgress(clamped);
       root.style.setProperty('--p', clamped.toFixed(4));
-      root.style.setProperty('--dim', '1');
     };
 
     // Transition spans HERO_SPAN screens of scroll (the .hero-section height in
@@ -283,7 +270,7 @@ function App() {
     const computeJourney = () => {
       const scene = sceneRef.current;
       if (!scene) return;
-      const mobile = window.innerWidth <= 760;
+      const mobile = window.innerWidth <= MOBILE_MAX_W;
       const activeKeys = mobile ? KEYS_MOBILE : KEYS;
       const mid = window.innerHeight * (mobile ? 0.12 : 0.5);
       const secs = activeKeys
@@ -394,7 +381,7 @@ function App() {
         <span className="edge-void__edge edge-void__edge--left" />
         <span className="edge-void__edge edge-void__edge--right" />
       </div>
-      {/* Darkness over the space above the navbar — "motion" slides up into it
+      {/* Darkness over the space above the navbar — the question slides up into it
           and vanishes by occlusion, intact. The ragged lower edge is a baked
           alpha texture, not a live SVG filter. */}
       <div className={`void-ceiling${locked ? ' void-ceiling--in' : ''}`} aria-hidden="true" />

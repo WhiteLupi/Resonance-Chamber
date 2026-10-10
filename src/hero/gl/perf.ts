@@ -1,3 +1,5 @@
+import { MOBILE_MAX_W } from './constants';
+
 const HERO_PERF_DEFAULTS = {
   enableComets: true,
   enableSonarRings: true,
@@ -21,6 +23,6 @@ export const readHeroPerf = (): HeroPerf => {
     if (value === '0' || value === 'false') config[key] = false;
     if (value === '1' || value === 'true') config[key] = true;
   }
-  config.mobile = window.innerWidth <= 760 || matchMedia('(pointer: coarse)').matches;
+  config.mobile = window.innerWidth <= MOBILE_MAX_W || matchMedia('(pointer: coarse)').matches;
   return config;
 };

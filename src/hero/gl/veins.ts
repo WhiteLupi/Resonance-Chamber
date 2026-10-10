@@ -25,7 +25,7 @@ export const VEINS = {
   sway: 0.03,
   /** halo width in CSS px around every filament */
   glowPx: 3.5,
-  /** teal-white of the growing tips */
+  /** how far the growing tips stay accent before going to white */
   tipMix: 0.45,
 };
 
@@ -91,7 +91,7 @@ const vertexShader = /* glsl */ `
     float ahead = (front - n) * uMaxDist;
     float reveal = clamp(ahead / uTipLen, 0.0, 1.0);
 
-    // Growing tips carry a soft teal-white light that settles once locked.
+    // Growing tips carry a soft accent-white light that settles once locked.
     float settled = smoothstep(0.0, 1.0, uClock - uLockT);
     vTip = exp(-max(ahead, 0.0) / 0.1) * (1.0 - settled) * step(0.001, uCharge);
 

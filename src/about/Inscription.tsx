@@ -1,4 +1,3 @@
-import type { DwellPhase } from './useDwell';
 import { LetterSub } from './LetterSub';
 
 const LINES: string[] = [
@@ -7,17 +6,17 @@ const LINES: string[] = [
   'Feelings matter. To taste, to love, to dream is to feel.',
 ];
 
-type Props = { phase: DwellPhase };
-
-export function Inscription({ phase }: Props) {
+// Split per character for the glyph swaps, which a screen reader would spell
+// out; the same words reach it as plain prose from the .sr-only header (App).
+export function Inscription() {
   return (
-    <div className="inscription">
+    <div className="inscription" aria-hidden="true">
       {LINES.map((line, lineIdx) => (
         <p key={lineIdx} className="inscription__line" data-line={lineIdx}>
           <span className="inscription__copy">
-            <LetterSub text={line} lineIdx={lineIdx} active={phase.v2} />
+            <LetterSub text={line} lineIdx={lineIdx} />
             {lineIdx === LINES.length - 1 && (
-              <span className="inscription__caret" aria-hidden="true">{'▌'}</span>
+              <span className="inscription__caret">{'▌'}</span>
             )}
           </span>
         </p>

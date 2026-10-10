@@ -113,15 +113,7 @@ function CharSpan({ ch, lineIdx, charIdx }: { ch: string; lineIdx: number; charI
   );
 }
 
-export function LetterSub({
-  text,
-  lineIdx,
-  active,
-}: {
-  text: string;
-  lineIdx: number;
-  active: boolean;
-}) {
+export function LetterSub({ text, lineIdx }: { text: string; lineIdx: number }) {
   const eligible = useMemo(() => {
     const arr: number[] = [];
     for (let i = 0; i < text.length; i++) if (ELIGIBLE.test(text[i])) arr.push(i);
@@ -132,13 +124,6 @@ export function LetterSub({
     letterSubBus.registerLine(lineIdx, eligible);
     return () => letterSubBus.unregisterLine(lineIdx);
   }, [lineIdx, eligible]);
-
-  useEffect(() => {
-    // The ambient scheduler swaps letters on its own — that's exactly the kind
-    // of uninvited motion reduced-motion asks to silence. Pointer-driven swaps
-    // still work: they move only when the visitor moves.
-    if (active && !prefersReducedMotion()) letterSubBus.ensureRunning();
-  }, [active]);
 
   type Part = { type: 'space' | 'word'; text: string; start: number };
   const parts = useMemo<Part[]>(() => {
@@ -163,8 +148,6 @@ export function LetterSub({
   const containerRef = useRef<HTMLSpanElement>(null);
 
   useEffect(() => {
-    if (!active) return;
-
     let px = -9999;
     let py = -9999;
     const inRadius = new Set<number>();
@@ -194,10 +177,8 @@ export function LetterSub({
     };
 
     // The reconcile loop reads every char's rect each frame — that's the
-    // price of being bulletproof against scroll-under-cursor, but it must be
-    // paid only while the inscription is actually on screen. `active` never
-    // flips back off, so without this gate three loops would keep measuring
-    // ~200 rects/frame for the rest of the session, even down at Contact.
+    // price of being bulletproof against scroll-under-cursor, so it runs only
+    // while the inscription is on screen.
     let onScreen = false;
 
     const tick = () => {
@@ -248,7 +229,11 @@ export function LetterSub({
 
     const io = new IntersectionObserver(([entry]) => {
       onScreen = entry.isIntersecting;
-      if (onScreen && !raf) raf = requestAnimationFrame(tick);
+      if (!onScreen) return;
+      if (!raf) raf = requestAnimationFrame(tick);
+      // The ambient swaps are uninvited motion, so reduced motion skips them;
+      // pointer-driven swaps stay, they move only when the visitor moves.
+      if (!prefersReducedMotion()) letterSubBus.ensureRunning();
       // leaving the viewport lets the running tick see the flag and stop
     });
     if (containerRef.current) io.observe(containerRef.current);
@@ -263,7 +248,7 @@ export function LetterSub({
       document.removeEventListener('pointerout', onPointerOut);
       pendingTimers.forEach(t => window.clearTimeout(t));
     };
-  }, [active, lineIdx, text]);
+  }, [lineIdx, text]);
 
   return (
     <span ref={containerRef} className="letter-sub">

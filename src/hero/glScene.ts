@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { prefersReducedMotion } from '../motion';
-import { ACCENT, CORE_R } from './gl/constants';
+import { ACCENT, CORE_R, MOBILE_MAX_W } from './gl/constants';
 import { readHeroPerf } from './gl/perf';
 import { createComets } from './gl/comets';
 import { createCoreGlow, createSonarRings } from './gl/glows';
@@ -54,10 +54,7 @@ const CAM_DIST = 9.0;
 const MIN_VIEWH = 640;
 const HIT_FORGIVE = 2.4;
 const IDLE_RING_INTERVAL = 12.5;
-const MOBILE_MAX_W = 760;
 
-// Per-frame smoothing written as a rate, so 60Hz and 120Hz displays converge
-// identically. `perFrame` is the fraction covered in one 60Hz frame.
 // Frame guard: when frames keep missing the display's refresh, give up pixels
 // one step at a time. Never steps back up — a resolution that pumps reads as
 // flicker. Lines antialias in their shaders, so a lower ratio stays smooth.
@@ -96,6 +93,8 @@ function createFrameGuard(stepDown: () => boolean) {
   return { sample, reset };
 }
 
+// Per-frame smoothing written as a rate, so 60Hz and 120Hz displays converge
+// identically. `perFrame` is the fraction covered in one 60Hz frame.
 const smoothing = (perFrame: number, dt: number) => 1 - Math.pow(1 - perFrame, dt * 60);
 
 export function startHero(host: HTMLElement): HeroScene {
@@ -137,7 +136,7 @@ export function startHero(host: HTMLElement): HeroScene {
   const camera = new THREE.PerspectiveCamera(42, viewW / viewH, 0.1, 100);
   camera.position.set(0, 0, CAM_DIST);
 
-  // Off-axis key + teal rim from behind the shadow side: the core reads as a
+  // Off-axis key + accent rim from behind the shadow side: the core reads as a
   // lit sphere and the parallax orbit sweeps the shading across it.
   scene.add(new THREE.AmbientLight(0xffffff, 0.42));
   const keyLight = new THREE.DirectionalLight(0xffffff, 0.9);
@@ -221,7 +220,7 @@ export function startHero(host: HTMLElement): HeroScene {
   let motionT = 0;
   const broadcast = (t: number) => {
     sonar.trigger(t);
-    roots.pulse?.(t);
+    roots.pulse(t);
   };
   const press = () => {
     clickHeld = true;

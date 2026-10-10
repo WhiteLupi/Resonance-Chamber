@@ -1,10 +1,5 @@
-/* ancient sci-fi cockpit HUD — glass surfaces with scanlines, mono labels, red accents */
-
-/* Vertical inscription column. The seal renders on canvas behind; the text
-   frames it on a single vertical axis (invitation above, named outcome below).
-   The seal is the central glyph of one carved sentence — not an object
-   decorated with corner labels. Both lines + the signature reveal after the
-   user locks the engine (.hero-section--revealed). */
+/* Fixed UI over the canvas: hero question and prompt, charge ring, section
+   spine, signature, navbar, cursor and the void frame. */
 
 .hero-section {
   /* Pointer events go through to the canvas for click-and-hold; the text
@@ -21,7 +16,7 @@
   inset: 0;
   z-index: 8;
   pointer-events: none;
-  /* The rising "motion" word (scale + tracking at full --rise) pokes past the
+  /* The rising question (scale + tracking at full --rise) pokes past the
      viewport edge and gives the page a sideways scroll on narrow screens;
      clipping at the fixed container (= viewport) costs nothing visually. */
   overflow: hidden;
@@ -194,7 +189,7 @@
 
 /* Mobile: the fixed spine collides with content on narrow screens — the same
    name lives as a section-top eyebrow instead (.section-eyebrow per section). */
-@media (max-width: 720px) {
+@media (max-width: 760px) {
   .section-header { display: none; }
 }
 
@@ -367,10 +362,7 @@
 
 .signature--in { opacity: 1; }
 
-@media (max-width: 720px) {
-  .hero-inscription {
-    padding: 14vh 0 14vh;
-  }
+@media (max-width: 760px) {
   /* No side room on a phone: the seal rises a little and the question sits
      centred below it. */
   .hero-inscription__bottom {
@@ -413,10 +405,6 @@
   width: calc(100% - 96px);
   max-width: 1180px;
   padding: 12px 28px 14px;
-  display: grid;
-  grid-template-columns: 1fr auto;
-  align-items: center;
-  gap: 28px;
   z-index: 50;
 
   font-family: 'Syne Mono', ui-monospace, monospace;
@@ -514,19 +502,6 @@
   transform: scaleX(1);
 }
 
-.cockpit-navbar__sep {
-  color: var(--fg-faint);
-  font-size: clamp(12px, 0.3vw + 8px, 16px);
-  user-select: none;
-}
-
-.cockpit-navbar__right {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  font-size: clamp(10px, 0.3vw + 6px, 14px);
-  letter-spacing: 0.22em;
-}
 
 
 /* custom cursor */
@@ -714,15 +689,10 @@
   .cockpit-cursor { display: none; }
 }
 
-@media (max-width: 720px) {
+@media (max-width: 760px) {
   .cockpit-navbar {
     padding: 9px 16px;
-    gap: 14px;
     width: calc(100% - 32px);
-    grid-template-columns: 1fr;
-  }
-  .cockpit-navbar__right {
-    display: none;
   }
   .cockpit-navbar__center {
     justify-content: space-between;
@@ -822,7 +792,7 @@
 }
 
 /* Darkness at the top of the void — the space above (and behind) the navbar is
-   solid black so "motion" slides up INTO it and disappears, never visible
+   solid black so the question slides up INTO it and disappears, never visible
    passing through the top. The lower boundary is the baked horizontal void
    edge; no live filter. */
 .void-ceiling {
@@ -845,7 +815,7 @@
 }
 .void-ceiling--in { opacity: 1; }
 
-@media (max-width: 720px) {
+@media (max-width: 760px) {
   .edge-void {
     display: none;
   }

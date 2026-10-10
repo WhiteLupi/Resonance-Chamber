@@ -101,10 +101,6 @@ export function Navbar({ locked }: NavbarProps) {
           <span>TRUTH</span>
         </a>
       </div>
-      <div className="cockpit-navbar__right" aria-hidden="true">
-        <Glyph kind="triangle-half" />
-        <span>2026.05</span>
-      </div>
     </nav>
   );
 }
