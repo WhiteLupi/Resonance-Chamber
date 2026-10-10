@@ -346,32 +346,15 @@ function App() {
 
   return (
     <>
-      {/* Machine-readable identity (see .sr-only). The visual layer splits the
-          manifesto per-character for animation; this carries the same words as
-          plain prose so search + AI agents can read them. */}
+      {/* The page's h1, and the manifesto as plain prose: the visible one is
+          split per letter for its glyph swaps and hidden from screen readers.
+          Values and the close are real text in their sections. */}
       <header className="sr-only">
         <h1>Kasia Walter — What makes you feel alive?</h1>
         <p>
           To create art is to speak another language. You can't move a heart if
           yours stands still. Feelings matter. To taste, to love, to dream is to
           feel.
-        </p>
-        <p>
-          Between the first sketch and the last line of code, this is what I
-          keep: I see the whole before I touch a part. Little patience for what
-          makes no sense. A good conclusion says more than the number. No
-          creativity without play. Rest is part of the work. As words get
-          cheaper, truth gets priceless.
-        </p>
-        <p>
-          {/* tabIndex -1: these exist for machines; the same links are real,
-              visible tab stops in the contact section. Keeping them out of the
-              tab order means the first Tab lands on the HOLD button instead of
-              an invisible focus ring. */}
-          Read the rest on{' '}
-          <a href="https://www.linkedin.com/in/kasia-walter" tabIndex={-1}>LinkedIn</a>
-          , then tell me your truth:{' '}
-          <a href="mailto:kasia.walter.it@gmail.com" tabIndex={-1}>kasia.walter.it@gmail.com</a>
         </p>
       </header>
       <div ref={stageRef} className="gl-stage" aria-hidden="true" />
