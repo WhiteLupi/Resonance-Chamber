@@ -566,57 +566,6 @@
   color: var(--accent);
 }
 
-.cockpit-cursor--scroll {
-  width: 92px;
-  height: 92px;
-  color: var(--accent);
-}
-
-.cockpit-cursor--scroll .cockpit-cursor__shape {
-  opacity: 0.28;
-}
-
-/* The hint is the cursor's tail: the ring itself pins to the pointer, and this
-   drifts behind it by --trail-x/--trail-y (the eased position minus the live
-   one, written per frame in Cursor.tsx). Precise target, soft wake. */
-.cockpit-cursor__hint {
-  position: absolute;
-  top: 50%; left: 50%;
-  transform: translate(-50%, -50%)
-    translate3d(var(--trail-x, 0px), var(--trail-y, 0px), 0);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 3px;
-  font-family: 'Syne Mono', ui-monospace, monospace;
-  text-transform: lowercase;
-  white-space: nowrap;
-  color: var(--accent);
-  opacity: 0;
-  transition: opacity 0.18s ease;
-  pointer-events: none;
-}
-
-.cockpit-cursor__hint-text {
-  font-size: 8.5px;
-  letter-spacing: 0.22em;
-}
-
-.cockpit-cursor__hint-arrow {
-  font-size: 13px;
-  line-height: 1;
-  animation: cockpit-cursor-arrow-pulse 1.3s ease-in-out infinite;
-}
-
-@keyframes cockpit-cursor-arrow-pulse {
-  0%, 100% { transform: translateY(0); opacity: 1; }
-  50%      { transform: translateY(2px); opacity: 0.55; }
-}
-
-.cockpit-cursor--scroll .cockpit-cursor__hint {
-  opacity: 1;
-}
-
 /* Pre-lock affordance: a wide teal ring (the dim rotating glyph) with the word
    "hold" at its centre, gently breathing to read as "press me". Mirrors the
    centre charge ring's language so cursor + seal say the same thing. */

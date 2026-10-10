@@ -221,7 +221,7 @@ function App() {
     const VALUE_HOLD = 0.7;
     const KEYS: Key[] = [
       { id: 'hero', x: HERO_X, y: 50, s: 1.00, o: 1.00, r: 0, hold: 0.45 },
-      { id: 'about', x: 70, y: 48, s: 0.72, o: 0.75, r: 40, c: C.clay, hold: 0.6 },
+      { id: 'about', x: 70, y: 48, s: 0.72, o: 0.75, r: 40, c: C.clay, hold: 0.2 },
       { id: 'values', x: 50, y: 34, s: 0.62, o: 0.5, r: 80 },
       { id: 'value-whole', x: 30, y: 50, s: 0.5, o: 0.95, r: 110, c: C.stone, hold: VALUE_HOLD },
       { id: 'value-sense', x: 30, y: 50, s: 0.95, o: 1, r: 140, g: 1.45, c: C.rose, hold: VALUE_HOLD },

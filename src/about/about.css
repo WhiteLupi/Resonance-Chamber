@@ -1,10 +1,10 @@
-/* The manifesto. The section is 200vh: a sticky stage pins the inscription
-   while the visitor stays with it. */
+/* The manifesto. A sticky stage pins the inscription for a short stay; the
+   seal keeps travelling through it, so the scroll never feels stuck. */
 
 .about-section {
   position: relative;
   z-index: 1;
-  height: 200vh;
+  height: 130vh;
   /* Transparent: the seal stays alive behind the words. */
   background: transparent;
   font-family: 'Syne Mono', ui-monospace, monospace;
@@ -165,13 +165,9 @@
 }
 
 @media (max-width: 760px) {
-  /* No sticky pin on phones. On desktop the 200vh section pins the stage and
-     spends the extra 100vh of scroll dwelling on the reveal — but the reveal
-     itself finishes on APPROACH (--p hits 1 before the pin even starts), so on
-     mobile that dwell was a full screen of scroll where nothing moved and the
-     seal is nearly invisible: it read as the scroll freezing. Flow the section
-     normally instead — the --p-driven reveal is unchanged (it keys off scroll
-     position, not the pin), the copy just scrolls continuously past. */
+  /* No sticky pin on phones: the reveal finishes before the pin starts and
+     the seal is only a faint backdrop, so a pinned stretch reads as the
+     scroll freezing. The section flows; the --p reveal is unchanged. */
   .about-section {
     height: auto;
   }
