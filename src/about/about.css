@@ -83,6 +83,15 @@
      increasing the outer chamber padding. */
   padding-block: 0.06em 0.28em;
 }
+/* The first sentence is the thesis; the other two answer it. */
+.inscription__line[data-line="0"] {
+  font-size: 1.6em;
+  line-height: 1.3;
+}
+.inscription__line[data-line="0"] .inscription__copy {
+  line-height: 1.3;
+  color: var(--fg-vault);
+}
 .inscription__line[data-line="1"] { --p-start: 0.83; --p-end: 0.91; }
 .inscription__line[data-line="2"] { --p-start: 0.88; --p-end: 0.96; }
 

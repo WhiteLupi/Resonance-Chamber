@@ -16,11 +16,17 @@ export type Journey = {
   o: number;
   /** camera orbit rotation around Y axis, in degrees */
   r: number;
+  /** tempo of the veins' sway and breath (1 = calm default) */
+  m: number;
+  /** vein brightness multiplier */
+  g: number;
 };
 
 export type HeroScene = {
   setProgress: (p: number) => void;
   setJourney: (j: Journey) => void;
+  /** Sends one wave of light through the figure. */
+  pulse: () => void;
   onLock: (cb: () => void) => () => void;
   onCharge: (cb: (charge: number) => void) => () => void;
   /** Fires when the pointer enters/leaves the seal core's screen disc — drives
@@ -179,8 +185,8 @@ export function startHero(host: HTMLElement): HeroScene {
   let overCore = false;
   let sceneVis = 1.0;
   let rootsVis = 1.0;
-  const journeyTarget: Journey = { x: 50, y: 50, s: 1, o: 1, r: 0 };
-  const journeyCur: Journey = { x: 50, y: 50, s: 1, o: 1, r: 0 };
+  const journeyTarget: Journey = { x: 50, y: 50, s: 1, o: 1, r: 0, m: 1, g: 1 };
+  const journeyCur: Journey = { ...journeyTarget };
   applySize();
 
   // Below MIN_VIEWH the camera pulls in, so the seal's apparent size freezes
@@ -204,6 +210,9 @@ export function startHero(host: HTMLElement): HeroScene {
   // than resetting it, so timed effects (pulses, lock flash) resume mid-flight.
   let t = 0;
   let lastNow = 0;
+  // The veins' own clock, so a section can speed their life up or slow it down
+  // without a jump in phase.
+  let motionT = 0;
   const broadcast = (t: number) => {
     sonar.trigger(t);
     roots.pulse?.(t);
@@ -327,6 +336,8 @@ export function startHero(host: HTMLElement): HeroScene {
     journeyCur.s += (journeyTarget.s - journeyCur.s) * jl;
     journeyCur.o += (journeyTarget.o - journeyCur.o) * jl;
     journeyCur.r += (journeyTarget.r - journeyCur.r) * jl;
+    journeyCur.m += (journeyTarget.m - journeyCur.m) * jl;
+    journeyCur.g += (journeyTarget.g - journeyCur.g) * jl;
 
     // Pointer parallax orbits the CAMERA; the seal holds still, like the moon
     // keeping its face.
@@ -361,7 +372,7 @@ export function startHero(host: HTMLElement): HeroScene {
       nextIdleRingAt = t + IDLE_RING_INTERVAL;
     }
 
-    const motionT = REDUCED_MOTION ? 0 : t;
+    if (!REDUCED_MOTION) motionT += dt * journeyCur.m;
     roots.update(charge, motionT, t);
 
     const pointerMotion = Math.min(1, (Math.abs(mouseX - parallaxX) + Math.abs(mouseY - parallaxY)) * 1.8);
@@ -399,7 +410,7 @@ export function startHero(host: HTMLElement): HeroScene {
     );
     sonar.update(t, breath, sealVis);
     comets.setOpacity(0.95 * sealVis);
-    roots.applyVisibility(charge, rootsVis, rootJVis, PERF.mobile ? 1.8 : 1);
+    roots.applyVisibility(charge, rootsVis, rootJVis, (PERF.mobile ? 1.8 : 1) * journeyCur.g);
 
     const timing = PERF.profile && beginGpuTimer();
     renderer.render(scene, camera);
@@ -459,6 +470,9 @@ export function startHero(host: HTMLElement): HeroScene {
     },
     setJourney(j: Journey) {
       Object.assign(journeyTarget, j);
+    },
+    pulse() {
+      if (locked && !REDUCED_MOTION) broadcast(t);
     },
     onLock(cb) {
       lockSubs.add(cb);

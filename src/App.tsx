@@ -206,39 +206,58 @@ function App() {
       setProgress(p);
     };
 
-    // Travelling seal (spec 2026-06-10): the route moves through the empty
-    // spaces in each section. App interpolates section keyframes from scroll
-    // position; glScene smooths the target per frame.
+    // Travelling seal: the route moves through the empty space in each section,
+    // always opposite the copy. App interpolates keyframes from scroll position;
+    // glScene smooths the target per frame. `m` is the veins' tempo and `g`
+    // their brightness, so each value can be felt in the figure.
     // `hold` keeps the seal parked on a key through the first fraction of its
-    // outgoing segment — the transition to the NEXT key begins only after
-    // that much of the scroll span has passed. Hero uses it for the ritual.
-    type Key = { id: string; x: number; y: number; s: number; o: number; r: number; hold?: number };
+    // outgoing segment: the ritual in hero, and each value while it is read.
+    type Key = {
+      id: string; x: number; y: number; s: number; o: number; r: number;
+      m?: number; g?: number; hold?: number; pulse?: boolean;
+    };
+    // Pre-lock the seal sits dead centre inside the charge ring; once awake it
+    // drifts left and the question takes the right.
+    const HERO_X = locked ? 33 : 50;
+    const VALUE_HOLD = 0.7;
     const KEYS: Key[] = [
-      { id: 'hero', x: 50, y: 50, s: 1.00, o: 1.00, r: 0, hold: 0.45 },
-      { id: 'about', x: 61, y: 42, s: 0.66, o: 0.50, r: 40 },
-      { id: 'values', x: 60, y: 52, s: 0.85, o: 0.38, r: 100 },
-      // Contact: the seal settles in the open air above the closing line —
-      // large and present for the farewell, not shrunk into the footer.
-      { id: 'contact', x: 52, y: 42, s: 0.88, o: 0.85, r: 170 },
+      { id: 'hero', x: HERO_X, y: 50, s: 1.00, o: 1.00, r: 0, hold: 0.45 },
+      { id: 'about', x: 68, y: 48, s: 0.72, o: 0.55, r: 40 },
+      { id: 'values', x: 50, y: 34, s: 0.62, o: 0.5, r: 80 },
+      { id: 'value-whole', x: 30, y: 50, s: 0.5, o: 0.95, r: 110, hold: VALUE_HOLD },
+      { id: 'value-sense', x: 30, y: 50, s: 0.95, o: 1, r: 140, g: 1.45, hold: VALUE_HOLD },
+      { id: 'value-meaning', x: 30, y: 50, s: 0.85, o: 0.9, r: 170, g: 1.1, hold: VALUE_HOLD, pulse: true },
+      { id: 'value-play', x: 30, y: 50, s: 0.9, o: 1, r: 215, m: 2.4, g: 1.15, hold: VALUE_HOLD },
+      { id: 'value-rest', x: 30, y: 50, s: 0.78, o: 0.4, r: 235, m: 0.25, g: 0.7, hold: VALUE_HOLD },
+      // Contact: the seal settles centred above the closing line.
+      { id: 'contact', x: 50, y: 30, s: 0.8, o: 0.85, r: 270 },
     ];
     // The mobile route is a vertical spine — every keyframe sits at x:50. A
     // phone viewport has no side room: any lateral keyframe turns into a
-    // visible side-to-side swim between sections.
-    // The seal breathes along the centre axis instead: scale, height, glow.
+    // visible side-to-side swim between sections. The seal breathes along the
+    // centre axis instead: scale, height, glow, tempo.
     const KEYS_MOBILE: Key[] = [
-      { id: 'hero', x: 50, y: 50, s: 1.00, o: 1.00, r: 0, hold: 0.45 },
+      { id: 'hero', x: 50, y: locked ? 36 : 50, s: 1.00, o: 1.00, r: 0, hold: 0.45 },
       { id: 'about', x: 50, y: 24, s: 0.62, o: 0.10, r: 40 },
-      { id: 'values', x: 50, y: 42, s: 0.72, o: 0.02, r: 100 },
-      // The journey ENDS centred above the closing block — on a phone the old
-      // exit toward the bottom-right corner read as the seal escaping sideways
-      // instead of settling for the farewell.
-      { id: 'contact', x: 50, y: 30, s: 0.55, o: 0.60, r: 170 },
+      { id: 'values', x: 50, y: 26, s: 0.55, o: 0.2, r: 80 },
+      { id: 'value-whole', x: 50, y: 26, s: 0.45, o: 0.35, r: 110 },
+      { id: 'value-sense', x: 50, y: 26, s: 0.7, o: 0.35, r: 140, g: 1.45 },
+      { id: 'value-meaning', x: 50, y: 26, s: 0.65, o: 0.35, r: 170, g: 1.1, pulse: true },
+      { id: 'value-play', x: 50, y: 26, s: 0.65, o: 0.35, r: 215, m: 2.4, g: 1.15 },
+      { id: 'value-rest', x: 50, y: 26, s: 0.6, o: 0.2, r: 235, m: 0.25, g: 0.7 },
+      { id: 'contact', x: 50, y: 30, s: 0.55, o: 0.60, r: 270 },
     ];
     const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
     const ease = (t: number) => (t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2);
 
     // The keyframe `o` is the seal's brightness per section. Legibility over copy
     // comes from the dark pools behind the text, so the seal need not dodge it.
+    let segment = '';
+    const enter = (scene: HeroScene, k: Key) => {
+      if (k.id === segment) return;
+      segment = k.id;
+      if (k.pulse) scene.pulse();
+    };
     const computeJourney = () => {
       const scene = sceneRef.current;
       if (!scene) return;
@@ -249,31 +268,37 @@ function App() {
         .map((k) => ({ k, el: document.getElementById(k.id) }))
         .filter((s): s is { k: Key; el: HTMLElement } => s.el !== null);
       for (let i = 0; i < secs.length; i++) {
+        const { k } = secs[i];
         const r = secs[i].el.getBoundingClientRect();
         const next = secs[i + 1];
         if (!next) {
-          scene.setJourney(secs[i].k);
+          enter(scene, k);
+          scene.setJourney({ x: k.x, y: k.y, s: k.s, o: k.o, r: k.r, m: k.m ?? 1, g: k.g ?? 1 });
           return;
         }
         const nr = next.el.getBoundingClientRect();
         if (r.top <= mid && nr.top > mid) {
+          enter(scene, k);
           let raw = Math.min(1, Math.max(0, (mid - r.top) / (nr.top - r.top)));
           // Mobile has no "hold to charge" indicator and the seal is only a
           // faint backdrop behind the text — so a keyframe hold or a per-segment
           // ease reads as the scroll STICKING, not as intent. On mobile the seal
           // tracks scroll 1:1 (no hold, linear) for uniform motion; desktop keeps
-          // the ritual holds and the eased settle between keys.
-          const hold = mobile ? 0 : (secs[i].k.hold ?? 0);
+          // the holds and the eased settle between keys.
+          const hold = mobile ? 0 : (k.hold ?? 0);
           if (hold > 0) {
             raw = Math.max(0, (raw - hold) / (1 - hold));
           }
           const t = mobile ? raw : ease(raw);
+          const n = next.k;
           scene.setJourney({
-            x: lerp(secs[i].k.x, next.k.x, t),
-            y: lerp(secs[i].k.y, next.k.y, t),
-            s: lerp(secs[i].k.s, next.k.s, t),
-            o: lerp(secs[i].k.o, next.k.o, t),
-            r: lerp(secs[i].k.r, next.k.r, t),
+            x: lerp(k.x, n.x, t),
+            y: lerp(k.y, n.y, t),
+            s: lerp(k.s, n.s, t),
+            o: lerp(k.o, n.o, t),
+            r: lerp(k.r, n.r, t),
+            m: lerp(k.m ?? 1, n.m ?? 1, t),
+            g: lerp(k.g ?? 1, n.g ?? 1, t),
           });
           return;
         }
@@ -301,7 +326,8 @@ function App() {
       window.removeEventListener('scroll', schedule);
       window.removeEventListener('resize', schedule);
     };
-  }, []);
+    // Re-run on lock: the hero keyframe moves once the seal is awake.
+  }, [locked]);
 
   return (
     <>
@@ -316,14 +342,21 @@ function App() {
           feel.
         </p>
         <p>
+          Between the first sketch and the last line of code, this is what I
+          keep: I see the whole before I touch a part. Little patience for what
+          makes no sense. A good conclusion says more than the number. No
+          creativity without play. Rest is part of the work. As words get
+          cheaper, truth gets priceless.
+        </p>
+        <p>
           {/* tabIndex -1: these exist for machines; the same links are real,
               visible tab stops in the contact section. Keeping them out of the
               tab order means the first Tab lands on the HOLD button instead of
               an invisible focus ring. */}
-          Contact:{' '}
-          <a href="mailto:kasia.walter.it@gmail.com" tabIndex={-1}>kasia.walter.it@gmail.com</a>
-          {' · '}
+          Read the rest on{' '}
           <a href="https://www.linkedin.com/in/kasia-walter" tabIndex={-1}>LinkedIn</a>
+          , then tell me yours:{' '}
+          <a href="mailto:kasia.walter.it@gmail.com" tabIndex={-1}>kasia.walter.it@gmail.com</a>
         </p>
       </header>
       <div ref={stageRef} className="gl-stage" aria-hidden="true" />

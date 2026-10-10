@@ -239,10 +239,9 @@
   transition: stroke-dashoffset 0.08s linear;
 }
 
-/* "motion" — the only inscription. Starts below the seal (bottom 22vh ≈
-   lower quarter of the viewport), grows + lifts toward center as the user
-   scrolls — engine "absorbs" the manifesto. Three independent layers of
-   movement compose:
+/* The question — the only inscription. Hidden pre-lock; once the seal is
+   awake and drifts left, it stands in the right half. Three independent
+   layers of movement compose:
    1. `translate` (CSS prop, scroll-driven) lift on --p
    2. `scale`     (CSS prop, scroll-driven) grow on --p
    3. `transform` (animation) float — independent life
@@ -250,27 +249,25 @@
    doesn't fight them. */
 .hero-inscription__bottom {
   position: absolute;
-  left: 50%;
-  bottom: 22vh;
-  /* shrink-to-fit so clip-path circle has a sensible reference box
-     (text width, not viewport width). Centered via translate. */
+  left: 54%;
+  top: 50%;
   font-family: 'Boldonse', system-ui, sans-serif;
   font-weight: 400;
-  font-size: clamp(40px, 5.8vw, 132px);
+  font-size: clamp(40px, 6.4vw, 140px);
   letter-spacing: -0.012em;
   /* "Alive" keeps its capital A — the Boldonse lowercase 'a' read as awkward. */
   text-transform: none;
-  text-align: center;
   color: rgba(245, 244, 240, 0.94);
   text-shadow:
     0 0 28px rgba(4, 7, 10, 0.92),
     0 0 60px rgba(61, 110, 99, 0.18);
   white-space: nowrap;
-  translate: -50% 0;
+  translate: 0 -50%;
+  transform-origin: left center;
   opacity: 0;
-  /* short, so the scroll-driven vanish (opacity calc below) stays responsive
-     while the lock-time appearance still eases rather than hard-cuts */
-  transition: opacity 0.45s ease 0.1s;
+  /* Arrives after the seal has started its drift left, so the two read as one
+     movement: the light makes room, the question steps in. */
+  transition: opacity 0.9s ease 0.6s;
   pointer-events: auto;
   user-select: none;
   will-change: translate, scale, transform;
@@ -278,14 +275,13 @@
 
 .hero-section--revealed .hero-inscription__bottom {
   opacity: 1;
-  /* "motion" travels UP intact, growing and spreading its letters as it goes,
-     and slides up into the darkness at the top (.void-ceiling) where it's
-     occluded — it disappears INTO the dark, it does not fall apart. Pure --p, so
-     scrolling back down it descends, contracts and reforms. */
+  /* Travels UP intact and slides into the darkness at the top (.void-ceiling),
+     where it's occluded. Pure --p, so scrolling back down it descends and
+     reforms. */
   --rise: clamp(0, calc(var(--p, 0) / 0.85), 1);
-  translate: -50% calc(var(--rise) * -78vh);
-  scale: calc(1 + var(--rise) * 0.42);
-  letter-spacing: calc(-0.012em + var(--rise) * 0.2em);
+  translate: 0 calc(-50% - var(--rise) * 62vh);
+  scale: calc(1 + var(--rise) * 0.2);
+  letter-spacing: calc(-0.012em + var(--rise) * 0.12em);
   animation: motion-float 11s ease-in-out infinite;
 }
 
@@ -293,7 +289,7 @@
   position: relative;
   display: block;
   width: fit-content;
-  margin: 0 auto 0.3em;
+  margin: 0 0 0.3em 0.08em;
   font-family: 'Syne Mono', ui-monospace, monospace;
   font-size: clamp(15px, 1.35vw, 26px);
   letter-spacing: 0.22em;
@@ -353,10 +349,24 @@
   .hero-inscription {
     padding: 14vh 0 14vh;
   }
+  /* No side room on a phone: the seal rises a little and the question sits
+     centred below it. */
   .hero-inscription__bottom {
+    left: 50%;
+    top: auto;
+    bottom: 20vh;
     font-size: clamp(44px, 14vw, 96px);
+    text-align: center;
+    translate: -50% 0;
+    transform-origin: center;
   }
-  /* The plate lands where full-width text flows (Skills bands, Work copy) —
+  .hero-section--revealed .hero-inscription__bottom {
+    translate: -50% calc(var(--rise) * -78vh);
+  }
+  .hero-inscription__lead {
+    margin-inline: auto;
+  }
+  /* The plate lands where full-width text flows —
      on narrow screens the chamber framing yields to legibility. */
   .signature {
     display: none;
