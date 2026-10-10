@@ -29,34 +29,6 @@
   will-change: translate;
 }
 
-/* Vertical axis hairline — suggests the inscription is engraved along the
-   engine's axis. Faint accent tint with center hot-spot (where the seal
-   sits). Stays subtle but locks the centered composition visually. */
-.hero-section::before {
-  content: '';
-  position: absolute;
-  left: 50%;
-  top: 0;
-  bottom: 0;
-  width: 1px;
-  z-index: 7;
-  background: linear-gradient(to bottom,
-    transparent 0%,
-    rgba(61, 110, 99, 0.0) 12%,
-    rgba(61, 110, 99, 0.16) 38%,
-    rgba(122, 196, 175, 0.32) 50%,
-    rgba(61, 110, 99, 0.16) 62%,
-    rgba(61, 110, 99, 0.0) 88%,
-    transparent 100%);
-  opacity: 0;
-  transition: opacity 1.4s ease-out 0.3s;
-  pointer-events: none;
-}
-
-.hero-section--revealed::before {
-  opacity: 1;
-}
-
 /* Pre-lock prompt — single carved word centered just below the seal area.
    Color pulses (not opacity, so we can tie base opacity to --charge — as
    the user starts holding, the prompt fades out). Hidden post-lock. */
