@@ -7,7 +7,6 @@ import { About } from './about/About'
 import { Values } from './sections/Values'
 import { Contact } from './sections/Contact'
 import { Cursor } from './hero/Cursor'
-import { Atmosphere } from './hero/Atmosphere'
 import { ChargeIndicator } from './hero/ChargeIndicator'
 import { SectionHeader } from './hero/SectionHeader'
 import { Signature } from './hero/Signature'
@@ -338,7 +337,6 @@ function App() {
           and vanishes by occlusion, intact. The ragged lower edge is a baked
           alpha texture, not a live SVG filter. */}
       <div className={`void-ceiling${locked ? ' void-ceiling--in' : ''}`} aria-hidden="true" />
-      <Atmosphere />
       <ChargeIndicator locked={locked} />
       <SectionHeader locked={locked} />
       <Signature locked={locked} />
