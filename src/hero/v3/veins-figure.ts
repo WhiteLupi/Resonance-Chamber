@@ -25,7 +25,9 @@ export const FIGURE = {
   trunks: 18,
   /** ellipsoid the figure fills (before the Z squash); overflows the frame vertically */
   bounds: [2.45, 1.95, 1.5] as V3,
-  zSquash: 0.4,
+  /** the camera orbits the figure on scroll, so it keeps real depth: a flat
+      disc collapses into a wall when seen from the side */
+  zSquash: 1.0,
   step: 0.075,
   stepDecay: 0.88,
   stepMin: 0.032,

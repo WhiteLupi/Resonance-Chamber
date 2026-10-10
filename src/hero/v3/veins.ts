@@ -47,6 +47,7 @@ const vertexShader = /* glsl */ `
   uniform float uTipLen;
   uniform float uWaveS;
   uniform float uSway;
+  uniform float uDepthRange;
 
   attribute vec3 aPrev;
   attribute vec3 aNext;
@@ -109,10 +110,17 @@ const vertexShader = /* glsl */ `
     vGlow = 0.18 + 0.35 * clamp(wave + vTip, 0.0, 1.0);
 
     float amp = uSway * mix(0.5, 1.0, uCharge) * (1.0 - uStill);
+    vec4 view = modelViewMatrix * vec4(sway(position, d, amp), 1.0);
     mat4 mvp = projectionMatrix * modelViewMatrix;
-    vec4 c0 = mvp * vec4(sway(position, d, amp), 1.0);
+    vec4 c0 = projectionMatrix * view;
     vec4 cp = mvp * vec4(sway(aPrev, d, amp), 1.0);
     vec4 cn = mvp * vec4(sway(aNext, d, amp), 1.0);
+
+    // Depth cue: veins behind the core recede (dimmer, finer), veins in front
+    // come forward, so the figure reads as a volume while the camera orbits.
+    float centerZ = (modelViewMatrix * vec4(0.0, 0.0, 0.0, 1.0)).z;
+    float nearness = clamp((view.z - centerZ) / uDepthRange * 0.5 + 0.5, 0.0, 1.0);
+    vBright *= mix(0.45, 1.15, nearness);
 
     vec2 s0 = toScreen(c0);
     vec2 dPrev = s0 - toScreen(cp);
@@ -123,7 +131,7 @@ const vertexShader = /* glsl */ `
 
     // Growing tips narrow to a point; a passing wave swells the channel a little.
     float taper = mix(0.35, 1.0, smoothstep(0.0, 0.25, ahead));
-    float width = aA.z * taper * (1.0 + 0.25 * clamp(wave, 0.0, 1.0));
+    float width = aA.z * taper * (1.0 + 0.25 * clamp(wave, 0.0, 1.0)) * mix(0.65, 1.2, nearness);
     // Below one device pixel a line can't get thinner without aliasing; hold
     // it at one pixel and trade the missing width for opacity instead.
     float minW = 1.0 / uPixelRatio;
@@ -236,6 +244,8 @@ export function createVeins(parent: THREE.Object3D): RootsModule {
     uTipLen: { value: VEINS.tipLen },
     uWaveS: { value: VEINS.waveS },
     uSway: { value: VEINS.sway },
+    // view-space half-depth of the figure (mesh extent × ROOTS_SCALE × seal scale)
+    uDepthRange: { value: 4.0 },
     uColor: { value: white.clone() },
     uTipColor: { value: tipColor },
     uOpacity: { value: 1 },
