@@ -13,6 +13,11 @@ import { Signature } from './hero/Signature'
 import { prefersReducedMotion } from './motion'
 import { createJourney } from './journey'
 
+// three.js ships in its own chunk, so the page paints before the engine loads.
+// The download starts as this module runs, alongside React's first render
+// instead of after it.
+const loadHero = import('./hero/glScene')
+
 function App() {
   const stageRef = useRef<HTMLDivElement>(null)
   const sceneRef = useRef<HeroScene | null>(null)
@@ -24,10 +29,9 @@ function App() {
   useEffect(() => {
     const stage = stageRef.current
     if (!stage) return
-    // three.js ships in its own chunk, so the page paints before the engine loads.
     let cancelled = false
     let teardown = () => {}
-    import('./hero/glScene').then(({ startHero }) => {
+    loadHero.then(({ startHero }) => {
       if (cancelled) return
       const scene = startHero(stage)
       sceneRef.current = scene
