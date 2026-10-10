@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { ShapeSvg } from '../ShapeSvg';
 import type { ShapeKind } from '../glyphs';
+import './navbar.css';
 
 // Delay between lock and navbar reveal — gives the chamber a beat to
 // settle into its locked state before HUD elements arrive.
@@ -14,7 +15,7 @@ const SCROLL_HIDE_THRESHOLD = 80;
 function Glyph({ kind }: { kind: ShapeKind }) {
   return (
     <svg
-      className="cockpit-navbar__glyph"
+      className="navbar__glyph"
       viewBox="0 0 30 30"
       aria-hidden="true"
     >
@@ -78,25 +79,25 @@ export function Navbar({ locked }: NavbarProps) {
   }, []);
 
   const cls = [
-    'cockpit-navbar',
-    introDone ? 'cockpit-navbar--in' : '',
-    hidden ? 'cockpit-navbar--hidden' : '',
+    'navbar',
+    introDone ? 'navbar--in' : '',
+    hidden ? 'navbar--hidden' : '',
   ].filter(Boolean).join(' ');
 
   // inert while invisible — an opacity-0 navbar must not hold phantom
   // tab stops (pre-lock) or catch focus while slid away (scroll-hidden).
   return (
     <nav className={cls} aria-label="primary" inert={!introDone || hidden}>
-      <div className="cockpit-navbar__center">
-        <a className="cockpit-navbar__link" href="#about">
+      <div className="navbar__center">
+        <a className="navbar__link" href="#about">
           <Glyph kind="circle" />
           <span>MANIFESTO</span>
         </a>
-        <a className="cockpit-navbar__link" href="#values">
+        <a className="navbar__link" href="#values">
           <Glyph kind="triangle" />
           <span>VALUES</span>
         </a>
-        <a className="cockpit-navbar__link" href="#contact">
+        <a className="navbar__link" href="#contact">
           <Glyph kind="square" />
           <span>TRUTH</span>
         </a>

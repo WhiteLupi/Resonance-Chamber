@@ -1,7 +1,7 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "git": {
-    "deploymentEnabled": { "engine-v2": false, "dev": false }
+    "deploymentEnabled": { "engine-v2": false, "dev": false, "scroll-life": false }
   },
   "redirects": [
     {

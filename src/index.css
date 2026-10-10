@@ -28,8 +28,12 @@
   --fg-strong: rgba(232, 230, 227, 0.92);
   --fg-soft: rgba(232, 230, 227, 0.62);
 
-  --accent: rgb(122, 196, 175);
-  --accent-shadow: rgba(122, 196, 175, 0.7);
+  /* Interface teal as channels, so any rule can set its own alpha:
+     rgb(var(--accent-rgb) / 0.5). --accent-deep-rgb is the darker patina. */
+  --accent-rgb: 122 196 175;
+  --accent-deep-rgb: 61 110 99;
+  --accent: rgb(var(--accent-rgb));
+  --accent-shadow: rgb(var(--accent-rgb) / 0.7);
 
   /* Fluid sizes: everything scales through clamp() up to ~2000px windows. */
   --pad: clamp(14px, 2vw, 56px);

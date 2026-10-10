@@ -1,11 +1,6 @@
 import * as THREE from 'three';
 
 const COMET_COUNT = 24;
-// Proximity-tug anchors on the comet shell.
-const ANCHORS = [
-  [2.6, 0, 0], [-2.6, 0, 0], [0, 0, 2.6], [0, 0, -2.6],
-] as const;
-const PROX = 0.55;
 
 // Comets orbit on fixed random planes, so a head's position is a closed-form
 // function of its phase: the shader evaluates it, the CPU only advances one
@@ -85,10 +80,9 @@ export function createComets(enabled: boolean, parent: THREE.Object3D, accent: T
   }
 
   let clock = 0;
-  const pull = { x: 0, y: 0, z: 0 };
   if (!enabled) {
     return {
-      update: () => pull,
+      update: () => {},
       setViewport: () => {},
       setOpacity: () => {},
       dispose: () => {},
@@ -147,29 +141,6 @@ export function createComets(enabled: boolean, parent: THREE.Object3D, accent: T
     clock += speedMul * Math.min(o.dt, 0.05);
     uniforms.uClock.value = clock;
     uniforms.uTrailK.value = speedMul * (16 / 60) * (1 - o.pointerMotion * 0.55);
-
-    pull.x = 0; pull.y = 0; pull.z = 0;
-    if (!o.locked) return pull;
-    for (let i = 0; i < count; i++) {
-      const ph = orbit[i * 3 + 1] + orbit[i * 3 + 2] * clock;
-      const r = orbit[i * 3];
-      const c = Math.cos(ph) * r, s = Math.sin(ph) * r;
-      const px = c * u[i * 3] + s * v[i * 3];
-      const py = c * u[i * 3 + 1] + s * v[i * 3 + 1];
-      const pz = c * u[i * 3 + 2] + s * v[i * 3 + 2];
-      let minD = Infinity, ax = 0, ay = 0, az = 0;
-      for (const [x, y, z] of ANCHORS) {
-        const d = (px - x) ** 2 + (py - y) ** 2 + (pz - z) ** 2;
-        if (d < minD) { minD = d; ax = x; ay = y; az = z; }
-      }
-      const aff = Math.max(0, 1 - Math.sqrt(minD) / PROX);
-      if (aff > 0) {
-        pull.x += (px - ax) * aff;
-        pull.y += (py - ay) * aff;
-        pull.z += (pz - az) * aff;
-      }
-    }
-    return pull;
   };
 
   const setViewport = (w: number, h: number, pixelRatio: number) => {

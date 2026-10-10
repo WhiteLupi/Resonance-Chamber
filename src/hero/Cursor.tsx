@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
 import { ShapeSvg } from '../ShapeSvg';
 import { SHAPES } from '../glyphs';
+import './cursor.css';
 
-type Variant = 'default' | 'link' | 'scroll' | 'hold' | 'charging' | 'wave';
+type Variant = 'default' | 'link' | 'hold' | 'charging' | 'wave';
 
 const SHAPE_INTERVAL_MS = 7000;
 
@@ -14,12 +15,6 @@ const TOUCH_ONLY =
   typeof window !== 'undefined' &&
   window.matchMedia('(hover: none), (pointer: coarse)').matches;
 
-// Cursor enters the scroll-indicator state while the user is actively
-// scrolling down. After the scroll burst stops we hold the state briefly so
-// the indicator still confirms "going down" for a beat, then return to
-// default. Scroll-up cancels the state immediately. Link hover always wins.
-const SCROLL_HOLD_MS = 380;
-
 export function Cursor({ locked, overCore }: { locked: boolean; overCore: boolean }) {
   if (TOUCH_ONLY) return null;
   return <PointerCursor locked={locked} overCore={overCore} />;
@@ -28,7 +23,6 @@ export function Cursor({ locked, overCore }: { locked: boolean; overCore: boolea
 function PointerCursor({ locked, overCore }: { locked: boolean; overCore: boolean }) {
   const ref = useRef<HTMLDivElement>(null);
   const [hoverVariant, setHoverVariant] = useState<'default' | 'link'>('default');
-  const [scrolling, setScrolling] = useState(false);
   const [held, setHeld] = useState(false);
   const [shapeIdx, setShapeIdx] = useState(0);
 
@@ -36,41 +30,13 @@ function PointerCursor({ locked, overCore }: { locked: boolean; overCore: boolea
     const el = ref.current;
     if (!el) return;
 
-    let tx = window.innerWidth / 2;
-    let ty = window.innerHeight / 2;
-    let cx = tx;
-    let cy = ty;
-    const ease = 0.22;
-
-    let raf = 0;
-    // The ring sits ON the pointer — it is a targeting reticle, and easing it
-    // read as a laggy mouse, especially while the GPU was saturated. Only the
-    // tail (the hint) keeps the eased position, published as an offset the CSS
-    // applies to it. Written together so the two never disagree within a frame.
-    const paint = () => {
-      el.style.transform = `translate3d(${tx}px, ${ty}px, 0) translate(-50%, -50%)`;
-      el.style.setProperty('--trail-x', `${(cx - tx).toFixed(2)}px`);
-      el.style.setProperty('--trail-y', `${(cy - ty).toFixed(2)}px`);
+    // The ring sits ON the pointer: it is a targeting reticle, and easing it
+    // reads as a laggy mouse.
+    const place = (x: number, y: number) => {
+      el.style.transform = `translate3d(${x}px, ${y}px, 0) translate(-50%, -50%)`;
     };
-    // Ease the tail toward the pointer, then idle out once converged (sub-pixel)
-    // — the same rest-and-wake pattern as the parallax vars in App.
-    const tick = () => {
-      cx += (tx - cx) * ease;
-      cy += (ty - cy) * ease;
-      paint();
-      if (Math.abs(tx - cx) > 0.1 || Math.abs(ty - cy) > 0.1) {
-        raf = requestAnimationFrame(tick);
-      } else {
-        raf = 0;
-      }
-    };
-    const onMove = (e: MouseEvent) => {
-      tx = e.clientX;
-      ty = e.clientY;
-      paint();
-      if (!raf) raf = requestAnimationFrame(tick);
-    };
-    paint();
+    const onMove = (e: MouseEvent) => place(e.clientX, e.clientY);
+    place(window.innerWidth / 2, window.innerHeight / 2);
 
     const onOver = (e: MouseEvent) => {
       const target = e.target as HTMLElement | null;
@@ -89,39 +55,9 @@ function PointerCursor({ locked, overCore }: { locked: boolean; overCore: boolea
     document.addEventListener('mouseleave', onLeave);
 
     return () => {
-      cancelAnimationFrame(raf);
       window.removeEventListener('mousemove', onMove);
       window.removeEventListener('mouseover', onOver);
       document.removeEventListener('mouseleave', onLeave);
-    };
-  }, []);
-
-  useEffect(() => {
-    let lastY = window.scrollY;
-    let holdTimer: number | null = null;
-    const onScroll = () => {
-      const y = window.scrollY;
-      const delta = y - lastY;
-      lastY = y;
-      if (delta > 0) {
-        setScrolling(true);
-        if (holdTimer != null) window.clearTimeout(holdTimer);
-        holdTimer = window.setTimeout(() => {
-          setScrolling(false);
-          holdTimer = null;
-        }, SCROLL_HOLD_MS);
-      } else if (delta < 0) {
-        setScrolling(false);
-        if (holdTimer != null) {
-          window.clearTimeout(holdTimer);
-          holdTimer = null;
-        }
-      }
-    };
-    window.addEventListener('scroll', onScroll, { passive: true });
-    return () => {
-      window.removeEventListener('scroll', onScroll);
-      if (holdTimer != null) window.clearTimeout(holdTimer);
     };
   }, []);
 
@@ -153,9 +89,7 @@ function PointerCursor({ locked, overCore }: { locked: boolean; overCore: boolea
       ? 'link'
       : overCore
         ? 'wave'
-        : scrolling
-          ? 'scroll'
-          : 'default';
+        : 'default';
 
   useEffect(() => {
     const id = window.setInterval(() => {
@@ -169,21 +103,17 @@ function PointerCursor({ locked, overCore }: { locked: boolean; overCore: boolea
   }, []);
 
   return (
-    <div ref={ref} className={`cockpit-cursor cockpit-cursor--${variant}`}>
+    <div ref={ref} className={`cursor cursor--${variant}`}>
       <svg
         key={shapeIdx}
-        className="cockpit-cursor__shape"
+        className="cursor__shape"
         viewBox="0 0 30 30"
         aria-hidden="true"
       >
         <ShapeSvg kind={SHAPES[shapeIdx]} />
       </svg>
-      <span className="cockpit-cursor__hint" aria-hidden="true">
-        <span className="cockpit-cursor__hint-text">going down</span>
-        <span className="cockpit-cursor__hint-arrow">↓</span>
-      </span>
-      <span className="cockpit-cursor__hold" aria-hidden="true">hold</span>
-      <span className="cockpit-cursor__ripple" aria-hidden="true" />
+      <span className="cursor__hold" aria-hidden="true">hold</span>
+      <span className="cursor__ripple" aria-hidden="true" />
     </div>
   );
 }

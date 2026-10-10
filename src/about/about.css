@@ -1,10 +1,10 @@
-/* The manifesto. The section is 200vh: a sticky stage pins the inscription
-   while the visitor stays with it. */
+/* The manifesto. A sticky stage pins the inscription for a short stay; the
+   seal keeps travelling through it, so the scroll never feels stuck. */
 
 .about-section {
   position: relative;
   z-index: 1;
-  height: 200vh;
+  height: 130vh;
   /* Transparent: the seal stays alive behind the words. */
   background: transparent;
   font-family: 'Syne Mono', ui-monospace, monospace;
@@ -97,42 +97,44 @@
   will-change: translate;
 }
 
-/* Letter substitution. During a swap an invisible copy of the letter holds
-   its slot, so the line never reflows; the letter falls out and the glyph
-   drops in from above. .ls-word holds a word together as one wrap unit. */
-.letter-sub {
-  display: inline;
-}
+/* Letter swaps: a letter falls out and a sign drops in from above, glowing
+   in the accent. The sign is the ::after of the same slot, so in monospace
+   the line never reflows. --d staggers a cascade (set per swap). */
 .ls-word {
   display: inline-block;
   white-space: nowrap;
 }
 .ls-ch {
-  display: inline-block;
-  vertical-align: baseline;
   position: relative;
+  display: inline-block;
 }
-.ls-ch__ghost {
-  visibility: hidden;
+.ls-ch__l,
+.ls-ch::after {
+  display: inline-block;
+  transition:
+    translate 0.24s cubic-bezier(0.2, 0.8, 0.2, 1) var(--d, 0s),
+    opacity 0.24s ease var(--d, 0s);
 }
-.ls-ch__letter,
-.ls-ch__glyph {
+.ls-ch::after {
+  content: attr(data-sign);
   position: absolute;
   inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  will-change: transform, opacity;
+  text-align: center;
+  color: var(--accent);
+  text-shadow:
+    0 0 6px var(--accent-shadow),
+    0 0 16px var(--accent-shadow);
+  opacity: 0;
+  translate: 0 -0.7em;
+  pointer-events: none;
 }
-.ls-svg {
-  width: 1ch;
-  height: 1ch;
-  overflow: visible;
-  color: inherit;
-  /* Phosphor halo — short core + long bloom. */
-  filter:
-    drop-shadow(0 0 2.5px var(--accent-shadow))
-    drop-shadow(0 0 7px var(--accent-shadow));
+.ls-ch.is-sign .ls-ch__l {
+  opacity: 0;
+  translate: 0 0.7em;
+}
+.ls-ch.is-sign::after {
+  opacity: 1;
+  translate: 0 0;
 }
 
 /* The blinking caret is the manifesto's single drop of accent. */
@@ -165,13 +167,9 @@
 }
 
 @media (max-width: 760px) {
-  /* No sticky pin on phones. On desktop the 200vh section pins the stage and
-     spends the extra 100vh of scroll dwelling on the reveal — but the reveal
-     itself finishes on APPROACH (--p hits 1 before the pin even starts), so on
-     mobile that dwell was a full screen of scroll where nothing moved and the
-     seal is nearly invisible: it read as the scroll freezing. Flow the section
-     normally instead — the --p-driven reveal is unchanged (it keys off scroll
-     position, not the pin), the copy just scrolls continuously past. */
+  /* No sticky pin on phones: the reveal finishes before the pin starts and
+     the seal is only a faint backdrop, so a pinned stretch reads as the
+     scroll freezing. The section flows; the --p reveal is unchanged. */
   .about-section {
     height: auto;
   }
