@@ -353,9 +353,9 @@
   font-weight: 400;
   font-size: clamp(40px, 5.8vw, 132px);
   letter-spacing: -0.012em;
-  /* "Alive" keeps its capital A — the Boldonse lowercase 'a' read as awkward.
-     (Was lowercase for the old single word "motion".) */
+  /* "Alive" keeps its capital A — the Boldonse lowercase 'a' read as awkward. */
   text-transform: none;
+  text-align: center;
   color: rgba(245, 244, 240, 0.94);
   text-shadow:
     0 0 28px rgba(4, 7, 10, 0.92),
@@ -384,9 +384,31 @@
   animation: motion-float 11s ease-in-out infinite;
 }
 
-@keyframes motion-breathe {
-  0%, 100% { letter-spacing: -0.012em; }
-  50%      { letter-spacing: 0.014em; }
+.hero-inscription__lead {
+  position: relative;
+  display: block;
+  width: fit-content;
+  margin: 0 auto 0.3em;
+  font-family: 'Syne Mono', ui-monospace, monospace;
+  font-size: clamp(15px, 1.35vw, 26px);
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: rgba(240, 250, 246, 1);
+  text-shadow:
+    0 0 4px rgba(0, 0, 0, 1),
+    0 0 12px rgba(0, 0, 0, 0.95);
+}
+
+/* It sits right under the core's glow and over the densest veins; text-shadow
+   alone can't hold thin mono strokes there, so a soft dark pool backs it. */
+.hero-inscription__lead::before {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  inset: -70% -12%;
+  border-radius: 50%;
+  background: radial-gradient(ellipse at center, rgba(0, 0, 0, 0.92) 30%, rgba(0, 0, 0, 0.6) 62%, transparent 100%);
+  filter: blur(10px);
 }
 
 @keyframes motion-float {

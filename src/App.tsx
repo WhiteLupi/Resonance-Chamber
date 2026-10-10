@@ -4,8 +4,7 @@ import type { HeroScene } from './hero/glScene'
 import { Hero } from './hero/Hero'
 import { Navbar } from './hero/Navbar'
 import { About } from './about/About'
-import { Skills } from './sections/Skills'
-import { Work } from './sections/Work'
+import { Values } from './sections/Values'
 import { Contact } from './sections/Contact'
 import { Cursor } from './hero/Cursor'
 import { Atmosphere } from './hero/Atmosphere'
@@ -213,29 +212,24 @@ function App() {
     // position; glScene smooths the target per frame.
     // `hold` keeps the seal parked on a key through the first fraction of its
     // outgoing segment — the transition to the NEXT key begins only after
-    // that much of the scroll span has passed. Hero uses it for the ritual;
-    // work uses it so the seal stays docked left while the case copy is
-    // still on screen instead of drifting toward contact from the first
-    // scrolled pixel.
+    // that much of the scroll span has passed. Hero uses it for the ritual.
     type Key = { id: string; x: number; y: number; s: number; o: number; r: number; hold?: number };
     const KEYS: Key[] = [
       { id: 'hero', x: 50, y: 50, s: 1.00, o: 1.00, r: 0, hold: 0.45 },
       { id: 'about', x: 61, y: 42, s: 0.66, o: 0.50, r: 40 },
-      { id: 'skills', x: 60, y: 52, s: 0.85, o: 0.38, r: 85 },
-      { id: 'work', x: 30, y: 50, s: 1.05, o: 0.95, r: 130, hold: 0.55 },
+      { id: 'values', x: 60, y: 52, s: 0.85, o: 0.38, r: 100 },
       // Contact: the seal settles in the open air above the closing line —
       // large and present for the farewell, not shrunk into the footer.
       { id: 'contact', x: 52, y: 42, s: 0.88, o: 0.85, r: 170 },
     ];
     // The mobile route is a vertical spine — every keyframe sits at x:50. A
-    // phone viewport has no side room: any lateral keyframe (the old skills
-    // x:115 exit) turns into a visible side-to-side swim between sections.
+    // phone viewport has no side room: any lateral keyframe turns into a
+    // visible side-to-side swim between sections.
     // The seal breathes along the centre axis instead: scale, height, glow.
     const KEYS_MOBILE: Key[] = [
       { id: 'hero', x: 50, y: 50, s: 1.00, o: 1.00, r: 0, hold: 0.45 },
       { id: 'about', x: 50, y: 24, s: 0.62, o: 0.10, r: 40 },
-      { id: 'skills', x: 50, y: 42, s: 0.72, o: 0.02, r: 85 },
-      { id: 'work', x: 50, y: 18, s: 0.65, o: 0.65, r: 130 },
+      { id: 'values', x: 50, y: 42, s: 0.72, o: 0.02, r: 100 },
       // The journey ENDS centred above the closing block — on a phone the old
       // exit toward the bottom-right corner read as the seal escaping sideways
       // instead of settling for the farewell.
@@ -312,37 +306,19 @@ function App() {
 
   return (
     <>
-      {/* Machine-readable identity (see .sr-only). The visual layer stays poetic
-          and, in About, split per-character for animation; this carries the same
-          content as plain prose so search + AI agents can actually read it. */}
+      {/* Machine-readable identity (see .sr-only). The visual layer splits the
+          manifesto per-character for animation; this carries the same words as
+          plain prose so search + AI agents can read them. */}
       <header className="sr-only">
-        <h1>Kasia Walter — Frontend &amp; Motion Engineer</h1>
+        <h1>Kasia Walter — What makes you feel alive?</h1>
         <p>
-          Frontend and motion engineer. I build the layer you feel before you
-          read a word. Something is wrong and nobody can name it yet — that is
-          the moment I am for; I go under the surface and fix the structure, not
-          the symptom. AI moved the bottleneck from typing to judgement, and
-          judgement is the part I am good at.
-        </p>
-        <p>
-          Selected work:{' '}
-          <a href="https://www.cuewigs.com" tabIndex={-1}>cuewigs</a> — I wrote
-          the frontend: the GSAP implementation, the responsive system, the
-          performance. Awwwards Developer Award, February 2024, which Awwwards
-          gives to the developer, plus Site of the Day the same month. This site
-          — a real-time engine written from scratch in Three.js and
-          TypeScript, sharing a render loop with a React app.
-        </p>
-        <p>
-          Four years of production web at Pirxey / Widelab: web developer first,
-          motion-led sites in GSAP; React developer since 2024, product apps and
-          design systems in code. React, TypeScript, Next.js, Redux Toolkit, RTK
-          Query, React Hook Form, Zod, Storybook. Open to frontend and motion
-          engineering roles; EU remote, based in Poland.
+          To create art is to speak another language. You can't move a heart if
+          yours stands still. Feelings matter. To taste, to love, to dream is to
+          feel.
         </p>
         <p>
           {/* tabIndex -1: these exist for machines; the same links are real,
-              visible tab stops in the Contact section. Keeping them out of the
+              visible tab stops in the contact section. Keeping them out of the
               tab order means the first Tab lands on the HOLD button instead of
               an invisible focus ring. */}
           Contact:{' '}
@@ -369,8 +345,7 @@ function App() {
       <main>
         <Hero locked={locked} />
         <About />
-        <Skills />
-        <Work />
+        <Values />
         <Contact />
       </main>
       <Navbar locked={locked} />

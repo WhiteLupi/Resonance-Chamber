@@ -1,4 +1,4 @@
-/* Skills ("THE CRAFT") + Contact ("THE CHANNEL").
+/* Values ("WHAT I KEEP") + Contact ("THE TRUTH").
    Both live inside the same chamber as hero/about: transparent bg so the dimmed
    seal stays a faint backdrop, fixed edge-void/atmosphere/signature frame them,
    one instrument (Syne Mono + phosphor teal) carries through. Content sits in
@@ -19,10 +19,8 @@
 
 /* Shared content safe-zone for sections that sit inside the chamber haze. */
 .section-inner,
-.work-grid,
-.work-info,
 .channel-grid,
-.craft-register {
+.values-register {
   position: relative;
   isolation: isolate;
 }
@@ -34,13 +32,9 @@
 
 /* Local legibility pool — a soft dark wash so text holds over the live ghost
    roots and chamber haze. */
-/* NOTE: the work pool sits on .work-info (the text column), NOT .work-grid —
-   the grid's left half is the seal's dock and a grid-wide pool was dimming
-   the seal even though no text sits there. */
 .section-inner::before,
-.work-info::before,
 .channel-grid::before,
-.craft-register::before {
+.values-register::before {
   content: '';
   position: absolute;
   z-index: -1;
@@ -81,26 +75,26 @@
   text-shadow: 0 1px 3px rgba(0, 0, 0, 0.7);
 }
 
-/* ===== THE CRAFT — band register (spec 2026-06-10) =====
+/* ===== WHAT I KEEP — band register =====
    Full-bleed: the section has no side padding, rows carry their own padding,
    and hairlines run edge to edge across the viewport. */
-.craft-section {
+.values-section {
   display: block;
   padding: var(--sec-pad) 0;
 }
 
-.craft-eyebrow {
+.values-eyebrow {
   padding: 0 max(var(--pad), calc(var(--content-safe-pad) + 10px));
 }
 
-.craft-register {
+.values-register {
   list-style: none;
   width: 100%;
   margin: 0;
   padding: 0;
 }
 
-.craft-band {
+.values-band {
   display: flex;
   align-items: baseline;
   gap: clamp(14px, 1.8vw, 40px);
@@ -109,15 +103,15 @@
   transition: background 0.3s ease;
 }
 
-.craft-band:last-child {
+.values-band:last-child {
   border-bottom: 1px solid var(--teal-dim);
 }
 
-.craft-band:hover {
+.values-band:hover {
   background: rgba(61, 110, 99, 0.07);
 }
 
-.craft-band__name {
+.values-band__name {
   margin: 0;
   flex: 0 0 clamp(120px, 17vw, 400px);
   font-size: var(--fs-band);
@@ -126,7 +120,7 @@
   color: var(--fg-vault);
 }
 
-.craft-band__desc {
+.values-band__line {
   margin: 0;
   max-width: 60ch;
   font-size: var(--fs-body);
@@ -134,145 +128,49 @@
   color: var(--teal-soft);
 }
 
-/* Tags are distant metadata: dimmed to hairline color and pushed right. */
-.craft-band__tags {
+/* A borrowed voice: pushed right and quieter than her own line. */
+.values-band__quote {
   margin: 0 0 0 auto;
+  max-width: 30ch;
+  text-align: right;
   font-size: var(--fs-small);
-  letter-spacing: 0.14em;
-  white-space: nowrap;
-  /* Quiet metadata — a step below the desc, but still legible over the seal. */
+  letter-spacing: 0.06em;
+  line-height: 1.5;
   color: rgba(159, 201, 189, 0.9);
   transition: color 0.3s ease;
 }
 
-.craft-band:hover .craft-band__tags {
+.values-band__quote p {
+  margin: 0;
+}
+
+.values-band__quote cite {
+  display: block;
+  margin-top: 0.4em;
+  font-style: normal;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--teal-dim);
+}
+
+.values-band:hover .values-band__quote {
   color: var(--teal);
 }
 
 /* Placeholder reveal for the later animation pass. */
-.craft-register .craft-band {
+.values-register .values-band {
   opacity: 0;
   translate: 0 14px;
   transition: opacity 0.5s ease, translate 0.5s ease, background 0.3s ease;
   transition-delay: calc(var(--i) * 90ms);
 }
 
-.craft-register.is-in .craft-band {
+.values-register.is-in .values-band {
   opacity: 1;
   translate: 0 0;
 }
 
-/* ===== SELECTED WORK — showcase (spec 2026-06-10) ===== */
-.work-section {
-  display: block;
-  padding: var(--sec-pad) var(--pad);
-}
-
-.work-grid {
-  display: grid;
-  grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
-  gap: var(--gap-fluid);
-  align-items: start;
-  min-height: clamp(320px, 56vh, 640px);
-}
-
-.work-entry + .work-entry {
-  margin-top: clamp(20px, 3vh, 44px);
-  border-top: 1px solid var(--teal-dim);
-  padding-top: clamp(20px, 3vh, 44px);
-}
-
-.work-title {
-  margin: 0 0 0.5em;
-  font-size: var(--fs-band);
-  font-weight: 400;
-  letter-spacing: 0.06em;
-  color: var(--fg-vault);
-}
-
-.work-award {
-  color: var(--fg-vault);
-  font-weight: 400;
-}
-
-.work-copy {
-  margin: 0 0 0.9em;
-  max-width: 56ch;
-  font-size: var(--fs-body);
-  line-height: 1.55;
-  color: var(--fg-soft);
-}
-
-.work-chips {
-  list-style: none;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  margin: 1.2em 0 2em;
-  padding: 0;
-}
-
-.work-chips li {
-  border: 1px solid var(--teal-dim);
-  border-radius: 999px;
-  padding: 0.35em 0.8em;
-  font-size: var(--fs-small);
-  letter-spacing: 0.08em;
-  color: var(--teal-soft);
-}
-
-/* Live-site link — same filament grammar as .channel-link, body-sized. */
-.work-link {
-  position: relative;
-  display: inline-block;
-  margin: 0 0 2em;
-  padding-bottom: 7px;
-  letter-spacing: 0.04em;
-  color: var(--accent);
-  text-decoration: none;
-}
-
-.work-link__text {
-  font-size: var(--fs-body);
-  text-shadow: 0 0 14px var(--accent-shadow);
-  transition: text-shadow 0.22s ease;
-}
-
-.work-link__line {
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  height: 1px;
-  background: var(--accent);
-  box-shadow: 0 0 9px var(--accent-shadow);
-  transform: scaleX(0);
-  transform-origin: center;
-  transition: transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
-}
-
-.work-link:hover .work-link__line,
-.work-link:focus-visible .work-link__line {
-  transform: scaleX(1);
-}
-
-.work-link:hover .work-link__text,
-.work-link:focus-visible .work-link__text {
-  text-shadow: 0 0 26px var(--accent-shadow);
-}
-
-.work-grid .work-info {
-  opacity: 0;
-  translate: 0 14px;
-  transition: opacity 0.5s ease, translate 0.5s ease;
-}
-
-.work-grid.is-in .work-info {
-  opacity: 1;
-  translate: 0 0;
-}
-
-/* ===== THE CHANNEL — asymmetrical signal close (spec 2026-06-10) ===== */
+/* ===== THE TRUTH — asymmetrical close ===== */
 .channel-section {
   display: flex;
   flex-direction: column;
@@ -299,7 +197,7 @@
 
 .channel-headline {
   margin: 0;
-  max-width: 18ch;
+  max-width: 22ch;
   font-weight: 400;
   font-size: var(--fs-title);
   line-height: 1.15;
@@ -399,25 +297,20 @@
   filter: drop-shadow(0 0 5px var(--accent-shadow));
 }
 
-.channel-status {
-  display: inline-flex;
-  align-items: flex-start;
+.channel-invite {
+  display: flex;
+  align-items: center;
   justify-content: flex-end;
-  text-align: right;
   gap: 10px;
-  margin: 56px 0 0;
+  margin: 0 0 28px;
   font-size: clamp(11px, 0.3vw + 9px, 14px);
-  line-height: 1.75;
   letter-spacing: 0.18em;
   text-transform: uppercase;
-  /* readable by AT now (was aria-hidden) — lift off the borderline-AA alpha */
   color: rgba(170, 222, 205, 0.85);
 }
 
-.channel-status__dot {
+.channel-invite__dot {
   flex: 0 0 auto;
-  /* the status is two lines now — pin the dot to the first one's optical centre */
-  margin-top: 0.62em;
   width: 6px;
   height: 6px;
   border-radius: 50%;
@@ -429,18 +322,6 @@
 @keyframes channel-beat {
   0%, 100% { opacity: 0.35; transform: scale(0.8); }
   50%      { opacity: 1;    transform: scale(1.15); }
-}
-
-/* Colophon — quieter than the status line: a maker's mark, not a message.
-   Quiet, not illegible: 9px at 0.44 alpha measured 3.18:1, under AA. */
-.channel-colophon {
-  margin: 16px 0 0;
-  font-size: clamp(10px, 0.22vw + 8.5px, 12px);
-  letter-spacing: 0.2em;
-  line-height: 1.7;
-  text-transform: uppercase;
-  text-align: right;
-  color: rgba(170, 222, 205, 0.62);
 }
 
 /* ============================ reveal on scroll ============================ */
@@ -469,17 +350,17 @@
     justify-self: start;
     align-self: flex-start;
   }
-  /* The craft register is full-bleed by design (hairlines edge to edge) —
+  /* The values register is full-bleed by design (hairlines edge to edge) —
      restore that under the generic .section mobile padding, and let bands
      carry the shared gutter themselves. */
-  .craft-section {
+  .values-section {
     padding-left: 0;
     padding-right: 0;
   }
-  .craft-eyebrow {
+  .values-eyebrow {
     padding: 0 22px;
   }
-  .craft-band {
+  .values-band {
     padding-left: 22px;
     padding-right: 22px;
   }
@@ -500,33 +381,22 @@
   .channel-section {
     min-height: 70vh;
   }
-  .craft-band {
+  .values-band {
     flex-wrap: wrap;
     row-gap: 6px;
   }
-  .craft-band__name {
+  .values-band__name {
     flex: 0 0 100%;
   }
-  .craft-band__tags {
+  .values-band__quote {
     margin-left: 0;
-    white-space: normal;
+    text-align: left;
   }
-  .work-grid {
-    grid-template-columns: 1fr;
-    min-height: 0;
-  }
-  .work-stage {
-    /* No side column on a phone — the seal is a full-bleed backdrop — so this
-       dock band only separated the eyebrow from cuewigs. Drop it. */
-    display: none;
-  }
-
   /* Reliable dark scrim under every text block (the seal is a full-bleed live
      backdrop here), and a dark halo for the eyebrows, which sit outside any pool. */
-  .work-info::before,
   .channel-grid::before,
   .section-inner::before,
-  .craft-register::before {
+  .values-register::before {
     inset: -12% -10%;
     background: radial-gradient(
       ellipse at center,
@@ -561,15 +431,8 @@
   .channel-link {
     padding-top: 18px;
   }
-  .channel-status {
+  .channel-invite {
     justify-content: flex-start;
-    text-align: left;
-    max-width: 100%;
-    letter-spacing: 0.16em;
-  }
-  .channel-colophon {
-    text-align: left;
-    letter-spacing: 0.18em;
   }
 }
 
