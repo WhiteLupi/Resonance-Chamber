@@ -1,5 +1,7 @@
 # Resonance Chamber
 
+<a href="https://kasiawalter.it"><img src=".github/hero.gif" alt="Holding the core: pale veins grow out of the dark until it wakes" width="100%"></a>
+
 The source of [kasiawalter.it](https://kasiawalter.it): one interactive piece about what I value in making things.
 Hold the core to wake it, then scroll through it.
 
