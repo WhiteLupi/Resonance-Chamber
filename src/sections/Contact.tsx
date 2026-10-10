@@ -24,7 +24,7 @@ export function Contact() {
           Read the rest on LinkedIn <span aria-hidden="true">&rarr;</span>
         </a>
         <p className="truth__then">
-          &hellip;then tell me yours.{' '}
+          &hellip;then tell me your truth.{' '}
           <a className="truth__mail" href="mailto:kasia.walter.it@gmail.com">
             kasia.walter.it@gmail.com
           </a>

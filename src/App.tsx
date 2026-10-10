@@ -383,7 +383,7 @@ function App() {
               an invisible focus ring. */}
           Read the rest on{' '}
           <a href="https://www.linkedin.com/in/kasia-walter" tabIndex={-1}>LinkedIn</a>
-          , then tell me yours:{' '}
+          , then tell me your truth:{' '}
           <a href="mailto:kasia.walter.it@gmail.com" tabIndex={-1}>kasia.walter.it@gmail.com</a>
         </p>
       </header>
