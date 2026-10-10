@@ -1,19 +1,17 @@
 import { useEffect, useRef, useState } from 'react'
 import Lenis from 'lenis'
-import { startHero, type HeroScene } from './hero/glScene'
+import type { HeroScene } from './hero/glScene'
 import { Hero } from './hero/Hero'
 import { Navbar } from './hero/Navbar'
 import { About } from './about/About'
-import { Skills } from './sections/Skills'
-import { Work } from './sections/Work'
+import { Values } from './sections/Values'
 import { Contact } from './sections/Contact'
 import { Cursor } from './hero/Cursor'
-import { Atmosphere } from './hero/Atmosphere'
 import { ChargeIndicator } from './hero/ChargeIndicator'
 import { SectionHeader } from './hero/SectionHeader'
 import { Signature } from './hero/Signature'
-import { progressStore } from './about/dwellStore'
 import { prefersReducedMotion } from './motion'
+import { ACCENT, MOBILE_MAX_W } from './hero/gl/constants'
 
 function App() {
   const stageRef = useRef<HTMLDivElement>(null)
@@ -26,20 +24,30 @@ function App() {
   useEffect(() => {
     const stage = stageRef.current
     if (!stage) return
-    const scene = startHero(stage)
-    sceneRef.current = scene
-    const unsub = scene.onLock(() => setLocked(true))
-    const root = document.documentElement
-    const unsubCharge = scene.onCharge((c) => {
-      root.style.setProperty('--charge', c.toFixed(4))
+    // three.js ships in its own chunk, so the page paints before the engine loads.
+    let cancelled = false
+    let teardown = () => {}
+    import('./hero/glScene').then(({ startHero }) => {
+      if (cancelled) return
+      const scene = startHero(stage)
+      sceneRef.current = scene
+      const unsub = scene.onLock(() => setLocked(true))
+      const root = document.documentElement
+      const unsubCharge = scene.onCharge((c) => {
+        root.style.setProperty('--charge', c.toFixed(4))
+      })
+      const unsubHover = scene.onHover(setOverCore)
+      teardown = () => {
+        sceneRef.current = null
+        unsub()
+        unsubCharge()
+        unsubHover()
+        scene.dispose()
+      }
     })
-    const unsubHover = scene.onHover(setOverCore)
     return () => {
-      sceneRef.current = null
-      unsub()
-      unsubCharge()
-      unsubHover()
-      scene.dispose()
+      cancelled = true
+      teardown()
     }
   }, [])
 
@@ -160,29 +168,17 @@ function App() {
     };
   }, []);
 
-  // Scroll-driven scene state — hero→about progress AND the travelling-seal
-  // journey — computed in ONE rAF-coalesced pass. These used to be two separate
-  // window 'scroll' listeners, each doing synchronous layout reads (the journey
-  // one re-ran querySelectorAll + getBoundingClientRect over every text block on
-  // EVERY scroll event). Lenis fires scroll densely, so that was many forced
-  // reflows per frame contending with the WebGL loop — the stutter felt while
-  // the seal rotates from about→work. Now scroll just flags a frame; we read
-  // layout at most once per rAF, and the text-block list is cached (refreshed on
-  // resize) instead of re-queried each time.
+  // Scroll-driven scene state — hero→about progress and the travelling-seal
+  // journey — in one rAF-coalesced pass. Lenis fires scroll densely; reading
+  // layout at most once per frame keeps it off the WebGL loop's budget.
   useEffect(() => {
     const root = document.documentElement;
 
     const setProgress = (p: number) => {
       const clamped = Math.max(0, Math.min(1, p));
-      progressStore.value = clamped;
-      // Vault-dark is the default room now — the seal lives in it from frame
-      // one, no hero→about transition. --dim stays pinned at 1 so every
-      // element that keys off it (fg, accent, hairlines) reads as vault-state
-      // immediately. --p still tracks scroll for the about-content reveal
-      // (inscription hairline, noise/vignette fade).
+      // --p drives the question's rise and the manifesto's reveal in CSS.
       sceneRef.current?.setProgress(clamped);
       root.style.setProperty('--p', clamped.toFixed(4));
-      root.style.setProperty('--dim', '1');
     };
 
     // Transition spans HERO_SPAN screens of scroll (the .hero-section height in
@@ -198,79 +194,126 @@ function App() {
       setProgress(p);
     };
 
-    // Travelling seal (spec 2026-06-10): the route moves through the empty
-    // spaces in each section. App interpolates section keyframes from scroll
-    // position; glScene smooths the target per frame.
+    // Travelling seal: the route moves through the empty space in each section,
+    // always opposite the copy. App interpolates keyframes from scroll position;
+    // glScene smooths the target per frame. `m` is the veins' tempo and `g`
+    // their brightness, so each value can be felt in the figure.
     // `hold` keeps the seal parked on a key through the first fraction of its
-    // outgoing segment — the transition to the NEXT key begins only after
-    // that much of the scroll span has passed. Hero uses it for the ritual;
-    // work uses it so the seal stays docked left while the case copy is
-    // still on screen instead of drifting toward contact from the first
-    // scrolled pixel.
-    type Key = { id: string; x: number; y: number; s: number; o: number; r: number; hold?: number };
+    // outgoing segment: the ritual in hero, and each value while it is read.
+    type Key = {
+      id: string; x: number; y: number; s: number; o: number; r: number;
+      m?: number; g?: number; c?: number; hold?: number; pulse?: boolean;
+    };
+    // Earth tones, low in chroma: sage as home, one warm departure (clay) for
+    // the manifesto. Interface accents stay teal throughout.
+    const SAGE = ACCENT;
+    const C = {
+      clay: 0x766656,
+      stone: 0x6a6964,
+      rose: 0x77636b,
+      ochre: 0x736a52,
+      lichen: 0x646e5e,
+      dusk: 0x484c50,
+    };
+    // Pre-lock the seal sits dead centre inside the charge ring; once awake it
+    // drifts left and the question takes the right.
+    const HERO_X = locked ? 33 : 50;
+    const VALUE_HOLD = 0.7;
     const KEYS: Key[] = [
-      { id: 'hero', x: 50, y: 50, s: 1.00, o: 1.00, r: 0, hold: 0.45 },
-      { id: 'about', x: 61, y: 42, s: 0.66, o: 0.50, r: 40 },
-      { id: 'skills', x: 60, y: 52, s: 0.85, o: 0.38, r: 85 },
-      { id: 'work', x: 30, y: 50, s: 1.05, o: 0.95, r: 130, hold: 0.55 },
-      // Contact: the seal settles in the open air above the closing line —
-      // large and present for the farewell, not shrunk into the footer.
-      { id: 'contact', x: 52, y: 42, s: 0.88, o: 0.85, r: 170 },
+      { id: 'hero', x: HERO_X, y: 50, s: 1.00, o: 1.00, r: 0, hold: 0.45 },
+      { id: 'about', x: 70, y: 48, s: 0.72, o: 0.75, r: 40, c: C.clay, hold: 0.6 },
+      { id: 'values', x: 50, y: 34, s: 0.62, o: 0.5, r: 80 },
+      { id: 'value-whole', x: 30, y: 50, s: 0.5, o: 0.95, r: 110, c: C.stone, hold: VALUE_HOLD },
+      { id: 'value-sense', x: 30, y: 50, s: 0.95, o: 1, r: 140, g: 1.45, c: C.rose, hold: VALUE_HOLD },
+      { id: 'value-meaning', x: 30, y: 50, s: 0.85, o: 0.9, r: 170, g: 1.1, c: C.ochre, hold: VALUE_HOLD, pulse: true },
+      { id: 'value-play', x: 30, y: 50, s: 0.9, o: 1, r: 215, m: 2.4, g: 1.15, c: C.lichen, hold: VALUE_HOLD },
+      { id: 'value-rest', x: 30, y: 50, s: 0.78, o: 0.4, r: 235, m: 0.25, g: 0.7, c: C.dusk, hold: VALUE_HOLD },
+      // Contact: the seal settles centred above the closing line.
+      { id: 'contact', x: 50, y: 30, s: 0.8, o: 0.85, r: 270 },
     ];
     // The mobile route is a vertical spine — every keyframe sits at x:50. A
-    // phone viewport has no side room: any lateral keyframe (the old skills
-    // x:115 exit) turns into a visible side-to-side swim between sections.
-    // The seal breathes along the centre axis instead: scale, height, glow.
+    // phone viewport has no side room: any lateral keyframe turns into a
+    // visible side-to-side swim between sections. The seal breathes along the
+    // centre axis instead: scale, height, glow, tempo.
     const KEYS_MOBILE: Key[] = [
-      { id: 'hero', x: 50, y: 50, s: 1.00, o: 1.00, r: 0, hold: 0.45 },
-      { id: 'about', x: 50, y: 24, s: 0.62, o: 0.10, r: 40 },
-      { id: 'skills', x: 50, y: 42, s: 0.72, o: 0.02, r: 85 },
-      { id: 'work', x: 50, y: 18, s: 0.65, o: 0.65, r: 130 },
-      // The journey ENDS centred above the closing block — on a phone the old
-      // exit toward the bottom-right corner read as the seal escaping sideways
-      // instead of settling for the farewell.
-      { id: 'contact', x: 50, y: 30, s: 0.55, o: 0.60, r: 170 },
+      { id: 'hero', x: 50, y: locked ? 36 : 50, s: 1.00, o: 1.00, r: 0, hold: 0.45 },
+      { id: 'about', x: 50, y: 24, s: 0.62, o: 0.10, r: 40, c: C.clay },
+      { id: 'values', x: 50, y: 26, s: 0.55, o: 0.2, r: 80 },
+      { id: 'value-whole', x: 50, y: 26, s: 0.45, o: 0.35, r: 110, c: C.stone },
+      { id: 'value-sense', x: 50, y: 26, s: 0.7, o: 0.35, r: 140, g: 1.45, c: C.rose },
+      { id: 'value-meaning', x: 50, y: 26, s: 0.65, o: 0.35, r: 170, g: 1.1, c: C.ochre, pulse: true },
+      { id: 'value-play', x: 50, y: 26, s: 0.65, o: 0.35, r: 215, m: 2.4, g: 1.15, c: C.lichen },
+      { id: 'value-rest', x: 50, y: 26, s: 0.6, o: 0.2, r: 235, m: 0.25, g: 0.7, c: C.dusk },
+      // Between the eyebrow and the closing block.
+      { id: 'contact', x: 50, y: 47, s: 0.55, o: 0.60, r: 270 },
     ];
     const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
+    const lerpHex = (a: number, b: number, t: number) => {
+      const ch = (shift: number) => Math.round(lerp((a >> shift) & 255, (b >> shift) & 255, t));
+      return (ch(16) << 16) | (ch(8) << 8) | ch(0);
+    };
+    // Keyframe x is a position within the content column (max CONTENT_MAX px),
+    // so on a wide screen the seal stays beside its copy instead of drifting
+    // to the viewport edge. Must match --content-max in index.css.
+    const CONTENT_MAX = 1600;
+    const toViewX = (x: number) => 50 + (x - 50) * Math.min(1, CONTENT_MAX / window.innerWidth);
     const ease = (t: number) => (t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2);
 
     // The keyframe `o` is the seal's brightness per section. Legibility over copy
     // comes from the dark pools behind the text, so the seal need not dodge it.
+    let segment = '';
+    const enter = (scene: HeroScene, k: Key) => {
+      if (k.id === segment) return;
+      segment = k.id;
+      if (k.pulse) scene.pulse();
+    };
     const computeJourney = () => {
       const scene = sceneRef.current;
       if (!scene) return;
-      const mobile = window.innerWidth <= 760;
+      const mobile = window.innerWidth <= MOBILE_MAX_W;
       const activeKeys = mobile ? KEYS_MOBILE : KEYS;
       const mid = window.innerHeight * (mobile ? 0.12 : 0.5);
       const secs = activeKeys
         .map((k) => ({ k, el: document.getElementById(k.id) }))
         .filter((s): s is { k: Key; el: HTMLElement } => s.el !== null);
       for (let i = 0; i < secs.length; i++) {
+        const { k } = secs[i];
         const r = secs[i].el.getBoundingClientRect();
         const next = secs[i + 1];
         if (!next) {
-          scene.setJourney(secs[i].k);
+          enter(scene, k);
+          scene.setJourney({
+            x: toViewX(k.x), y: k.y, s: k.s, o: k.o, r: k.r, m: k.m ?? 1, g: k.g ?? 1, c: k.c ?? SAGE,
+          });
           return;
         }
         const nr = next.el.getBoundingClientRect();
-        if (r.top <= mid && nr.top > mid) {
-          let raw = Math.min(1, Math.max(0, (mid - r.top) / (nr.top - r.top)));
+        // A last section shorter than the screen never brings its top up to
+        // `mid`; it arrives when the page bottoms out instead.
+        const arrive = i + 2 === secs.length ? Math.max(mid, window.innerHeight - nr.height) : mid;
+        if (r.top <= mid && nr.top > arrive) {
+          enter(scene, k);
+          let raw = Math.min(1, Math.max(0, (mid - r.top) / (mid - r.top + nr.top - arrive)));
           // Mobile has no "hold to charge" indicator and the seal is only a
           // faint backdrop behind the text — so a keyframe hold or a per-segment
           // ease reads as the scroll STICKING, not as intent. On mobile the seal
           // tracks scroll 1:1 (no hold, linear) for uniform motion; desktop keeps
-          // the ritual holds and the eased settle between keys.
-          const hold = mobile ? 0 : (secs[i].k.hold ?? 0);
+          // the holds and the eased settle between keys.
+          const hold = mobile ? 0 : (k.hold ?? 0);
           if (hold > 0) {
             raw = Math.max(0, (raw - hold) / (1 - hold));
           }
           const t = mobile ? raw : ease(raw);
+          const n = next.k;
           scene.setJourney({
-            x: lerp(secs[i].k.x, next.k.x, t),
-            y: lerp(secs[i].k.y, next.k.y, t),
-            s: lerp(secs[i].k.s, next.k.s, t),
-            o: lerp(secs[i].k.o, next.k.o, t),
-            r: lerp(secs[i].k.r, next.k.r, t),
+            x: toViewX(lerp(k.x, n.x, t)),
+            y: lerp(k.y, n.y, t),
+            s: lerp(k.s, n.s, t),
+            o: lerp(k.o, n.o, t),
+            r: lerp(k.r, n.r, t),
+            m: lerp(k.m ?? 1, n.m ?? 1, t),
+            g: lerp(k.g ?? 1, n.g ?? 1, t),
+            c: lerpHex(k.c ?? SAGE, n.c ?? SAGE, t),
           });
           return;
         }
@@ -298,69 +341,30 @@ function App() {
       window.removeEventListener('scroll', schedule);
       window.removeEventListener('resize', schedule);
     };
-  }, []);
+    // Re-run on lock: the hero keyframe moves once the seal is awake.
+  }, [locked]);
 
   return (
     <>
-      {/* Machine-readable identity (see .sr-only). The visual layer stays poetic
-          and, in About, split per-character for animation; this carries the same
-          content as plain prose so search + AI agents can actually read it. */}
+      {/* The page's h1, and the manifesto as plain prose: the visible one is
+          split per letter for its glyph swaps and hidden from screen readers.
+          Values and the close are real text in their sections. */}
       <header className="sr-only">
-        <h1>Kasia Walter — Frontend &amp; Motion Engineer</h1>
+        <h1>Kasia Walter — What makes you feel alive?</h1>
         <p>
-          Frontend and motion engineer. I build the layer you feel before you
-          read a word. Something is wrong and nobody can name it yet — that is
-          the moment I am for; I go under the surface and fix the structure, not
-          the symptom. AI moved the bottleneck from typing to judgement, and
-          judgement is the part I am good at.
-        </p>
-        <p>
-          Selected work:{' '}
-          <a href="https://www.cuewigs.com" tabIndex={-1}>cuewigs</a> — I wrote
-          the frontend: the GSAP implementation, the responsive system, the
-          performance. Awwwards Developer Award, February 2024, which Awwwards
-          gives to the developer, plus Site of the Day the same month. This site
-          — a real-time engine written from scratch in Three.js, my own GLSL, and
-          TypeScript, sharing a render loop with a React app.
-        </p>
-        <p>
-          Four years of production web at Pirxey / Widelab: web developer first,
-          motion-led sites in GSAP; React developer since 2024, product apps and
-          design systems in code. React, TypeScript, Next.js, Redux Toolkit, RTK
-          Query, React Hook Form, Zod, Storybook. Open to frontend and motion
-          engineering roles; EU remote, based in Poland.
-        </p>
-        <p>
-          {/* tabIndex -1: these exist for machines; the same links are real,
-              visible tab stops in the Contact section. Keeping them out of the
-              tab order means the first Tab lands on the HOLD button instead of
-              an invisible focus ring. */}
-          Contact:{' '}
-          <a href="mailto:kasia.walter.it@gmail.com" tabIndex={-1}>kasia.walter.it@gmail.com</a>
-          {' · '}
-          <a href="https://www.linkedin.com/in/kasia-walter" tabIndex={-1}>LinkedIn</a>
+          To create art is to speak another language. You can't move a heart if
+          yours stands still. Feelings matter. To taste, to love, to dream is to
+          feel.
         </p>
       </header>
       <div ref={stageRef} className="gl-stage" aria-hidden="true" />
-      <div className={`edge-void${locked ? ' edge-void--in' : ''}`} aria-hidden="true">
-        <span className="edge-void__edge edge-void__edge--top" />
-        <span className="edge-void__edge edge-void__edge--bottom" />
-        <span className="edge-void__edge edge-void__edge--left" />
-        <span className="edge-void__edge edge-void__edge--right" />
-      </div>
-      {/* Darkness over the space above the navbar — "motion" slides up into it
-          and vanishes by occlusion, intact. The ragged lower edge is a baked
-          alpha texture, not a live SVG filter. */}
-      <div className={`void-ceiling${locked ? ' void-ceiling--in' : ''}`} aria-hidden="true" />
-      <Atmosphere />
       <ChargeIndicator locked={locked} />
       <SectionHeader locked={locked} />
       <Signature locked={locked} />
       <main>
         <Hero locked={locked} />
         <About />
-        <Skills />
-        <Work />
+        <Values />
         <Contact />
       </main>
       <Navbar locked={locked} />

@@ -1,10 +1,5 @@
-/* ancient sci-fi cockpit HUD — glass surfaces with scanlines, mono labels, red accents */
-
-/* Vertical inscription column. The seal renders on canvas behind; the text
-   frames it on a single vertical axis (invitation above, named outcome below).
-   The seal is the central glyph of one carved sentence — not an object
-   decorated with corner labels. Both lines + the signature reveal after the
-   user locks the engine (.hero-section--revealed). */
+/* Fixed UI over the canvas: hero question and prompt, charge ring, section
+   spine, signature, navbar and cursor. */
 
 .hero-section {
   /* Pointer events go through to the canvas for click-and-hold; the text
@@ -21,40 +16,14 @@
   inset: 0;
   z-index: 8;
   pointer-events: none;
-  /* The rising "motion" word (scale + tracking at full --rise) pokes past the
+  /* The rising question (scale + tracking at full --rise) pokes past the
      viewport edge and gives the page a sideways scroll on narrow screens;
      clipping at the fixed container (= viewport) costs nothing visually. */
   overflow: hidden;
   translate: calc(var(--mx, 0) * -12px) calc(var(--my, 0) * -8px);
-  will-change: translate;
-}
-
-/* Vertical axis hairline — suggests the inscription is engraved along the
-   engine's axis. Faint accent tint with center hot-spot (where the seal
-   sits). Stays subtle but locks the centered composition visually. */
-.hero-section::before {
-  content: '';
-  position: absolute;
-  left: 50%;
-  top: 0;
-  bottom: 0;
-  width: 1px;
-  z-index: 7;
-  background: linear-gradient(to bottom,
-    transparent 0%,
-    rgba(61, 110, 99, 0.0) 12%,
-    rgba(61, 110, 99, 0.16) 38%,
-    rgba(122, 196, 175, 0.32) 50%,
-    rgba(61, 110, 99, 0.16) 62%,
-    rgba(61, 110, 99, 0.0) 88%,
-    transparent 100%);
-  opacity: 0;
-  transition: opacity 1.4s ease-out 0.3s;
-  pointer-events: none;
-}
-
-.hero-section--revealed::before {
-  opacity: 1;
+  /* The question is gone before it reaches the navbar. */
+  opacity: calc(1 - clamp(0, (var(--p, 0) - 0.15) / 0.23, 1));
+  will-change: translate, opacity;
 }
 
 /* Pre-lock prompt — single carved word centered just below the seal area.
@@ -134,12 +103,28 @@
 .section-header {
   position: fixed;
   top: 50%;
-  left: 26px;
+  /* Hugs the content column, so on a wide screen the name sits by its copy. */
+  left: max(26px, calc((100vw - var(--content-max)) / 2 - 64px));
   z-index: 9;
   translate: 0 -50%;
+  /* Every length below is in em, so the whole spine scales with this. */
+  font-size: clamp(10px, 0.4vw + 5px, 16px);
   pointer-events: none;
   opacity: 0;
   transition: opacity 1.0s ease-out 0.4s;
+}
+
+/* The veins reach the screen edge; a soft dark pool keeps the name legible
+   where they cross behind it. */
+.section-header::after {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  inset: -3em -2.4em;
+  border-radius: 50%;
+  background: radial-gradient(ellipse at center, rgba(0, 0, 0, 0.9) 35%, rgba(0, 0, 0, 0.55) 65%, transparent 100%);
+  filter: blur(12px);
+  pointer-events: none;
 }
 
 .section-header--in { opacity: 1; }
@@ -149,11 +134,11 @@
 .section-header::before {
   content: '';
   position: absolute;
-  left: -8px;
+  left: -0.8em;
   top: 50%;
   translate: 0 -50%;
   width: 1px;
-  height: 168px;
+  height: 16.8em;
   background: linear-gradient(
     to bottom,
     transparent,
@@ -166,8 +151,8 @@
 
 .section-header__inner {
   position: relative;
-  width: 16px;
-  height: 192px;     /* reading length of the longest vertical title */
+  width: 1.6em;
+  height: 19.2em;    /* reading length of the longest vertical title */
   overflow: clip;
 }
 
@@ -182,12 +167,11 @@
   justify-content: center;
   font-family: 'Syne Mono', ui-monospace, monospace;
   font-weight: 400;
-  font-size: 10px;
   letter-spacing: 0.42em;
   text-transform: uppercase;
   /* teal light, not grey label — reads as a filament of the organism's glow */
-  color: rgba(170, 222, 205, 0.82);
-  text-shadow: 0 0 14px rgba(122, 196, 175, 0.6);
+  color: rgba(190, 234, 219, 0.95);
+  text-shadow: 0 0 3px rgba(0, 0, 0, 1), 0 0 14px rgba(122, 196, 175, 0.5);
   white-space: nowrap;
   /* Remounted (key=active) on each section change → slides up into place. The
      hairline carries the steady breath; the label just arrives. */
@@ -207,7 +191,7 @@
 
 /* Mobile: the fixed spine collides with content on narrow screens — the same
    name lives as a section-top eyebrow instead (.section-eyebrow per section). */
-@media (max-width: 720px) {
+@media (max-width: 760px) {
   .section-header { display: none; }
 }
 
@@ -267,77 +251,9 @@
   transition: stroke-dashoffset 0.08s linear;
 }
 
-/* === Chamber atmosphere ===
-   Fixed inset 0 below sections (z:0) — sits above the seal canvas (also z:0,
-   later DOM order wins) but below hero/about content (z:1). Shafts read as
-   light cones in the room's haze; dust as motes in depth. Both CSS-only
-   for now — promote to Three.js if it reads flat. */
-.atmosphere {
-  position: fixed;
-  inset: 0;
-  z-index: 0;
-  pointer-events: none;
-  overflow: hidden;
-}
-
-.atmosphere__shaft {
-  position: absolute;
-  top: -10%;
-  height: 130%;
-  width: 72px;
-  pointer-events: none;
-  filter: blur(12px);
-  will-change: opacity;
-}
-
-.atmosphere__shaft--l {
-  left: 6%;
-  background: linear-gradient(15deg,
-    transparent 34%,
-    rgba(122, 196, 175, 0.11) 50%,
-    transparent 66%);
-  rotate: -5deg;
-  animation: shaft-breathe 14s ease-in-out infinite;
-}
-
-.atmosphere__shaft--r {
-  right: 6%;
-  background: linear-gradient(-15deg,
-    transparent 34%,
-    rgba(122, 196, 175, 0.09) 50%,
-    transparent 66%);
-  rotate: 5deg;
-  animation: shaft-breathe 11s ease-in-out infinite -3s;
-}
-
-@keyframes shaft-breathe {
-  0%, 100% { opacity: 0.28; }
-  50%      { opacity: 0.55; }
-}
-
-.atmosphere__dust {
-  position: absolute;
-  border-radius: 50%;
-  background: rgba(122, 196, 175, 0.58);
-  box-shadow: 0 0 4px rgba(122, 196, 175, 0.35);
-  pointer-events: none;
-  animation: dust-drift 14s ease-in-out infinite;
-  will-change: translate, opacity;
-}
-
-@keyframes dust-drift {
-  0%, 100% { translate: 0 0;        opacity: 0.35; }
-  50%      { translate: 8px -10px; opacity: 0.85; }
-}
-
-@media (max-width: 720px) {
-  .atmosphere__shaft { display: none; }
-}
-
-/* "motion" — the only inscription. Starts below the seal (bottom 22vh ≈
-   lower quarter of the viewport), grows + lifts toward center as the user
-   scrolls — engine "absorbs" the manifesto. Three independent layers of
-   movement compose:
+/* The question — the only inscription. Hidden pre-lock; once the seal is
+   awake and drifts left, it stands in the right half. Three independent
+   layers of movement compose:
    1. `translate` (CSS prop, scroll-driven) lift on --p
    2. `scale`     (CSS prop, scroll-driven) grow on --p
    3. `transform` (animation) float — independent life
@@ -345,27 +261,24 @@
    doesn't fight them. */
 .hero-inscription__bottom {
   position: absolute;
-  left: 50%;
-  bottom: 22vh;
-  /* shrink-to-fit so clip-path circle has a sensible reference box
-     (text width, not viewport width). Centered via translate. */
+  left: calc(50% + 0.04 * min(100vw, var(--content-max)));
+  /* A touch above the seal's centre line, into the open space. */
+  top: 45%;
   font-family: 'Boldonse', system-ui, sans-serif;
   font-weight: 400;
-  font-size: clamp(40px, 5.8vw, 132px);
+  font-size: clamp(40px, 6.4vw, 150px);
   letter-spacing: -0.012em;
-  /* "Alive" keeps its capital A — the Boldonse lowercase 'a' read as awkward.
-     (Was lowercase for the old single word "motion".) */
+  /* "Alive" keeps its capital A — the Boldonse lowercase 'a' read as awkward. */
   text-transform: none;
   color: rgba(245, 244, 240, 0.94);
   text-shadow:
     0 0 28px rgba(4, 7, 10, 0.92),
     0 0 60px rgba(61, 110, 99, 0.18);
   white-space: nowrap;
-  translate: -50% 0;
+  translate: 0 -50%;
+  transform-origin: left center;
   opacity: 0;
-  /* short, so the scroll-driven vanish (opacity calc below) stays responsive
-     while the lock-time appearance still eases rather than hard-cuts */
-  transition: opacity 0.45s ease 0.1s;
+  transition: opacity 0.8s ease 0.15s;
   pointer-events: auto;
   user-select: none;
   will-change: translate, scale, transform;
@@ -373,20 +286,49 @@
 
 .hero-section--revealed .hero-inscription__bottom {
   opacity: 1;
-  /* "motion" travels UP intact, growing and spreading its letters as it goes,
-     and slides up into the darkness at the top (.void-ceiling) where it's
-     occluded — it disappears INTO the dark, it does not fall apart. Pure --p, so
-     scrolling back down it descends, contracts and reforms. */
+  /* Rises as the page scrolls and fades out before it reaches the navbar
+     (.hero-inscription opacity). Pure --p, so scrolling back reverses it. */
   --rise: clamp(0, calc(var(--p, 0) / 0.85), 1);
-  translate: -50% calc(var(--rise) * -78vh);
-  scale: calc(1 + var(--rise) * 0.42);
-  letter-spacing: calc(-0.012em + var(--rise) * 0.2em);
-  animation: motion-float 11s ease-in-out infinite;
+  translate: 0 calc(-50% - var(--rise) * 62vh);
+  scale: calc(1 + var(--rise) * 0.2);
+  letter-spacing: calc(-0.012em + var(--rise) * 0.12em);
+  /* Enters from the right at the pace of the camera's sideways move: it was
+     always there, just outside the frame, and the gaze arrives at it. */
+  animation:
+    hero-arrive 1.1s cubic-bezier(0.16, 1, 0.3, 1) both,
+    motion-float 11s ease-in-out 1.1s infinite;
 }
 
-@keyframes motion-breathe {
-  0%, 100% { letter-spacing: -0.012em; }
-  50%      { letter-spacing: 0.014em; }
+@keyframes hero-arrive {
+  from { margin-left: 34vw; }
+  to   { margin-left: 0; }
+}
+
+.hero-inscription__lead {
+  position: relative;
+  display: block;
+  width: fit-content;
+  margin: 0 0 0.3em 0.08em;
+  font-family: 'Syne Mono', ui-monospace, monospace;
+  font-size: clamp(15px, 1.35vw, 26px);
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: rgba(240, 250, 246, 1);
+  text-shadow:
+    0 0 4px rgba(0, 0, 0, 1),
+    0 0 12px rgba(0, 0, 0, 0.95);
+}
+
+/* It sits right under the core's glow and over the densest veins; text-shadow
+   alone can't hold thin mono strokes there, so a soft dark pool backs it. */
+.hero-inscription__lead::before {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  inset: -70% -12%;
+  border-radius: 50%;
+  background: radial-gradient(ellipse at center, rgba(0, 0, 0, 0.92) 30%, rgba(0, 0, 0, 0.6) 62%, transparent 100%);
+  filter: blur(10px);
 }
 
 @keyframes motion-float {
@@ -404,7 +346,7 @@
   translate: -50% 0;
   font-family: 'Syne Mono', ui-monospace, monospace;
   font-weight: 400;
-  font-size: 10px;
+  font-size: clamp(10px, 0.3vw + 6px, 14px);
   letter-spacing: 0.42em;
   text-transform: uppercase;
   /* teal light, same language as the section marker — a touch dimmer since it
@@ -420,16 +362,40 @@
   transition: opacity 1.0s ease-out 0.8s;
 }
 
+.signature::before {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  inset: -1.6em -1.2em;
+  border-radius: 50%;
+  background: radial-gradient(ellipse at center, rgba(0, 0, 0, 0.85) 30%, rgba(0, 0, 0, 0.5) 62%, transparent 100%);
+  filter: blur(12px);
+  pointer-events: none;
+}
+
 .signature--in { opacity: 1; }
 
-@media (max-width: 720px) {
-  .hero-inscription {
-    padding: 14vh 0 14vh;
-  }
+@media (max-width: 760px) {
+  /* No side room on a phone: the seal rises a little and the question sits
+     centred below it. */
   .hero-inscription__bottom {
+    left: 50%;
+    top: auto;
+    bottom: 20vh;
     font-size: clamp(44px, 14vw, 96px);
+    text-align: center;
+    translate: -50% 0;
+    transform-origin: center;
   }
-  /* The plate lands where full-width text flows (Skills bands, Work copy) —
+  /* The seal doesn't travel sideways on a phone, so neither does the gaze. */
+  .hero-section--revealed .hero-inscription__bottom {
+    translate: -50% calc(var(--rise) * -78vh);
+    animation: motion-float 11s ease-in-out infinite;
+  }
+  .hero-inscription__lead {
+    margin-inline: auto;
+  }
+  /* The plate lands where full-width text flows —
      on narrow screens the chamber framing yields to legibility. */
   .signature {
     display: none;
@@ -442,9 +408,8 @@
 }
 
 
-/* Carved/etched. Legibility over the tendrils comes from the global .edge-void
-   frame (see App.tsx) darkening the screen perimeter; here just a faint teal
-   hairline below, suggesting an engraved seam in the wall. */
+/* A soft dark pool behind the links keeps them legible over the veins; a
+   faint teal hairline below. */
 .cockpit-navbar {
   position: fixed;
   top: 22px;
@@ -452,10 +417,6 @@
   width: calc(100% - 96px);
   max-width: 1180px;
   padding: 12px 28px 14px;
-  display: grid;
-  grid-template-columns: 1fr auto;
-  align-items: center;
-  gap: 28px;
   z-index: 50;
 
   font-family: 'Syne Mono', ui-monospace, monospace;
@@ -469,6 +430,17 @@
   transition:
     transform 0.75s cubic-bezier(0.2, 0.8, 0.2, 1),
     opacity 0.6s ease;
+}
+
+.cockpit-navbar::before {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  inset: -40% 8%;
+  border-radius: 50%;
+  background: radial-gradient(ellipse at center, rgba(0, 0, 0, 0.85) 30%, rgba(0, 0, 0, 0.5) 62%, transparent 100%);
+  filter: blur(16px);
+  pointer-events: none;
 }
 
 .cockpit-navbar::after {
@@ -518,7 +490,7 @@
   display: flex;
   justify-content: center;
   gap: 22px;
-  font-size: 12px;
+  font-size: clamp(12px, 0.3vw + 8px, 16px);
   letter-spacing: 0.28em;
 }
 
@@ -553,19 +525,6 @@
   transform: scaleX(1);
 }
 
-.cockpit-navbar__sep {
-  color: var(--fg-faint);
-  font-size: 12px;
-  user-select: none;
-}
-
-.cockpit-navbar__right {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  font-size: 10px;
-  letter-spacing: 0.22em;
-}
 
 
 /* custom cursor */
@@ -753,15 +712,10 @@
   .cockpit-cursor { display: none; }
 }
 
-@media (max-width: 720px) {
+@media (max-width: 760px) {
   .cockpit-navbar {
     padding: 9px 16px;
-    gap: 14px;
     width: calc(100% - 32px);
-    grid-template-columns: 1fr;
-  }
-  .cockpit-navbar__right {
-    display: none;
   }
   .cockpit-navbar__center {
     justify-content: space-between;
@@ -772,130 +726,5 @@
   /* Finger-sized targets: the label stays small, the touchable box doesn't. */
   .cockpit-navbar__link {
     padding: 14px 4px;
-  }
-}
-
-/* === The void — darkness swallows the tendril tips on every edge, so the
-   organism dissolves into black at the perimeter while the lit core holds the
-   centre. The ragged boundaries are baked alpha textures captured from the
-   original SVG turbulence/displacement filter, so runtime only composites
-   static PNGs and opacity. */
-.edge-void {
-  position: fixed;
-  top: -8vh;
-  left: -3vw;
-  right: -3vw;
-  bottom: -8vh;
-  z-index: 4;
-  pointer-events: none;
-  opacity: 0;
-  transition: opacity 0.9s ease;
-}
-.edge-void--in {
-  opacity: 1;
-}
-
-.edge-void__edge {
-  position: absolute;
-  display: block;
-  pointer-events: none;
-}
-
-/* Baked tile: 2048×240, solid black for the first ~100px, torn over the next
-   ~110px. A plain solid strip backs the overscan + the tile's solid head, so
-   no soft gradient ever shows — black stays black up to the ragged boundary. */
-.edge-void__edge--top,
-.edge-void__edge--bottom {
-  left: 0;
-  right: 0;
-  height: 300px;
-  background:
-    linear-gradient(#000, #000) left top / 100% 60px no-repeat,
-    url('/void-edge-h.png') left 40px / 2048px 240px repeat-x;
-}
-
-.edge-void__edge--top {
-  top: 0;
-}
-
-.edge-void__edge--bottom {
-  bottom: 0;
-  transform: scaleY(-1);
-}
-
-/* Sides hug the viewport edge tighter than the horizontal bands — the torn
-   zone must end before the content-safe padding (~55px) so it only grazes
-   the about column with outer wisps, like the original live filter did. */
-.edge-void__edge--left,
-.edge-void__edge--right {
-  top: 0;
-  bottom: 0;
-  width: 200px;
-  background:
-    linear-gradient(#000, #000) left top / 24px 100% no-repeat,
-    url('/void-edge-v.png') left top / 200px 2048px repeat-y;
-}
-
-.edge-void__edge--left {
-  left: 0;
-}
-
-.edge-void__edge--right {
-  right: 0;
-  transform: scaleX(-1);
-}
-
-/* Short viewports: the horizontal bands are fixed-pixel (300px) while the
-   sections' safe padding scales with vh — on a low window the torn zone would
-   swallow nearly half the screen and drown the closing headline. Scale the
-   bands down (same baked texture at half size, like the mobile ceiling) so the
-   frame keeps its proportion to the room. */
-@media (max-height: 700px) {
-  .edge-void__edge--top,
-  .edge-void__edge--bottom {
-    height: 160px;
-    background:
-      linear-gradient(#000, #000) left top / 100% 30px no-repeat,
-      url('/void-edge-h.png') left 20px / 1024px 120px repeat-x;
-  }
-}
-
-/* Darkness at the top of the void — the space above (and behind) the navbar is
-   solid black so "motion" slides up INTO it and disappears, never visible
-   passing through the top. The lower boundary is the baked horizontal void
-   edge; no live filter. */
-.void-ceiling {
-  position: fixed;
-  top: -10vh;
-  left: -10vw;
-  right: -10vw;
-  /* fixed-depth ceiling: the torn boundary starts right under the navbar
-     (~80px) instead of tracking viewport height and sagging into the frame */
-  height: calc(10vh + 250px);
-  z-index: 9;
-  pointer-events: none;
-  /* solid black down to the baked torn band — the word is occluded by SOLID
-     darkness, never seen through a translucent haze */
-  background:
-    linear-gradient(#000, #000) left top / 100% calc(100% - 180px) no-repeat,
-    url('/void-edge-h.png') left bottom / 2048px 240px repeat-x;
-  opacity: 0;
-  transition: opacity 0.9s ease;
-}
-.void-ceiling--in { opacity: 1; }
-
-@media (max-width: 720px) {
-  .edge-void {
-    display: none;
-  }
-
-  .void-ceiling {
-    top: -6vh;
-    left: -8vw;
-    right: -8vw;
-    height: 20vh;
-    background:
-      linear-gradient(#000, #000) left top / 100% calc(100% - 80px) no-repeat,
-      url('/void-edge-h.png') left bottom / 1024px 120px repeat-x;
   }
 }

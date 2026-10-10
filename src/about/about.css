@@ -1,16 +1,11 @@
-/* About section — Polyrhythm Chamber (v8).
-   The section is 200vh: a sticky stage pins the inscription to viewport while
-   scroll progress finishes (extra dwell time for the polyrhythm reveal).
-   BG is driven by --about-bg-pulse when voice v4 is active; otherwise stays
-   at the static settled #bcc0c5 which matches the canvas clearColor at p==1. */
+/* The manifesto. The section is 200vh: a sticky stage pins the inscription
+   while the visitor stays with it. */
 
 .about-section {
   position: relative;
   z-index: 1;
   height: 200vh;
-  /* Transparent — the dimmed seal (sceneVis driven by setProgress in
-     glScene.ts) stays as a faint ambient backdrop behind the about
-     inscription. About is "inside the engine," not behind a wall. */
+  /* Transparent: the seal stays alive behind the words. */
   background: transparent;
   font-family: 'Syne Mono', ui-monospace, monospace;
   color: var(--fg);
@@ -23,49 +18,10 @@
   display: grid;
   grid-template-rows: 1fr;
   align-items: center;
-  padding: var(--sec-pad) max(var(--pad), var(--content-safe-pad));
+  padding: var(--sec-pad) var(--gutter);
   overflow: hidden;
 }
 
-/* Row 1: thesis left + aside right; middle space belongs to the seal. */
-.practice-top {
-  display: grid;
-  grid-template-columns: minmax(0, 1.55fr) minmax(0, 0.92fr);
-  gap: clamp(28px, 5vw, 120px);
-  align-items: center;
-  width: 100%;
-}
-
-.practice-aside {
-  justify-self: end;
-  /* ch measured against the body size the copy actually renders at. */
-  font-size: var(--fs-body);
-  max-width: 34ch;
-  border-left: 1px solid var(--teal-dim);
-  padding-left: clamp(18px, 2.2vw, 48px);
-  opacity: clamp(0, calc((var(--p, 0) - 0.78) / 0.12), 1);
-}
-
-.practice-aside__label {
-  margin: 0 0 0.6em;
-  color: var(--teal);
-  font-size: var(--fs-small);
-  letter-spacing: 0.26em;
-  text-transform: uppercase;
-}
-
-.practice-aside__copy {
-  margin: 0;
-  font-size: var(--fs-body);
-  line-height: 1.55;
-  color: var(--fg-soft);
-}
-
-.practice-aside__copy + .practice-aside__copy {
-  margin-top: 0.75em;
-}
-
-/* Row 2: facets across the full width. */
 /* the single bounding box around all three sentences. Font size lives HERE
    (not on the copy) so the ch-based measure tracks the rendered text — with
    the size on the child, 52ch resolved against the 16px wrapper and squeezed
@@ -74,17 +30,16 @@
   position: relative;
   z-index: 2;
   width: 100%;
-  font-size: clamp(19px, 2.35vw, 27px);
+  font-family: var(--font-voice);
+  font-size: clamp(19px, 2.1vw, 34px);
   max-width: min(44ch, 100% - clamp(8px, 2vw, 28px));
   display: flex;
   flex-direction: column;
   gap: clamp(28px, 3.2vh, 42px);
 }
 
-/* Shadow box — a soft dark pool behind the text so white words stay readable
-   over the now-ALIVE roots (we no longer kill the roots; this is the local
-   legibility instead). Blurred dark rounded slab; fades in with the inscription
-   so it arrives as the words rise, and reverses cleanly on scroll-up (pure --p). */
+/* A soft dark pool behind the text keeps it readable over the live veins.
+   Fades in with the words, and reverses on scroll-up (pure --p). */
 .inscription::after {
   content: '';
   position: absolute;
@@ -97,11 +52,9 @@
   pointer-events: none;
 }
 
-/* Per-line emergence keyed to scroll progress. Lines stagger across
-   p ∈ [0.78, 0.96] — overlapping with the tail of particle fadeout so the
-   inscription emerges THROUGH the dissolving engine. NO opacity fade:
-   each line is a mask (overflow: clip) and the copy translates up from
-   below into view. Reads as voice rising into the chamber. */
+/* Per-line emergence keyed to scroll progress, staggered across
+   p ∈ [0.78, 0.96]. No opacity fade: each line is a mask (overflow: clip)
+   and the copy rises into view from below. */
 .inscription__line {
   display: block;
   margin: 0;
@@ -115,6 +68,15 @@
   /* Internal mask breathing room keeps descenders/diacritics intact without
      increasing the outer chamber padding. */
   padding-block: 0.06em 0.28em;
+}
+/* The first sentence is the thesis; the other two answer it. */
+.inscription__line[data-line="0"] {
+  font-size: 1.6em;
+  line-height: 1.3;
+}
+.inscription__line[data-line="0"] .inscription__copy {
+  line-height: 1.3;
+  color: var(--fg);
 }
 .inscription__line[data-line="1"] { --p-start: 0.83; --p-end: 0.91; }
 .inscription__line[data-line="2"] { --p-start: 0.88; --p-end: 0.96; }
@@ -135,12 +97,9 @@
   will-change: translate;
 }
 
-/* Voice v2 — letter substitution. Char-by-char inline-block 1ch slots keep
-   the line width stable in monospace (Space Mono) so the SVG swap doesn't
-   reflow neighbours. ls-word holds chars together as one wrap unit; spaces
-   stay as plain text nodes between word spans for natural line breaking.
-   During swap the letter slides DOWN and the glyph drops IN from above; the
-   slot becomes a stacking container and both children animate independently. */
+/* Letter substitution. During a swap an invisible copy of the letter holds
+   its slot, so the line never reflows; the letter falls out and the glyph
+   drops in from above. .ls-word holds a word together as one wrap unit. */
 .letter-sub {
   display: inline;
 }
@@ -150,14 +109,11 @@
 }
 .ls-ch {
   display: inline-block;
-  width: 1ch;
-  text-align: center;
   vertical-align: baseline;
   position: relative;
 }
-.ls-ch--swap {
-  /* explicit height keeps the inline baseline stable when children go absolute */
-  height: 1em;
+.ls-ch__ghost {
+  visibility: hidden;
 }
 .ls-ch__letter,
 .ls-ch__glyph {
@@ -173,16 +129,13 @@
   height: 1ch;
   overflow: visible;
   color: inherit;
-  /* Phosphor halo — short core + long bloom. --accent-shadow already lerps with
-     the room (subdued in hero, full teal glow in vault), so the glyphs read as
-     embedded light in old stone once you're in the chamber. */
+  /* Phosphor halo — short core + long bloom. */
   filter:
     drop-shadow(0 0 2.5px var(--accent-shadow))
     drop-shadow(0 0 7px var(--accent-shadow));
 }
 
-/* Voice v1 — cursor blink. The single drop of accent in About; cross-stitches
-   the patina-teal from Hero so both rooms read as the same instrument. */
+/* The blinking caret is the manifesto's single drop of accent. */
 .inscription__caret {
   display: inline-block;
   margin-left: 2px;
@@ -199,7 +152,7 @@
 /* Desktop: the left spine carries the section name — the eyebrow stays for
    the heading outline only (visually clipped, sr-only pattern). Mobile swaps:
    spine hidden, eyebrow visible at the top of the stage. */
-@media (min-width: 721px) {
+@media (min-width: 761px) {
   .about-eyebrow {
     position: absolute;
     width: 1px;
@@ -211,7 +164,7 @@
   }
 }
 
-@media (max-width: 720px) {
+@media (max-width: 760px) {
   /* No sticky pin on phones. On desktop the 200vh section pins the stage and
      spends the extra 100vh of scroll dwelling on the reveal — but the reveal
      itself finishes on APPROACH (--p hits 1 before the pin even starts), so on
@@ -222,10 +175,8 @@
   .about-section {
     height: auto;
   }
-  /* One mobile gutter (22px) across every section. The TOP rhythm is larger
-     here than the shared 88px because the fixed .void-ceiling paints solid black
-     down to ~14vh (see cockpit.css); at 88px the eyebrow sat entirely under that
-     band and read as invisible ("THE SIGNAL" fading out). Clear the ceiling. */
+  /* One mobile gutter (22px) across every section; the larger top keeps the
+     eyebrow clear of the fixed navbar. */
   .about-stage {
     position: static;
     height: auto;
@@ -239,51 +190,7 @@
     margin: 0;
     align-self: start;
   }
-  .practice-top {
-    grid-template-columns: 1fr;
-  }
-  /* The "since 2022" fact is a secondary voice, but on black it was reading as
-     washed-out mud: the label sat at the darkest teal and the divider was a
-     muddy mid-dark hairline that looked accidental. Lift the label to the
-     legible teal, warm the copy up a tier, and make the rule a clean faint
-     line instead of dirt. */
-  .practice-aside {
-    justify-self: start;
-    border-left: none;
-    border-top: 1px solid rgba(125, 169, 158, 0.28);
-    padding-left: 0;
-    padding-top: 18px;
-    /* Above the inscription (z-index 2) so its blurred dark box can't bleed
-       down over "since 2022". */
-    position: relative;
-    z-index: 3;
-  }
-  /* Own scrim: the travelling core passes behind "since 2022", which has no pool
-     of the inscription's. */
-  .practice-aside::before {
-    content: '';
-    position: absolute;
-    z-index: -1;
-    inset: -16% -12%;
-    border-radius: 24px;
-    background: radial-gradient(
-      ellipse at center,
-      rgba(0, 0, 0, 0.9),
-      rgba(0, 0, 0, 0.8) 60%,
-      rgba(0, 0, 0, 0.5) 85%,
-      transparent 100%
-    );
-    filter: blur(30px);
-    pointer-events: none;
-  }
-  .practice-aside__label {
-    color: rgba(170, 222, 205, 0.9);
-    text-shadow: 0 0 12px rgba(122, 196, 175, 0.35);
-  }
-  .practice-aside__copy {
-    color: var(--fg-vault);
-  }
-  /* Hug the copy tighter so the box doesn't bleed down over the aside. */
+  /* Hug the copy tighter on narrow screens. */
   .inscription::after {
     inset: -12% -8% -2%;
     filter: blur(32px);

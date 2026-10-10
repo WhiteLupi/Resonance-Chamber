@@ -13,11 +13,10 @@ import { useEffect, useState } from 'react';
 // encounter shows nothing but the seal, the charge ring and the HOLD prompt.
 
 const SECTIONS = [
-  { id: 'hero', label: 'THE ENGINE' },
-  { id: 'about', label: 'THE SIGNAL' },
-  { id: 'skills', label: 'THE CRAFT' },
-  { id: 'work', label: 'THE RECORD' },
-  { id: 'contact', label: 'THE CHANNEL' },
+  { id: 'hero', label: 'THE PULSE' },
+  { id: 'about', label: 'THE LANGUAGE' },
+  { id: 'values', label: 'WHAT I KEEP' },
+  { id: 'contact', label: 'THE TRUTH' },
 ];
 
 type Props = { locked: boolean };

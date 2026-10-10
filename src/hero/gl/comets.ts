@@ -1,171 +1,183 @@
 import * as THREE from 'three';
-import { ACCENT } from './constants';
 
-// Anchors for proximity tug — placed on the comet orbital shell so passes
-// actually trigger.
-const ANCHOR_VERTS = [
-  new THREE.Vector3( 2.6, 0,  0 ),
-  new THREE.Vector3(-2.6, 0,  0 ),
-  new THREE.Vector3( 0,   0,  2.6),
-  new THREE.Vector3( 0,   0, -2.6),
-];
+const COMET_COUNT = 24;
+// Proximity-tug anchors on the comet shell.
+const ANCHORS = [
+  [2.6, 0, 0], [-2.6, 0, 0], [0, 0, 2.6], [0, 0, -2.6],
+] as const;
 const PROX = 0.55;
 
-// Comets — 24 particles on random 3D orbital planes, rendered as short
-// additive line segments (dim tail → bright head).
-export function createComets(enabled: boolean, parent: THREE.Object3D) {
-  const COMET_COUNT = enabled ? 24 : 0;
-  const cuX = new Float32Array(COMET_COUNT), cuY = new Float32Array(COMET_COUNT), cuZ = new Float32Array(COMET_COUNT);
-  const cvX = new Float32Array(COMET_COUNT), cvY = new Float32Array(COMET_COUNT), cvZ = new Float32Array(COMET_COUNT);
-  const cRadius = new Float32Array(COMET_COUNT);
-  const cPhase = new Float32Array(COMET_COUNT);
-  const cBaseSpeed = new Float32Array(COMET_COUNT);
-  const cPrevX = new Float32Array(COMET_COUNT), cPrevY = new Float32Array(COMET_COUNT), cPrevZ = new Float32Array(COMET_COUNT);
+// Comets orbit on fixed random planes, so a head's position is a closed-form
+// function of its phase: the shader evaluates it, the CPU only advances one
+// shared phase clock (speed changes with charge). Each comet is a screen-space
+// ribbon from a dim tail to a bright head, antialiased in the fragment shader.
+const vertexShader = /* glsl */ `
+  uniform float uClock;
+  uniform float uTrailK;
+  uniform vec2 uViewport;
+  uniform float uPixelRatio;
+  attribute vec3 aU;
+  attribute vec3 aV;
+  // radius, phase0, base speed
+  attribute vec3 aOrbit;
+  // x: 0 tail / 1 head, y: side
+  attribute vec2 aEnd;
+  varying float vHead;
+  varying float vDist;
+  varying float vHalf;
 
-  for (let i = 0; i < COMET_COUNT; i++) {
-    let nx = Math.random() * 2 - 1;
-    let ny = Math.random() * 2 - 1;
-    let nz = Math.random() * 2 - 1;
-    const nl = 1 / Math.sqrt(nx*nx + ny*ny + nz*nz);
-    nx *= nl; ny *= nl; nz *= nl;
-    let tx = 1, ty = 0;
-    const tz = 0;
-    if (Math.abs(nx) > 0.9) { tx = 0; ty = 1; }
-    let ux = ny * tz - nz * ty;
-    let uy = nz * tx - nx * tz;
-    let uz = nx * ty - ny * tx;
-    const ul = 1 / Math.sqrt(ux*ux + uy*uy + uz*uz);
-    ux *= ul; uy *= ul; uz *= ul;
-    cuX[i] = ux; cuY[i] = uy; cuZ[i] = uz;
-    cvX[i] = ny * uz - nz * uy;
-    cvY[i] = nz * ux - nx * uz;
-    cvZ[i] = nx * uy - ny * ux;
+  void main() {
+    float ph = aOrbit.y + aOrbit.z * uClock;
+    float r = aOrbit.x;
+    vec3 head = (cos(ph) * aU + sin(ph) * aV) * r;
+    vec3 tangent = -sin(ph) * aU + cos(ph) * aV;
+    float trail = min(0.46, r * aOrbit.z * uTrailK);
+    vec3 tail = head - tangent * trail;
 
-    cRadius[i] = 2.5 + Math.random() * 0.7;
-    cPhase[i] = Math.random() * Math.PI * 2;
-    cBaseSpeed[i] = 0.7 + Math.random() * 0.5;
+    mat4 mvp = projectionMatrix * modelViewMatrix;
+    vec4 ch = mvp * vec4(head, 1.0);
+    vec4 ct = mvp * vec4(tail, 1.0);
+    vec2 sh = ch.xy / ch.w * uViewport * 0.5;
+    vec2 st = ct.xy / ct.w * uViewport * 0.5;
+    vec2 dir = normalize(sh - st + vec2(1e-5, 0.0));
+    vec2 normal = vec2(-dir.y, dir.x);
 
-    const cs = Math.cos(cPhase[i]) * cRadius[i];
-    const sn = Math.sin(cPhase[i]) * cRadius[i];
-    cPrevX[i] = cs * cuX[i] + sn * cvX[i];
-    cPrevY[i] = cs * cuY[i] + sn * cvY[i];
-    cPrevZ[i] = cs * cuZ[i] + sn * cvZ[i];
+    vec4 c = aEnd.x > 0.5 ? ch : ct;
+    vHalf = 0.5 / uPixelRatio + 0.35;
+    float extent = vHalf + 1.5;
+    vDist = aEnd.y * extent;
+    c.xy += normal * aEnd.y * extent / (uViewport * 0.5) * c.w;
+    vHead = aEnd.x;
+    gl_Position = c;
+  }
+`;
+
+const fragmentShader = /* glsl */ `
+  uniform vec3 uColor;
+  uniform float uOpacity;
+  uniform float uPixelRatio;
+  varying float vHead;
+  varying float vDist;
+  varying float vHalf;
+  void main() {
+    float d = abs(vDist);
+    float core = clamp((vHalf - d) * uPixelRatio + 0.5, 0.0, 1.0);
+    float glow = 0.25 * exp(-max(d - vHalf, 0.0) * 1.6);
+    float bright = mix(0.08, 1.0, vHead * vHead);
+    gl_FragColor = vec4(uColor * bright * max(core, glow) * uOpacity, 1.0);
+  }
+`;
+
+// `accent` is shared with the rest of the scene; its changes show up here live.
+export function createComets(enabled: boolean, parent: THREE.Object3D, accent: THREE.Color) {
+  const count = enabled ? COMET_COUNT : 0;
+  const u = new Float32Array(count * 3);
+  const v = new Float32Array(count * 3);
+  const orbit = new Float32Array(count * 3);
+  for (let i = 0; i < count; i++) {
+    const n = new THREE.Vector3(Math.random() * 2 - 1, Math.random() * 2 - 1, Math.random() * 2 - 1).normalize();
+    const ref = Math.abs(n.x) > 0.9 ? new THREE.Vector3(0, 1, 0) : new THREE.Vector3(1, 0, 0);
+    const uu = new THREE.Vector3().crossVectors(n, ref).normalize();
+    const vv = new THREE.Vector3().crossVectors(n, uu);
+    u.set([uu.x, uu.y, uu.z], i * 3);
+    v.set([vv.x, vv.y, vv.z], i * 3);
+    orbit.set([2.5 + Math.random() * 0.7, Math.random() * Math.PI * 2, 0.7 + Math.random() * 0.5], i * 3);
   }
 
-  let cGeo: THREE.BufferGeometry | null = null;
-  let cMat: THREE.LineBasicMaterial | null = null;
-  if (enabled) {
-    const cPositions = new Float32Array(COMET_COUNT * 6);
-    const cColors = new Float32Array(COMET_COUNT * 6);
-    const accentCol = new THREE.Color(ACCENT);
-    for (let i = 0; i < COMET_COUNT; i++) {
-      // tail dim → head bright (vertex colors)
-      cColors[i*6 + 0] = accentCol.r * 0.08;
-      cColors[i*6 + 1] = accentCol.g * 0.08;
-      cColors[i*6 + 2] = accentCol.b * 0.08;
-      cColors[i*6 + 3] = accentCol.r;
-      cColors[i*6 + 4] = accentCol.g;
-      cColors[i*6 + 5] = accentCol.b;
-    }
-
-    cGeo = new THREE.BufferGeometry();
-    cGeo.setAttribute('position', new THREE.BufferAttribute(cPositions, 3));
-    cGeo.setAttribute('color',    new THREE.BufferAttribute(cColors, 3));
-    cMat = new THREE.LineBasicMaterial({
-      vertexColors: true,
-      transparent: true,
-      opacity: 0.95,
-      blending: THREE.AdditiveBlending,
-      depthWrite: false,
-    });
-    const cometLines = new THREE.LineSegments(cGeo, cMat);
-    parent.add(cometLines);
-  }
-
+  let clock = 0;
   const pull = { x: 0, y: 0, z: 0 };
+  if (!enabled) {
+    return {
+      update: () => pull,
+      setViewport: () => {},
+      setOpacity: () => {},
+      dispose: () => {},
+    };
+  }
 
-  // Advance orbits and accumulate the proximity tug on the seal. Pre-lock:
-  // speed scales with charge (slow → fast streaks). Post-lock: speed decouples
-  // and stays at idle drift even though charge is 1. On skipped frames the
-  // pull reads zero, so the tug in the caller decays naturally.
-  const update = (opts: {
-    dt: number;
-    charge: number;
-    locked: boolean;
-    frameCount: number;
-    updateStep: number;
-    trailScale: number;
-    pointerMotion: number;
-  }) => {
-    pull.x = 0; pull.y = 0; pull.z = 0;
-    if (
-      !cGeo
-      || opts.trailScale <= 0
-      || opts.updateStep <= 0
-      || opts.frameCount % opts.updateStep !== 0
-    ) return pull;
-
-    const cometSpeedMul = opts.locked ? 0.35 : 0.35 + opts.charge * 3.2;
-    const cometDt = Math.min(opts.dt, 0.022);
-    const trailMotionDamp = 1 - opts.pointerMotion * 0.55;
-    const cPosAttr = cGeo.attributes.position.array as Float32Array;
-    for (let i = 0; i < COMET_COUNT; i++) {
-      cPhase[i] += cBaseSpeed[i] * cometSpeedMul * cometDt * opts.updateStep;
-      const cs = Math.cos(cPhase[i]) * cRadius[i];
-      const sn = Math.sin(cPhase[i]) * cRadius[i];
-      const tx_ = cs * cuX[i] + sn * cvX[i];
-      const ty_ = cs * cuY[i] + sn * cvY[i];
-      const tz_ = cs * cuZ[i] + sn * cvZ[i];
-
-      const lr = Math.min(1, cometDt * 14 * opts.updateStep);
-      const px = cPrevX[i] + (tx_ - cPrevX[i]) * lr;
-      const py = cPrevY[i] + (ty_ - cPrevY[i]) * lr;
-      const pz = cPrevZ[i] + (tz_ - cPrevZ[i]) * lr;
-
-      const dx = px - cPrevX[i];
-      const dy = py - cPrevY[i];
-      const dz = pz - cPrevZ[i];
-      const sp = Math.sqrt(dx*dx + dy*dy + dz*dz);
-
-      const trail = Math.min(0.46 * opts.trailScale, sp * 16 * opts.trailScale) * trailMotionDamp;
-      const inv = sp > 0.00001 ? 1 / sp : 0;
-      cPosAttr[i*6 + 0] = px - dx * inv * trail;
-      cPosAttr[i*6 + 1] = py - dy * inv * trail;
-      cPosAttr[i*6 + 2] = pz - dz * inv * trail;
-      cPosAttr[i*6 + 3] = px;
-      cPosAttr[i*6 + 4] = py;
-      cPosAttr[i*6 + 5] = pz;
-
-      let minD = 1e9;
-      let nvx = 0, nvy = 0, nvz = 0;
-      for (let k = 0; k < ANCHOR_VERTS.length; k++) {
-        const vv = ANCHOR_VERTS[k];
-        const ddx = px - vv.x, ddy = py - vv.y, ddz = pz - vv.z;
-        const d = ddx*ddx + ddy*ddy + ddz*ddz;
-        if (d < minD) { minD = d; nvx = vv.x; nvy = vv.y; nvz = vv.z; }
-      }
-      const dist = Math.sqrt(minD);
-      const aff = Math.max(0, 1 - dist / PROX);
-      if (aff > 0) {
-        pull.x += (px - nvx) * aff;
-        pull.y += (py - nvy) * aff;
-        pull.z += (pz - nvz) * aff;
-      }
-
-      cPrevX[i] = px; cPrevY[i] = py; cPrevZ[i] = pz;
+  const pos: number[] = [], aU: number[] = [], aV: number[] = [], aOrbit: number[] = [], aEnd: number[] = [];
+  const index: number[] = [];
+  for (let i = 0; i < count; i++) {
+    const base = i * 4;
+    for (const [end, side] of [[0, -1], [0, 1], [1, -1], [1, 1]]) {
+      pos.push(0, 0, 0);
+      aU.push(u[i * 3], u[i * 3 + 1], u[i * 3 + 2]);
+      aV.push(v[i * 3], v[i * 3 + 1], v[i * 3 + 2]);
+      aOrbit.push(orbit[i * 3], orbit[i * 3 + 1], orbit[i * 3 + 2]);
+      aEnd.push(end, side);
     }
-    cGeo.attributes.position.needsUpdate = true;
+    index.push(base, base + 1, base + 2, base + 1, base + 3, base + 2);
+  }
+  const geom = new THREE.BufferGeometry();
+  geom.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+  geom.setAttribute('aU', new THREE.Float32BufferAttribute(aU, 3));
+  geom.setAttribute('aV', new THREE.Float32BufferAttribute(aV, 3));
+  geom.setAttribute('aOrbit', new THREE.Float32BufferAttribute(aOrbit, 3));
+  geom.setAttribute('aEnd', new THREE.Float32BufferAttribute(aEnd, 2));
+  geom.setIndex(index);
+
+  const uniforms = {
+    uClock: { value: 0 },
+    uTrailK: { value: 0 },
+    uViewport: { value: new THREE.Vector2(1, 1) },
+    uPixelRatio: { value: 1 },
+    uColor: { value: accent },
+    uOpacity: { value: 0.95 },
+  };
+  const mat = new THREE.ShaderMaterial({
+    uniforms,
+    vertexShader,
+    fragmentShader,
+    blending: THREE.AdditiveBlending,
+    transparent: true,
+    depthWrite: false,
+    // Screen-space ribbons wind either way depending on the line's direction.
+    side: THREE.DoubleSide,
+  });
+  const mesh = new THREE.Mesh(geom, mat);
+  mesh.frustumCulled = false;
+  parent.add(mesh);
+
+  // Pre-lock the comets accelerate with charge; post-lock they drift at idle
+  // and quicken with the energy of clicks.
+  // Trail length follows speed (world units travelled in ~16 frames at 60fps),
+  // shortened while the pointer moves so parallax doesn't smear them.
+  const update = (o: { dt: number; charge: number; energy: number; locked: boolean; pointerMotion: number }) => {
+    const speedMul = o.locked ? 0.35 + o.energy * 1.2 : 0.35 + o.charge * 3.2;
+    clock += speedMul * Math.min(o.dt, 0.05);
+    uniforms.uClock.value = clock;
+    uniforms.uTrailK.value = speedMul * (16 / 60) * (1 - o.pointerMotion * 0.55);
+
+    pull.x = 0; pull.y = 0; pull.z = 0;
+    if (!o.locked) return pull;
+    for (let i = 0; i < count; i++) {
+      const ph = orbit[i * 3 + 1] + orbit[i * 3 + 2] * clock;
+      const r = orbit[i * 3];
+      const c = Math.cos(ph) * r, s = Math.sin(ph) * r;
+      const px = c * u[i * 3] + s * v[i * 3];
+      const py = c * u[i * 3 + 1] + s * v[i * 3 + 1];
+      const pz = c * u[i * 3 + 2] + s * v[i * 3 + 2];
+      let minD = Infinity, ax = 0, ay = 0, az = 0;
+      for (const [x, y, z] of ANCHORS) {
+        const d = (px - x) ** 2 + (py - y) ** 2 + (pz - z) ** 2;
+        if (d < minD) { minD = d; ax = x; ay = y; az = z; }
+      }
+      const aff = Math.max(0, 1 - Math.sqrt(minD) / PROX);
+      if (aff > 0) {
+        pull.x += (px - ax) * aff;
+        pull.y += (py - ay) * aff;
+        pull.z += (pz - az) * aff;
+      }
+    }
     return pull;
   };
 
-  const setOpacity = (opacity: number) => {
-    if (cMat) cMat.opacity = opacity;
+  const setViewport = (w: number, h: number, pixelRatio: number) => {
+    uniforms.uViewport.value.set(w, h);
+    uniforms.uPixelRatio.value = pixelRatio;
   };
+  const setOpacity = (opacity: number) => { uniforms.uOpacity.value = opacity; };
+  const dispose = () => { geom.dispose(); mat.dispose(); };
 
-  const dispose = () => {
-    cMat?.dispose();
-    cGeo?.dispose();
-  };
-
-  return { update, setOpacity, dispose };
+  return { update, setViewport, setOpacity, dispose };
 }
