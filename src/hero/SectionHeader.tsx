@@ -3,8 +3,7 @@ import { useEffect, useState } from 'react';
 // Section marker — a faint living-light inscription running UP the left margin
 // (vertical spine), not a HUD tape across the top. Tracks the section currently
 // holding the viewport and swaps its title: the active label slides up into the
-// clip box as you move through the chamber. Drives off scroll position against
-// each section's offset (robust under the sticky/fixed layout).
+// clip box as you move through the page.
 //
 // Treatment is "trace of light in living tissue", not carved stone: phosphor
 // teal halo + a slow breath on the hairline, so it reads alive.
@@ -25,44 +24,22 @@ export function SectionHeader({ locked }: Props) {
   const [active, setActive] = useState(0);
 
   useEffect(() => {
-    // Same discipline as App's scroll pass: sections mount once, so the element
-    // list is cached (refreshed on resize) and layout is read at most once per
-    // rAF — Lenis fires scroll densely and this must not contend with the GL
-    // frame budget.
-    let els: (HTMLElement | null)[] = [];
-    const refreshEls = () => {
-      els = SECTIONS.map((s) => document.getElementById(s.id));
-    };
-
-    let raf = 0;
-    const frame = () => {
-      raf = 0;
-      // Mark a touch above viewport centre: a section claims the spine once its
-      // top has risen past ~42% of the screen.
-      const mark = window.innerHeight * 0.42;
-      let idx = 0;
-      for (let i = 0; i < els.length; i++) {
-        if (els[i] && els[i]!.getBoundingClientRect().top <= mark) idx = i;
-      }
-      setActive((prev) => (prev === idx ? prev : idx));
-    };
-    const schedule = () => {
-      if (!raf) raf = requestAnimationFrame(frame);
-    };
-    const onResize = () => {
-      refreshEls();
-      schedule();
-    };
-
-    refreshEls();
-    frame();
-    window.addEventListener('scroll', schedule, { passive: true });
-    window.addEventListener('resize', onResize);
-    return () => {
-      if (raf) cancelAnimationFrame(raf);
-      window.removeEventListener('scroll', schedule);
-      window.removeEventListener('resize', onResize);
-    };
+    // A section claims the spine once its top rises past ~42% of the screen:
+    // the observer watches a one-pixel line there, so scrolling costs no
+    // layout reads.
+    const els = SECTIONS.map((sec) => document.getElementById(sec.id));
+    const io = new IntersectionObserver(
+      (entries) => {
+        for (const e of entries) {
+          if (!e.isIntersecting) continue;
+          const idx = els.indexOf(e.target as HTMLElement);
+          if (idx >= 0) setActive(idx);
+        }
+      },
+      { rootMargin: '-42% 0px -58% 0px' },
+    );
+    for (const el of els) if (el) io.observe(el);
+    return () => io.disconnect();
   }, []);
 
   return (
