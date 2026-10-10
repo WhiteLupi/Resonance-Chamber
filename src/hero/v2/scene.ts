@@ -135,14 +135,17 @@ export function startHero(host: HTMLElement, createRoots: RootsFactory = createT
     return dx * dx + dy * dy <= pxR * pxR;
   };
 
-  const clock = new THREE.Clock(false);
+  // Scene time only advances while the loop runs. A hidden tab pauses it rather
+  // than resetting it, so timed effects (pulses, lock flash) resume mid-flight.
+  let t = 0;
+  let lastNow = 0;
   const broadcast = (t: number) => {
     sonar.trigger(t);
     roots.pulse?.(t);
   };
   const press = () => {
     clickHeld = true;
-    if (locked) broadcast(clock.getElapsedTime());
+    if (locked) broadcast(t);
   };
   const onPointerMove = (e: PointerEvent) => {
     lastClientX = e.clientX;
@@ -173,7 +176,6 @@ export function startHero(host: HTMLElement, createRoots: RootsFactory = createT
   window.addEventListener('blur', release);
 
   let raf = 0;
-  let lastT = 0;
   let nextIdleRingAt = Infinity;
   let frames = 0;
   let frameMsAvg = 0;
@@ -212,10 +214,11 @@ export function startHero(host: HTMLElement, createRoots: RootsFactory = createT
 
   const loop = () => {
     raf = requestAnimationFrame(loop);
-    const t = clock.getElapsedTime();
-    const rawDt = t - lastT;
-    lastT = t;
+    const now = performance.now();
+    const rawDt = (now - lastNow) / 1000;
+    lastNow = now;
     const dt = Math.min(0.05, rawDt);
+    t += dt;
     frames += 1;
     frameMsAvg += (rawDt * 1000 - frameMsAvg) * 0.05;
 
@@ -308,27 +311,23 @@ export function startHero(host: HTMLElement, createRoots: RootsFactory = createT
   renderer.compileAsync(scene, camera).then(() => {
     if (disposed) return;
     started = true;
-    clock.start();
-    lastT = clock.getElapsedTime();
+    lastNow = performance.now();
     raf = requestAnimationFrame(loop);
     requestAnimationFrame(() => {
       if (!disposed) host.style.opacity = '1';
     });
   });
 
-  // A hidden tab parks the loop; on return the gap is swallowed so dt doesn't
-  // spike and the idle heartbeat re-arms instead of firing at once.
+  // A hidden tab parks the loop; on return the gap is swallowed, so nothing
+  // jumps and the idle heartbeat keeps its rhythm.
   const onVisibility = () => {
     if (document.hidden) {
       cancelAnimationFrame(raf);
       raf = 0;
-      clock.stop();
       return;
     }
     if (raf || disposed || !started) return;
-    clock.start();
-    lastT = clock.getElapsedTime();
-    if (nextIdleRingAt !== Infinity) nextIdleRingAt = lastT + IDLE_RING_INTERVAL;
+    lastNow = performance.now();
     raf = requestAnimationFrame(loop);
   };
   document.addEventListener('visibilitychange', onVisibility);
