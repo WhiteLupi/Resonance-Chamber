@@ -130,14 +130,14 @@ const sampleTendril = (spinePoints: THREE.Vector3[], helix: Helix | null, sample
 // Widths are CSS px. Multiple layers per tendril, each shorter and thicker than
 // the next, give the base-heavy taper; the shader smooths each layer's end.
 const mainLayers = (jitter: number): Layer[] => [
-  { width: 5.0, opacity: 0.72, ratio: 0.45 + jitter * 0.05 },
-  { width: 3.4, opacity: 0.82, ratio: 0.72 + jitter * 0.04 },
-  { width: 2.0, opacity: 0.90, ratio: 0.90 + jitter * 0.03 },
-  { width: 1.1, opacity: 0.85, ratio: 1.00 },
+  { width: 3.85, opacity: 0.72, ratio: 0.45 + jitter * 0.05 },
+  { width: 2.6, opacity: 0.82, ratio: 0.72 + jitter * 0.04 },
+  { width: 1.55, opacity: 0.90, ratio: 0.90 + jitter * 0.03 },
+  { width: 0.85, opacity: 0.85, ratio: 1.00 },
 ];
 const branchLayers: Layer[] = [
-  { width: 2.6, opacity: 0.75, ratio: 0.60 },
-  { width: 1.1, opacity: 0.85, ratio: 1.00 },
+  { width: 2.0, opacity: 0.75, ratio: 0.60 },
+  { width: 0.7, opacity: 0.85, ratio: 1.00 },
 ];
 
 const buildLayout = (): TendrilDef[] => {
@@ -355,7 +355,7 @@ const fragmentShader = /* glsl */ `
   }
 `;
 
-export function createTendrilFieldV2(parent: THREE.Object3D): RootsModule {
+export function createTendrilFieldV2(parent: THREE.Object3D, widthScale = 1): RootsModule {
   const defs = buildLayout();
 
   const params = new Float32Array(defs.length * PARAM_TEXELS * 4);
@@ -391,7 +391,7 @@ export function createTendrilFieldV2(parent: THREE.Object3D): RootsModule {
           prev.push(pp.x, pp.y, pp.z);
           next.push(pn.x, pn.y, pn.z);
           meta.push(i, side, id);
-          layer.push(l.width, l.opacity, endIdx - 1);
+          layer.push(l.width * widthScale, l.opacity, endIdx - 1);
         }
         if (i < endIdx - 1) {
           const a = base + i * 2;
