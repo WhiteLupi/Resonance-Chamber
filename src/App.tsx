@@ -257,7 +257,8 @@ function App() {
       { id: 'value-meaning', x: 50, y: 26, s: 0.65, o: 0.35, r: 170, g: 1.1, c: C.ochre, pulse: true },
       { id: 'value-play', x: 50, y: 26, s: 0.65, o: 0.35, r: 215, m: 2.4, g: 1.15, c: C.lichen },
       { id: 'value-rest', x: 50, y: 26, s: 0.6, o: 0.2, r: 235, m: 0.25, g: 0.7, c: C.dusk },
-      { id: 'contact', x: 50, y: 30, s: 0.55, o: 0.60, r: 270 },
+      // Between the eyebrow and the closing block.
+      { id: 'contact', x: 50, y: 47, s: 0.55, o: 0.60, r: 270 },
     ];
     const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
     const lerpHex = (a: number, b: number, t: number) => {
@@ -300,9 +301,12 @@ function App() {
           return;
         }
         const nr = next.el.getBoundingClientRect();
-        if (r.top <= mid && nr.top > mid) {
+        // A last section shorter than the screen never brings its top up to
+        // `mid`; it arrives when the page bottoms out instead.
+        const arrive = i + 2 === secs.length ? Math.max(mid, window.innerHeight - nr.height) : mid;
+        if (r.top <= mid && nr.top > arrive) {
           enter(scene, k);
-          let raw = Math.min(1, Math.max(0, (mid - r.top) / (nr.top - r.top)));
+          let raw = Math.min(1, Math.max(0, (mid - r.top) / (mid - r.top + nr.top - arrive)));
           // Mobile has no "hold to charge" indicator and the seal is only a
           // faint backdrop behind the text — so a keyframe hold or a per-segment
           // ease reads as the scroll STICKING, not as intent. On mobile the seal
