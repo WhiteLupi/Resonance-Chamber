@@ -90,7 +90,8 @@ function CharSpan({ ch, lineIdx, charIdx }: { ch: string; lineIdx: number; charI
   }
 
   return (
-    <span className="ls-ch ls-ch--swap" data-idx={charIdx}>
+    <span className="ls-ch" data-idx={charIdx}>
+      <span className="ls-ch__ghost">{ch}</span>
       <span
         className="ls-ch__letter"
         style={{ transform: `translateY(${v.letterY}em)`, opacity: v.letterOpacity }}

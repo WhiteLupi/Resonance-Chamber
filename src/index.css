@@ -34,6 +34,9 @@
   /* Fluid sizes: everything scales through clamp() up to ~2000px windows. */
   --pad: clamp(14px, 2vw, 56px);
   --fs-title: clamp(26px, 3.4vw, 74px);
+  /* The words that carry meaning: manifesto, values, the close. UI labels
+     stay in Syne Mono. */
+  --font-voice: 'Syne Mono', ui-monospace, monospace;
   --fs-small: clamp(11px, 0.4vw + 7px, 15px);
   --sec-pad: clamp(56px, 9vh, 150px);
   --content-safe-pad: clamp(28px, 3.8vw, 78px);
