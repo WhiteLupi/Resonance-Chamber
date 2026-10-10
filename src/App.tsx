@@ -36,9 +36,12 @@ function App() {
       const scene = startHero(stage)
       sceneRef.current = scene
       const unsub = scene.onLock(() => setLocked(true))
-      const root = document.documentElement
+      // Written per frame while holding, so only on its two readers: on <html>
+      // it restyled the whole page every frame and stuttered phones.
+      const chargeReaders = document.querySelectorAll<HTMLElement>('.hero-prompt, .charge-indicator')
       const unsubCharge = scene.onCharge((c) => {
-        root.style.setProperty('--charge', c.toFixed(4))
+        const v = c.toFixed(4)
+        for (const el of chargeReaders) el.style.setProperty('--charge', v)
       })
       const unsubHover = scene.onHover(setOverCore)
       teardown = () => {
