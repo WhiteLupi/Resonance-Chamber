@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import Lenis from 'lenis'
-import { startHero, type HeroScene } from './hero/glScene'
+import type { HeroScene } from './hero/glScene'
 import { Hero } from './hero/Hero'
 import { Navbar } from './hero/Navbar'
 import { About } from './about/About'
@@ -26,20 +26,34 @@ function App() {
   useEffect(() => {
     const stage = stageRef.current
     if (!stage) return
-    const scene = startHero(stage)
-    sceneRef.current = scene
-    const unsub = scene.onLock(() => setLocked(true))
-    const root = document.documentElement
-    const unsubCharge = scene.onCharge((c) => {
-      root.style.setProperty('--charge', c.toFixed(4))
+    // three.js ships in its own chunk, so the page paints before the engine loads.
+    // /v2 runs the GPU-first engine for side-by-side comparison.
+    const engine = window.location.pathname.startsWith('/v2')
+      ? import('./hero/v2/scene')
+      : import('./hero/glScene')
+    let cancelled = false
+    let teardown = () => {}
+    engine.then(({ startHero }) => {
+      if (cancelled) return
+      const scene = startHero(stage)
+      sceneRef.current = scene
+      const unsub = scene.onLock(() => setLocked(true))
+      const root = document.documentElement
+      const unsubCharge = scene.onCharge((c) => {
+        root.style.setProperty('--charge', c.toFixed(4))
+      })
+      const unsubHover = scene.onHover(setOverCore)
+      teardown = () => {
+        sceneRef.current = null
+        unsub()
+        unsubCharge()
+        unsubHover()
+        scene.dispose()
+      }
     })
-    const unsubHover = scene.onHover(setOverCore)
     return () => {
-      sceneRef.current = null
-      unsub()
-      unsubCharge()
-      unsubHover()
-      scene.dispose()
+      cancelled = true
+      teardown()
     }
   }, [])
 
