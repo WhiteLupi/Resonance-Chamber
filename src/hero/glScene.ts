@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { prefersReducedMotion } from '../motion';
 import { ACCENT, CORE_R, MOBILE_MAX_W } from './gl/constants';
-import { readHeroPerf } from './gl/perf';
+import { createProfiler, readHeroPerf } from './gl/perf';
 import { createComets } from './gl/comets';
 import { createCoreGlow, createSonarRings } from './gl/glows';
 import { createVeins } from './gl/veins';
@@ -112,7 +112,6 @@ export function startHero(host: HTMLElement): HeroScene {
     PERF.enableComets = false;
     PERF.enableChargePulse = false;
   }
-  const perfDebug = window as typeof window & { __heroPerf?: Record<string, unknown> };
   const lockSubs = new Set<() => void>();
   const chargeSubs = new Set<(charge: number) => void>();
   const hoverSubs = new Set<(over: boolean) => void>();
@@ -270,7 +269,6 @@ export function startHero(host: HTMLElement): HeroScene {
 
   let raf = 0;
   let nextIdleRingAt = Infinity;
-  let frames = 0;
   const frameGuard = createFrameGuard(() => {
     const current = renderer.getPixelRatio();
     const next = PIXEL_RATIO_STEPS.find((step) => step < current - 0.01);
@@ -279,46 +277,13 @@ export function startHero(host: HTMLElement): HeroScene {
     applySize();
     return true;
   });
-  let frameMsAvg = 0;
-  let cpuMsAvg = 0;
-  let gpuMsAvg = -1;
-  // Profile-only GPU timing: one query in flight, read back a few frames later.
-  const gl = renderer.getContext() as WebGL2RenderingContext;
-  const timerExt = PERF.profile ? gl.getExtension('EXT_disjoint_timer_query_webgl2') : null;
-  let gpuQuery: WebGLQuery | null = null;
-  const beginGpuTimer = () => {
-    if (!timerExt || gpuQuery) return false;
-    gpuQuery = gl.createQuery();
-    if (!gpuQuery) return false;
-    gl.beginQuery(timerExt.TIME_ELAPSED_EXT, gpuQuery);
-    return true;
-  };
-  const readGpuTimer = () => {
-    if (!timerExt || !gpuQuery) return;
-    if (!gl.getQueryParameter(gpuQuery, gl.QUERY_RESULT_AVAILABLE)) return;
-    if (!gl.getParameter(timerExt.GPU_DISJOINT_EXT)) {
-      const ms = gl.getQueryParameter(gpuQuery, gl.QUERY_RESULT) / 1e6;
-      gpuMsAvg = gpuMsAvg < 0 ? ms : gpuMsAvg + (ms - gpuMsAvg) * 0.1;
-    }
-    gl.deleteQuery(gpuQuery);
-    gpuQuery = null;
-  };
-
-  const syncPerfDebug = () => {
-    if (!PERF.profile) return;
-    perfDebug.__heroPerf = {
-      dpr: window.devicePixelRatio,
-      renderPixelRatio: renderer.getPixelRatio(),
-      canvasPx: [canvas.width, canvas.height],
-      drawCalls: renderer.info.render.calls,
-      triangles: renderer.info.render.triangles,
-      frameMsAvg: Number(frameMsAvg.toFixed(2)),
-      cpuMsAvg: Number(cpuMsAvg.toFixed(3)),
-      gpuMsAvg: Number(gpuMsAvg.toFixed(3)),
-      pixelRatioCap,
-      journey: { ...journeyCur },
-    };
-  };
+  const profiler = createProfiler(PERF.profile, renderer, () => ({
+    dpr: window.devicePixelRatio,
+    renderPixelRatio: renderer.getPixelRatio(),
+    canvasPx: [canvas.width, canvas.height],
+    pixelRatioCap,
+    journey: { ...journeyCur, c: accentTarget.getHex() },
+  }));
 
   // Moving the seal across the screen moves the CAMERA, not the picture: the
   // eye travels sideways, so near and far veins slide at different speeds and
@@ -356,8 +321,6 @@ export function startHero(host: HTMLElement): HeroScene {
     lastNow = now;
     const dt = Math.min(0.05, rawDt);
     t += dt;
-    frames += 1;
-    frameMsAvg += (rawDt * 1000 - frameMsAvg) * 0.05;
     frameGuard.sample(rawDt * 1000, t);
 
     const jl = smoothing(0.07, dt);
@@ -442,14 +405,7 @@ export function startHero(host: HTMLElement): HeroScene {
     comets.setOpacity(0.95 * sealVis);
     roots.applyVisibility(charge, rootsVis, rootJVis, (PERF.mobile ? 1.8 : 1) * journeyCur.g * (1 + surge * 0.45));
 
-    const timing = PERF.profile && beginGpuTimer();
-    renderer.render(scene, camera);
-    if (timing && timerExt) gl.endQuery(timerExt.TIME_ELAPSED_EXT);
-    if (PERF.profile) {
-      readGpuTimer();
-      cpuMsAvg += (performance.now() - now - cpuMsAvg) * 0.05;
-    }
-    if (frames % 30 === 0) syncPerfDebug();
+    profiler.frame(now, rawDt * 1000, () => renderer.render(scene, camera));
   };
 
   // Compile every program before the first visible frame so the reveal never
@@ -525,7 +481,7 @@ export function startHero(host: HTMLElement): HeroScene {
     dispose() {
       disposed = true;
       cancelAnimationFrame(raf);
-      delete perfDebug.__heroPerf;
+      profiler.dispose();
       document.removeEventListener('visibilitychange', onVisibility);
       window.removeEventListener('resize', onResize);
       window.removeEventListener('pointermove', onPointerMove);
