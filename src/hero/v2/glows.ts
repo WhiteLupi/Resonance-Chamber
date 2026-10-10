@@ -60,8 +60,6 @@ export function createCoreGlow(parent: THREE.Object3D) {
     uBloom: { value: 0.2 },
   };
   const mat = additive(glowFragment, uniforms);
-  // Bloom light sits over the core, not behind it: that's what whitens its face.
-  mat.depthTest = false;
   const halo = new THREE.Mesh(quad, mat);
   halo.frustumCulled = false;
   parent.add(halo);

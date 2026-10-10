@@ -74,10 +74,29 @@ const buildSpine = (dir: THREE.Vector3, lengthMul: number, swayBias: number): TH
   return pts;
 };
 
+// Chaikin corner-cutting on the control polygon: a sharp turn between two
+// spine steps becomes a rounded bend before the curve is fitted. Endpoints stay
+// put, so roots remain anchored on the core and branches on their parent.
+const smoothControl = (pts: THREE.Vector3[], iterations: number): THREE.Vector3[] => {
+  let out = pts;
+  for (let k = 0; k < iterations; k++) {
+    const next = [out[0]];
+    for (let i = 0; i < out.length - 1; i++) {
+      next.push(
+        out[i].clone().lerp(out[i + 1], 0.25),
+        out[i].clone().lerp(out[i + 1], 0.75),
+      );
+    }
+    next.push(out[out.length - 1]);
+    out = next;
+  }
+  return out;
+};
+
 // Helix coil around a centripetal Catmull-Rom spine, carried on a
 // rotation-minimizing frame so the coil plane never flips on vertical tangents.
 const sampleTendril = (spinePoints: THREE.Vector3[], helix: Helix | null, samples: number) => {
-  const spine = new THREE.CatmullRomCurve3(spinePoints, false, 'centripetal');
+  const spine = new THREE.CatmullRomCurve3(smoothControl(spinePoints, 2), false, 'centripetal');
   const points: THREE.Vector3[] = [];
   let prevPerp: THREE.Vector3 | null = null;
   const fallbackPerp = (tan: THREE.Vector3) => {
@@ -331,7 +350,7 @@ const fragmentShader = /* glsl */ `
     float a = max(core, glow) * vAlpha * uOpacity * tip;
     if (a < 0.002) discard;
     // A hot centre lifts the filament toward white, as the old bloom did.
-    gl_FragColor = vec4(min(uColor + core * 0.45, vec3(1.0)), min(a, 1.0));
+    gl_FragColor = vec4(min(uColor + core * 0.45, vec3(1.0)) * min(a, 1.0), 1.0);
   }
 `;
 
@@ -406,6 +425,10 @@ export function createTendrilFieldV2(parent: THREE.Object3D) {
     fragmentShader,
     transparent: true,
     depthWrite: false,
+    // Layers of one tendril overlap; MAX keeps the brightest instead of letting
+    // a thinner layer's dim glow veil a thicker layer's core.
+    blending: THREE.CustomBlending,
+    blendEquation: THREE.MaxEquation,
     // Screen-space ribbons wind either way depending on the line's direction.
     side: THREE.DoubleSide,
   });
