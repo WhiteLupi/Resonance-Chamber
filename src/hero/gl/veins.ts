@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { prefersReducedMotion } from '../../motion';
-import { ACCENT, BASE_COLOR, CORE_R, ROOTS_SCALE } from './constants';
+import { BASE_COLOR, CORE_R, ROOTS_SCALE } from './constants';
 import { buildFigure } from './veins-figure';
 import { packFigure, type VeinBuffers } from './veins-pack';
 
@@ -176,7 +176,7 @@ const fragmentShader = /* glsl */ `
   }
 `;
 
-export function createVeins(parent: THREE.Object3D) {
+export function createVeins(parent: THREE.Object3D, accent: THREE.Color) {
   const geom = new THREE.BufferGeometry();
   // Bases tuck just under the core surface, hidden at the bottom of its breath.
   const baseRadius = (CORE_R / ROOTS_SCALE) * 0.9;
@@ -207,10 +207,6 @@ export function createVeins(parent: THREE.Object3D) {
   }
 
   const white = new THREE.Color(BASE_COLOR);
-  const accent = new THREE.Color(ACCENT);
-  // The muted accent is too dark to read as light on its own; lift it toward
-  // white so growing tips glow teal instead of dimming.
-  const tipColor = accent.clone().multiplyScalar(3).lerp(white, 1 - VEINS.tipMix);
 
   const uniforms = {
     uTime: { value: 0 },
@@ -232,7 +228,7 @@ export function createVeins(parent: THREE.Object3D) {
     // view-space half-depth of the figure (mesh extent × ROOTS_SCALE × seal scale)
     uDepthRange: { value: 4.0 },
     uColor: { value: white.clone() },
-    uTipColor: { value: tipColor },
+    uTipColor: { value: new THREE.Color() },
     uOpacity: { value: 1 },
   };
   const mat = new THREE.ShaderMaterial({
@@ -284,6 +280,9 @@ export function createVeins(parent: THREE.Object3D) {
 
   const applyVisibility = (charge: number, rootsVis: number, jVis: number, brightnessMul = 1) => {
     uniforms.uColor.value.copy(white).lerp(accent, charge * 0.4);
+    // The muted accent is too dark to read as light on its own; lift it toward
+    // white so growing tips glow in the accent instead of dimming.
+    uniforms.uTipColor.value.copy(accent).multiplyScalar(3).lerp(white, 1 - VEINS.tipMix);
     uniforms.uOpacity.value = rootsVis * (0.05 + 0.95 * jVis) * brightnessMul;
   };
 

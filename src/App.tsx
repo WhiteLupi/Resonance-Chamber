@@ -214,7 +214,18 @@ function App() {
     // outgoing segment: the ritual in hero, and each value while it is read.
     type Key = {
       id: string; x: number; y: number; s: number; o: number; r: number;
-      m?: number; g?: number; hold?: number; pulse?: boolean;
+      m?: number; g?: number; c?: number; hold?: number; pulse?: boolean;
+    };
+    // A narrow palette around the teal, with one warm departure for the
+    // manifesto (feeling). Interface accents stay teal throughout.
+    const TEAL = 0x3d6e63;
+    const C = {
+      warm: 0x9a6a3e,
+      pale: 0x66706e,
+      cool: 0x3a6478,
+      gold: 0x7a6a35,
+      bright: 0x45857a,
+      deep: 0x2c4a5a,
     };
     // Pre-lock the seal sits dead centre inside the charge ring; once awake it
     // drifts left and the question takes the right.
@@ -222,13 +233,13 @@ function App() {
     const VALUE_HOLD = 0.7;
     const KEYS: Key[] = [
       { id: 'hero', x: HERO_X, y: 50, s: 1.00, o: 1.00, r: 0, hold: 0.45 },
-      { id: 'about', x: 68, y: 48, s: 0.72, o: 0.55, r: 40 },
+      { id: 'about', x: 70, y: 48, s: 0.72, o: 0.75, r: 40, c: C.warm, hold: 0.6 },
       { id: 'values', x: 50, y: 34, s: 0.62, o: 0.5, r: 80 },
-      { id: 'value-whole', x: 30, y: 50, s: 0.5, o: 0.95, r: 110, hold: VALUE_HOLD },
-      { id: 'value-sense', x: 30, y: 50, s: 0.95, o: 1, r: 140, g: 1.45, hold: VALUE_HOLD },
-      { id: 'value-meaning', x: 30, y: 50, s: 0.85, o: 0.9, r: 170, g: 1.1, hold: VALUE_HOLD, pulse: true },
-      { id: 'value-play', x: 30, y: 50, s: 0.9, o: 1, r: 215, m: 2.4, g: 1.15, hold: VALUE_HOLD },
-      { id: 'value-rest', x: 30, y: 50, s: 0.78, o: 0.4, r: 235, m: 0.25, g: 0.7, hold: VALUE_HOLD },
+      { id: 'value-whole', x: 30, y: 50, s: 0.5, o: 0.95, r: 110, c: C.pale, hold: VALUE_HOLD },
+      { id: 'value-sense', x: 30, y: 50, s: 0.95, o: 1, r: 140, g: 1.45, c: C.cool, hold: VALUE_HOLD },
+      { id: 'value-meaning', x: 30, y: 50, s: 0.85, o: 0.9, r: 170, g: 1.1, c: C.gold, hold: VALUE_HOLD, pulse: true },
+      { id: 'value-play', x: 30, y: 50, s: 0.9, o: 1, r: 215, m: 2.4, g: 1.15, c: C.bright, hold: VALUE_HOLD },
+      { id: 'value-rest', x: 30, y: 50, s: 0.78, o: 0.4, r: 235, m: 0.25, g: 0.7, c: C.deep, hold: VALUE_HOLD },
       // Contact: the seal settles centred above the closing line.
       { id: 'contact', x: 50, y: 30, s: 0.8, o: 0.85, r: 270 },
     ];
@@ -238,16 +249,25 @@ function App() {
     // centre axis instead: scale, height, glow, tempo.
     const KEYS_MOBILE: Key[] = [
       { id: 'hero', x: 50, y: locked ? 36 : 50, s: 1.00, o: 1.00, r: 0, hold: 0.45 },
-      { id: 'about', x: 50, y: 24, s: 0.62, o: 0.10, r: 40 },
+      { id: 'about', x: 50, y: 24, s: 0.62, o: 0.10, r: 40, c: C.warm },
       { id: 'values', x: 50, y: 26, s: 0.55, o: 0.2, r: 80 },
-      { id: 'value-whole', x: 50, y: 26, s: 0.45, o: 0.35, r: 110 },
-      { id: 'value-sense', x: 50, y: 26, s: 0.7, o: 0.35, r: 140, g: 1.45 },
-      { id: 'value-meaning', x: 50, y: 26, s: 0.65, o: 0.35, r: 170, g: 1.1, pulse: true },
-      { id: 'value-play', x: 50, y: 26, s: 0.65, o: 0.35, r: 215, m: 2.4, g: 1.15 },
-      { id: 'value-rest', x: 50, y: 26, s: 0.6, o: 0.2, r: 235, m: 0.25, g: 0.7 },
+      { id: 'value-whole', x: 50, y: 26, s: 0.45, o: 0.35, r: 110, c: C.pale },
+      { id: 'value-sense', x: 50, y: 26, s: 0.7, o: 0.35, r: 140, g: 1.45, c: C.cool },
+      { id: 'value-meaning', x: 50, y: 26, s: 0.65, o: 0.35, r: 170, g: 1.1, c: C.gold, pulse: true },
+      { id: 'value-play', x: 50, y: 26, s: 0.65, o: 0.35, r: 215, m: 2.4, g: 1.15, c: C.bright },
+      { id: 'value-rest', x: 50, y: 26, s: 0.6, o: 0.2, r: 235, m: 0.25, g: 0.7, c: C.deep },
       { id: 'contact', x: 50, y: 30, s: 0.55, o: 0.60, r: 270 },
     ];
     const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
+    const lerpHex = (a: number, b: number, t: number) => {
+      const ch = (shift: number) => Math.round(lerp((a >> shift) & 255, (b >> shift) & 255, t));
+      return (ch(16) << 16) | (ch(8) << 8) | ch(0);
+    };
+    // Keyframe x is a position within the content column (max CONTENT_MAX px),
+    // so on a wide screen the seal stays beside its copy instead of drifting
+    // to the viewport edge. Must match --content-max in index.css.
+    const CONTENT_MAX = 1600;
+    const toViewX = (x: number) => 50 + (x - 50) * Math.min(1, CONTENT_MAX / window.innerWidth);
     const ease = (t: number) => (t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2);
 
     // The keyframe `o` is the seal's brightness per section. Legibility over copy
@@ -273,7 +293,9 @@ function App() {
         const next = secs[i + 1];
         if (!next) {
           enter(scene, k);
-          scene.setJourney({ x: k.x, y: k.y, s: k.s, o: k.o, r: k.r, m: k.m ?? 1, g: k.g ?? 1 });
+          scene.setJourney({
+            x: toViewX(k.x), y: k.y, s: k.s, o: k.o, r: k.r, m: k.m ?? 1, g: k.g ?? 1, c: k.c ?? TEAL,
+          });
           return;
         }
         const nr = next.el.getBoundingClientRect();
@@ -292,13 +314,14 @@ function App() {
           const t = mobile ? raw : ease(raw);
           const n = next.k;
           scene.setJourney({
-            x: lerp(k.x, n.x, t),
+            x: toViewX(lerp(k.x, n.x, t)),
             y: lerp(k.y, n.y, t),
             s: lerp(k.s, n.s, t),
             o: lerp(k.o, n.o, t),
             r: lerp(k.r, n.r, t),
             m: lerp(k.m ?? 1, n.m ?? 1, t),
             g: lerp(k.g ?? 1, n.g ?? 1, t),
+            c: lerpHex(k.c ?? TEAL, n.c ?? TEAL, t),
           });
           return;
         }

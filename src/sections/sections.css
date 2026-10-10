@@ -9,7 +9,7 @@
   z-index: 1;
   width: 100%;
   min-height: 100vh;
-  padding: var(--sec-pad) max(var(--pad), var(--content-safe-pad));
+  padding: var(--sec-pad) var(--gutter);
   font-family: 'Syne Mono', ui-monospace, monospace;
   color: var(--fg);
   background: transparent;
@@ -64,7 +64,7 @@
   min-height: 80vh;
   max-width: 30ch;
   text-align: center;
-  font-size: clamp(18px, 1.7vw, 30px);
+  font-size: clamp(18px, 1.9vw, 36px);
   line-height: 1.6;
   color: var(--fg-vault);
   text-shadow: 0 1px 3px rgba(0, 0, 0, 0.7);
@@ -96,14 +96,13 @@
   grid-column: 2;
   position: relative;
   isolation: isolate;
-  max-width: 34ch;
 }
 
 .value-step__name {
   margin: 0 0 0.35em;
   font-family: 'Boldonse', system-ui, sans-serif;
   font-weight: 400;
-  font-size: clamp(44px, 6.4vw, 132px);
+  font-size: clamp(44px, 6.6vw, 150px);
   line-height: 1.05;
   letter-spacing: -0.01em;
   color: rgba(245, 244, 240, 0.94);
@@ -112,12 +111,14 @@
 
 .value-step__line {
   margin: 0;
-  font-size: clamp(17px, 1.35vw, 26px);
+  max-width: 26ch;
+  font-size: clamp(17px, 1.55vw, 32px);
   line-height: 1.55;
   color: var(--teal-soft);
 }
 
 .value-step__quote {
+  max-width: 34ch;
   margin: 2.2em 0 0;
   padding-left: 1em;
   border-left: 1px solid var(--teal-dim);
@@ -199,7 +200,7 @@
   padding: 0.75em 1.6em;
   border: 1px solid rgba(122, 196, 175, 0.55);
   border-radius: 999px;
-  font-size: clamp(14px, 1.1vw, 20px);
+  font-size: clamp(14px, 1.1vw, 22px);
   letter-spacing: 0.12em;
   text-transform: uppercase;
   text-decoration: none;
@@ -218,7 +219,7 @@
 
 .truth__then {
   margin: 22px 0 0;
-  font-size: clamp(13px, 0.5vw + 9px, 17px);
+  font-size: clamp(13px, 0.55vw + 9px, 20px);
   letter-spacing: 0.06em;
   color: rgba(170, 222, 205, 0.85);
 }

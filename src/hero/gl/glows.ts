@@ -1,5 +1,4 @@
 import * as THREE from 'three';
-import { ACCENT } from './constants';
 
 // Camera-facing quads whose falloff is computed per pixel, not sampled from a
 // 256px canvas texture — a ring scaled to fill the viewport stays sharp, and a
@@ -53,9 +52,9 @@ const glowFragment = /* glsl */ `
   }
 `;
 
-export function createCoreGlow(parent: THREE.Object3D) {
+export function createCoreGlow(parent: THREE.Object3D, accent: THREE.Color) {
   const uniforms = {
-    uColor: { value: new THREE.Color(ACCENT) },
+    uColor: { value: accent },
     uHalo: { value: 0.28 },
     uBloom: { value: 0.2 },
   };
@@ -100,12 +99,12 @@ const ringFragment = /* glsl */ `
 
 type Ring = { mesh: THREE.Mesh; uniforms: { uOpacity: { value: number } }; active: boolean; startT: number };
 
-export function createSonarRings(enabled: boolean, parent: THREE.Object3D) {
+export function createSonarRings(enabled: boolean, parent: THREE.Object3D, accent: THREE.Color) {
   const rings: Ring[] = [];
   const mats: THREE.ShaderMaterial[] = [];
   if (enabled) {
     for (let i = 0; i < RING_COUNT; i++) {
-      const uniforms = { uColor: { value: new THREE.Color(ACCENT) }, uOpacity: { value: 0 } };
+      const uniforms = { uColor: { value: accent }, uOpacity: { value: 0 } };
       const mat = additive(ringFragment, uniforms);
       mats.push(mat);
       const mesh = new THREE.Mesh(quad, mat);

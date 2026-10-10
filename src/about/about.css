@@ -23,7 +23,7 @@
   display: grid;
   grid-template-rows: 1fr;
   align-items: center;
-  padding: var(--sec-pad) max(var(--pad), var(--content-safe-pad));
+  padding: var(--sec-pad) var(--gutter);
   overflow: hidden;
 }
 
@@ -41,7 +41,7 @@
   position: relative;
   z-index: 2;
   width: 100%;
-  font-size: clamp(19px, 2.35vw, 27px);
+  font-size: clamp(19px, 2.1vw, 34px);
   max-width: min(44ch, 100% - clamp(8px, 2vw, 28px));
   display: flex;
   flex-direction: column;

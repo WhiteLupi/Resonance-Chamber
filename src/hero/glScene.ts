@@ -20,6 +20,8 @@ export type Journey = {
   m: number;
   /** vein brightness multiplier */
   g: number;
+  /** accent colour (sRGB hex) for core, glow, tips, rings and comets */
+  c: number;
 };
 
 export type HeroScene = {
@@ -161,10 +163,14 @@ export function startHero(host: HTMLElement): HeroScene {
   const coreMesh = new THREE.Mesh(coreGeom, coreMat);
   sealGroup.add(coreMesh);
 
-  const glow = createCoreGlow(sealGroup);
-  const sonar = createSonarRings(PERF.enableSonarRings, sealGroup);
-  const roots = createVeins(sealGroup);
-  const comets = createComets(PERF.enableComets, particlesGroup);
+  // One accent instance shared by every layer, so a section's colour arrives
+  // everywhere in the same frame.
+  const accent = new THREE.Color(ACCENT);
+  const accentTarget = accent.clone();
+  const glow = createCoreGlow(sealGroup, accent);
+  const sonar = createSonarRings(PERF.enableSonarRings, sealGroup, accent);
+  const roots = createVeins(sealGroup, accent);
+  const comets = createComets(PERF.enableComets, particlesGroup, accent);
 
   const applySize = () => {
     const pr = pixelRatio();
@@ -185,7 +191,7 @@ export function startHero(host: HTMLElement): HeroScene {
   let overCore = false;
   let sceneVis = 1.0;
   let rootsVis = 1.0;
-  const journeyTarget: Journey = { x: 50, y: 50, s: 1, o: 1, r: 0, m: 1, g: 1 };
+  const journeyTarget: Journey = { x: 50, y: 50, s: 1, o: 1, r: 0, m: 1, g: 1, c: ACCENT };
   const journeyCur: Journey = { ...journeyTarget };
   applySize();
 
@@ -297,9 +303,16 @@ export function startHero(host: HTMLElement): HeroScene {
       cpuMsAvg: Number(cpuMsAvg.toFixed(3)),
       gpuMsAvg: Number(gpuMsAvg.toFixed(3)),
       pixelRatioCap,
+      journey: { ...journeyCur },
     };
   };
 
+  // Moving the seal across the screen moves the CAMERA, not the picture: the
+  // eye travels sideways, so near and far veins slide at different speeds and
+  // the seal reads as staying put while the gaze shifts.
+  const _right = new THREE.Vector3();
+  const _up = new THREE.Vector3();
+  const _shift = new THREE.Vector3();
   const updateCamera = (camYawOff: number, camPitchOff: number) => {
     const yaw = (journeyCur.r * Math.PI) / 180 + camYawOff;
     const jDist = CAM_DIST / (journeyCur.s * fitScale());
@@ -310,12 +323,14 @@ export function startHero(host: HTMLElement): HeroScene {
       Math.cos(yaw) * jDist * cosPitch,
     );
     camera.lookAt(0, 0, 0);
-    camera.setViewOffset(
-      viewW, viewH,
-      ((journeyCur.x - 50) / 100) * -viewW,
-      ((journeyCur.y - 50) / 100) * -viewH,
-      viewW, viewH,
-    );
+    camera.updateMatrixWorld();
+    const worldH = 2 * jDist * Math.tan((camera.fov * Math.PI) / 360);
+    _right.setFromMatrixColumn(camera.matrixWorld, 0);
+    _up.setFromMatrixColumn(camera.matrixWorld, 1);
+    _shift
+      .copy(_right).multiplyScalar(((50 - journeyCur.x) / 100) * worldH * camera.aspect)
+      .addScaledVector(_up, ((journeyCur.y - 50) / 100) * worldH);
+    camera.position.add(_shift);
     camera.updateProjectionMatrix();
   };
 
@@ -338,6 +353,7 @@ export function startHero(host: HTMLElement): HeroScene {
     journeyCur.r += (journeyTarget.r - journeyCur.r) * jl;
     journeyCur.m += (journeyTarget.m - journeyCur.m) * jl;
     journeyCur.g += (journeyTarget.g - journeyCur.g) * jl;
+    accent.lerp(accentTarget, jl);
 
     // Pointer parallax orbits the CAMERA; the seal holds still, like the moon
     // keeping its face.
@@ -401,6 +417,8 @@ export function startHero(host: HTMLElement): HeroScene {
     const chargeFx = charge * pulse;
     const breath = 1 + Math.sin(t * 1.25) * 0.04 * pulse;
     coreMesh.scale.setScalar(breath);
+    coreMat.emissive.copy(accent);
+    rimLight.color.copy(accent);
     coreMat.emissiveIntensity = (1.6 + chargeFx * 3.0 + Math.sin(t * 1.7) * 0.15 * pulse) * coreGlow;
 
     glow.update(
@@ -470,6 +488,7 @@ export function startHero(host: HTMLElement): HeroScene {
     },
     setJourney(j: Journey) {
       Object.assign(journeyTarget, j);
+      accentTarget.setHex(j.c);
     },
     pulse() {
       if (locked && !REDUCED_MOTION) broadcast(t);

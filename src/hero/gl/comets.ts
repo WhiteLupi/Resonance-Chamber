@@ -1,5 +1,4 @@
 import * as THREE from 'three';
-import { ACCENT } from './constants';
 
 const COMET_COUNT = 24;
 // Proximity-tug anchors on the comet shell.
@@ -69,7 +68,8 @@ const fragmentShader = /* glsl */ `
   }
 `;
 
-export function createComets(enabled: boolean, parent: THREE.Object3D) {
+// `accent` is shared with the rest of the scene; its changes show up here live.
+export function createComets(enabled: boolean, parent: THREE.Object3D, accent: THREE.Color) {
   const count = enabled ? COMET_COUNT : 0;
   const u = new Float32Array(count * 3);
   const v = new Float32Array(count * 3);
@@ -121,7 +121,7 @@ export function createComets(enabled: boolean, parent: THREE.Object3D) {
     uTrailK: { value: 0 },
     uViewport: { value: new THREE.Vector2(1, 1) },
     uPixelRatio: { value: 1 },
-    uColor: { value: new THREE.Color(ACCENT) },
+    uColor: { value: accent },
     uOpacity: { value: 0.95 },
   };
   const mat = new THREE.ShaderMaterial({
