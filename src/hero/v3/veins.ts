@@ -3,6 +3,7 @@ import { prefersReducedMotion } from '../../motion';
 import { ACCENT, BASE_COLOR, CORE_R, ROOTS_SCALE } from '../gl/constants';
 import type { RootsModule } from '../v2/roots';
 import { buildFigure } from './veins-figure';
+import { packFigure, type VeinBuffers } from './veins-pack';
 
 // Veins that grow out of the core while it charges. The figure is one static
 // ribbon mesh; growth, sway, breathing and light waves are functions of
@@ -177,49 +178,34 @@ const fragmentShader = /* glsl */ `
 `;
 
 export function createVeins(parent: THREE.Object3D): RootsModule {
-  // Bases tuck just under the core surface, hidden at the bottom of its breath.
-  const figure = buildFigure((CORE_R / ROOTS_SCALE) * 0.9);
-
-  const vertCount = figure.pointCount * 2;
-  const pos = new Float32Array(vertCount * 3);
-  const prev = new Float32Array(vertCount * 3);
-  const next = new Float32Array(vertCount * 3);
-  const attrA = new Float32Array(vertCount * 3);
-  const vigour = new Float32Array(vertCount);
-  const index: number[] = [];
-  let v = 0;
-  for (const b of figure.branches) {
-    const count = b.dist.length;
-    const base = v;
-    for (let i = 0; i < count; i++) {
-      const ip = Math.max(i - 1, 0) * 3;
-      const ic = i * 3;
-      const inx = Math.min(i + 1, count - 1) * 3;
-      for (const side of [-1, 1]) {
-        const o = v * 3;
-        for (let k = 0; k < 3; k++) {
-          pos[o + k] = b.pts[ic + k];
-          prev[o + k] = b.pts[ip + k];
-          next[o + k] = b.pts[inx + k];
-        }
-        attrA.set([b.dist[i], side, b.width[i]], o);
-        vigour[v] = b.reach;
-        v++;
-      }
-      if (i < count - 1) {
-        const a = base + i * 2;
-        index.push(a, a + 1, a + 2, a + 1, a + 3, a + 2);
-      }
-    }
-  }
-
   const geom = new THREE.BufferGeometry();
-  geom.setAttribute('position', new THREE.BufferAttribute(pos, 3));
-  geom.setAttribute('aPrev', new THREE.BufferAttribute(prev, 3));
-  geom.setAttribute('aNext', new THREE.BufferAttribute(next, 3));
-  geom.setAttribute('aA', new THREE.BufferAttribute(attrA, 3));
-  geom.setAttribute('aVigour', new THREE.BufferAttribute(vigour, 1));
-  geom.setIndex(index);
+  // Bases tuck just under the core surface, hidden at the bottom of its breath.
+  const baseRadius = (CORE_R / ROOTS_SCALE) * 0.9;
+  let disposed = false;
+  let worker: Worker | null = null;
+  const fill = (b: VeinBuffers) => {
+    if (disposed) return;
+    geom.setAttribute('position', new THREE.BufferAttribute(b.pos, 3));
+    geom.setAttribute('aPrev', new THREE.BufferAttribute(b.prev, 3));
+    geom.setAttribute('aNext', new THREE.BufferAttribute(b.next, 3));
+    geom.setAttribute('aA', new THREE.BufferAttribute(b.attrA, 3));
+    geom.setAttribute('aVigour', new THREE.BufferAttribute(b.vigour, 1));
+    geom.setIndex(new THREE.BufferAttribute(b.index, 1));
+    uniforms.uMaxDist.value = b.maxDist;
+  };
+  // Growing the figure takes tens of ms — hundreds on a slow phone — so it runs
+  // in a worker. Nothing is visible before the visitor holds the core anyway.
+  try {
+    worker = new Worker(new URL('./veins.worker.ts', import.meta.url), { type: 'module' });
+    worker.onmessage = (e: MessageEvent<VeinBuffers>) => {
+      fill(e.data);
+      worker?.terminate();
+      worker = null;
+    };
+    worker.postMessage({ baseRadius });
+  } catch {
+    queueMicrotask(() => fill(packFigure(buildFigure(baseRadius))));
+  }
 
   const white = new THREE.Color(BASE_COLOR);
   const accent = new THREE.Color(ACCENT);
@@ -234,7 +220,7 @@ export function createVeins(parent: THREE.Object3D): RootsModule {
     uLockT: { value: 1e9 },
     uWaveT: { value: -1e4 },
     uWaveAmp: { value: 0 },
-    uMaxDist: { value: figure.maxDist },
+    uMaxDist: { value: 1 },
     uStill: { value: prefersReducedMotion() ? 1 : 0 },
     uViewport: { value: new THREE.Vector2(1, 1) },
     uPixelRatio: { value: 1 },
@@ -264,6 +250,12 @@ export function createVeins(parent: THREE.Object3D): RootsModule {
   });
   const mesh = new THREE.Mesh(geom, mat);
   mesh.frustumCulled = false;
+  // A one-triangle stand-in keeps the mesh drawable, so its shader is compiled
+  // with the rest before the first frame instead of on the first hold.
+  fill({
+    pos: new Float32Array(9), prev: new Float32Array(9), next: new Float32Array(9),
+    attrA: new Float32Array(9), vigour: new Float32Array(3), index: new Uint32Array([0, 1, 2]), maxDist: 1,
+  });
   mesh.scale.setScalar(ROOTS_SCALE);
   parent.add(mesh);
 
@@ -299,6 +291,8 @@ export function createVeins(parent: THREE.Object3D): RootsModule {
   };
 
   const dispose = () => {
+    disposed = true;
+    worker?.terminate();
     parent.remove(mesh);
     geom.dispose();
     mat.dispose();

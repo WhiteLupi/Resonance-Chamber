@@ -226,6 +226,29 @@ export function startHero(host: HTMLElement, createRoots: RootsFactory = createT
     return true;
   });
   let frameMsAvg = 0;
+  let cpuMsAvg = 0;
+  let gpuMsAvg = -1;
+  // Profile-only GPU timing: one query in flight, read back a few frames later.
+  const gl = renderer.getContext() as WebGL2RenderingContext;
+  const timerExt = PERF.profile ? gl.getExtension('EXT_disjoint_timer_query_webgl2') : null;
+  let gpuQuery: WebGLQuery | null = null;
+  const beginGpuTimer = () => {
+    if (!timerExt || gpuQuery) return false;
+    gpuQuery = gl.createQuery();
+    if (!gpuQuery) return false;
+    gl.beginQuery(timerExt.TIME_ELAPSED_EXT, gpuQuery);
+    return true;
+  };
+  const readGpuTimer = () => {
+    if (!timerExt || !gpuQuery) return;
+    if (!gl.getQueryParameter(gpuQuery, gl.QUERY_RESULT_AVAILABLE)) return;
+    if (!gl.getParameter(timerExt.GPU_DISJOINT_EXT)) {
+      const ms = gl.getQueryParameter(gpuQuery, gl.QUERY_RESULT) / 1e6;
+      gpuMsAvg = gpuMsAvg < 0 ? ms : gpuMsAvg + (ms - gpuMsAvg) * 0.1;
+    }
+    gl.deleteQuery(gpuQuery);
+    gpuQuery = null;
+  };
 
   const syncPerfDebug = () => {
     if (!PERF.profile) return;
@@ -237,6 +260,8 @@ export function startHero(host: HTMLElement, createRoots: RootsFactory = createT
       drawCalls: renderer.info.render.calls,
       triangles: renderer.info.render.triangles,
       frameMsAvg: Number(frameMsAvg.toFixed(2)),
+      cpuMsAvg: Number(cpuMsAvg.toFixed(3)),
+      gpuMsAvg: Number(gpuMsAvg.toFixed(3)),
       pixelRatioCap,
     };
   };
@@ -351,7 +376,13 @@ export function startHero(host: HTMLElement, createRoots: RootsFactory = createT
     comets.setOpacity(0.95 * sealVis);
     roots.applyVisibility(charge, rootsVis, rootJVis, PERF.mobile ? 1.8 : 1);
 
+    const timing = PERF.profile && beginGpuTimer();
     renderer.render(scene, camera);
+    if (timing && timerExt) gl.endQuery(timerExt.TIME_ELAPSED_EXT);
+    if (PERF.profile) {
+      readGpuTimer();
+      cpuMsAvg += (performance.now() - now - cpuMsAvg) * 0.05;
+    }
     if (frames % 30 === 0) syncPerfDebug();
   };
 
