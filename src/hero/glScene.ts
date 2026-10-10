@@ -344,6 +344,8 @@ export function startHero(host: HTMLElement): HeroScene {
       .copy(_right).multiplyScalar(((50 - journeyCur.x) / 100) * worldH * camera.aspect)
       .addScaledVector(_up, ((journeyCur.y - 50) / 100) * worldH);
     camera.position.add(_shift);
+    // The hit test reads these matrices before the render would refresh them.
+    camera.updateMatrixWorld();
     camera.updateProjectionMatrix();
   };
 
