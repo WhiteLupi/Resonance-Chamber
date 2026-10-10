@@ -121,53 +121,6 @@ function App() {
     }
   }, [locked])
 
-  // Mouse parallax — sets --mx / --my (-0.5 .. 0.5) on document root. The
-  // inscription wrap reads these via CSS `translate` to drift opposite the
-  // cursor. We smooth and quantize here so rapid mousemove bursts do not restart
-  // CSS transitions every frame while the GL scene is also rotating.
-  useEffect(() => {
-    const root = document.documentElement;
-    let raf = 0;
-    let targetMx = 0;
-    let targetMy = 0;
-    let curMx = 0;
-    let curMy = 0;
-    let lastMx = 0;
-    let lastMy = 0;
-    const flush = () => {
-      curMx += (targetMx - curMx) * 0.12;
-      curMy += (targetMy - curMy) * 0.12;
-      if (Math.abs(curMx - lastMx) > 0.003 || Math.abs(curMy - lastMy) > 0.003) {
-        lastMx = curMx;
-        lastMy = curMy;
-        root.style.setProperty('--mx', curMx.toFixed(3));
-        root.style.setProperty('--my', curMy.toFixed(3));
-      }
-      if (Math.abs(targetMx - curMx) > 0.004 || Math.abs(targetMy - curMy) > 0.004) {
-        raf = requestAnimationFrame(flush);
-      } else {
-        raf = 0;
-      }
-    };
-    const onMove = (e: MouseEvent) => {
-      targetMx = (e.clientX / window.innerWidth) - 0.5;
-      targetMy = (e.clientY / window.innerHeight) - 0.5;
-      if (!raf) raf = requestAnimationFrame(flush);
-    };
-    const onLeave = () => {
-      targetMx = 0;
-      targetMy = 0;
-      if (!raf) raf = requestAnimationFrame(flush);
-    };
-    window.addEventListener('mousemove', onMove, { passive: true });
-    document.addEventListener('mouseleave', onLeave);
-    return () => {
-      cancelAnimationFrame(raf);
-      window.removeEventListener('mousemove', onMove);
-      document.removeEventListener('mouseleave', onLeave);
-    };
-  }, []);
-
   // Scroll-driven scene state — hero→about progress and the travelling-seal
   // journey — in one rAF-coalesced pass. Lenis fires scroll densely; reading
   // layout at most once per frame keeps it off the WebGL loop's budget.

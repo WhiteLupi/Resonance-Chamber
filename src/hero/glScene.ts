@@ -209,7 +209,7 @@ export function startHero(host: HTMLElement): HeroScene {
 
   const _coreNdc = new THREE.Vector3();
   const isOverCore = (clientX: number, clientY: number) => {
-    _coreNdc.copy(sealGroup.position).project(camera);
+    _coreNdc.set(0, 0, 0).project(camera);
     const cx = (_coreNdc.x * 0.5 + 0.5) * viewW;
     const cy = (-_coreNdc.y * 0.5 + 0.5) * viewH;
     const jDist = CAM_DIST / (journeyCur.s * fitScale());
@@ -410,14 +410,7 @@ export function startHero(host: HTMLElement): HeroScene {
     roots.update(charge, motionT, t);
 
     const pointerMotion = Math.min(1, (Math.abs(mouseX - parallaxX) + Math.abs(mouseY - parallaxY)) * 1.8);
-    const pull = comets.update({ dt, charge, energy, locked, pointerMotion });
-    // Post-lock the seal leans a hair toward passing comets; pre-lock it stays
-    // pinned dead-centre inside the charge ring.
-    const tug = locked ? 0.0015 : 0;
-    const tl = smoothing(0.15, dt);
-    sealGroup.position.x += (pull.x * tug - sealGroup.position.x) * tl;
-    sealGroup.position.y += (pull.y * tug - sealGroup.position.y) * tl;
-    sealGroup.position.z += (pull.z * tug - sealGroup.position.z) * tl;
+    comets.update({ dt, charge, energy, locked, pointerMotion });
 
     if (lastClientX >= 0) {
       const nowOver = isOverCore(lastClientX, lastClientY);

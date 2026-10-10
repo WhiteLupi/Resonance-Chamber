@@ -7,10 +7,8 @@
   pointer-events: none;
 }
 
-/* Outer parallax wrap. Fixed to viewport so motion can travel toward the
-   seal (also fixed) without being clipped by hero-section's overflow:hidden.
-   Mouse position sets --mx/--my on document root (App.tsx); wrap drifts
-   opposite — engine has presence in 3D space. */
+/* Fixed to the viewport, so the question can rise without being clipped by
+   hero-section's overflow:hidden. */
 .hero-inscription {
   position: fixed;
   inset: 0;
@@ -20,10 +18,9 @@
      viewport edge and gives the page a sideways scroll on narrow screens;
      clipping at the fixed container (= viewport) costs nothing visually. */
   overflow: hidden;
-  translate: calc(var(--mx, 0) * -12px) calc(var(--my, 0) * -8px);
   /* The question is gone before it reaches the navbar. */
   opacity: calc(1 - clamp(0, (var(--p, 0) - 0.15) / 0.23, 1));
-  will-change: translate, opacity;
+  will-change: opacity;
 }
 
 /* Pre-lock prompt — single carved word centered just below the seal area.
