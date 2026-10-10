@@ -12,6 +12,7 @@ import { SectionHeader } from './hero/SectionHeader'
 import { Signature } from './hero/Signature'
 import { progressStore } from './about/dwellStore'
 import { prefersReducedMotion } from './motion'
+import { ACCENT } from './hero/gl/constants'
 
 function App() {
   const stageRef = useRef<HTMLDivElement>(null)
@@ -216,16 +217,16 @@ function App() {
       id: string; x: number; y: number; s: number; o: number; r: number;
       m?: number; g?: number; c?: number; hold?: number; pulse?: boolean;
     };
-    // A narrow palette around the teal, with one warm departure for the
-    // manifesto (feeling). Interface accents stay teal throughout.
-    const TEAL = 0x3d6e63;
+    // Earth tones, low in chroma: sage as home, one warm departure (clay) for
+    // the manifesto. Interface accents stay teal throughout.
+    const SAGE = ACCENT;
     const C = {
-      warm: 0x9a6a3e,
-      pale: 0x66706e,
-      cool: 0x3a6478,
-      gold: 0x7a6a35,
-      bright: 0x45857a,
-      deep: 0x2c4a5a,
+      clay: 0x766656,
+      stone: 0x6a6964,
+      slate: 0x5a6266,
+      ochre: 0x736a52,
+      lichen: 0x646e5e,
+      dusk: 0x484c50,
     };
     // Pre-lock the seal sits dead centre inside the charge ring; once awake it
     // drifts left and the question takes the right.
@@ -233,13 +234,13 @@ function App() {
     const VALUE_HOLD = 0.7;
     const KEYS: Key[] = [
       { id: 'hero', x: HERO_X, y: 50, s: 1.00, o: 1.00, r: 0, hold: 0.45 },
-      { id: 'about', x: 70, y: 48, s: 0.72, o: 0.75, r: 40, c: C.warm, hold: 0.6 },
+      { id: 'about', x: 70, y: 48, s: 0.72, o: 0.75, r: 40, c: C.clay, hold: 0.6 },
       { id: 'values', x: 50, y: 34, s: 0.62, o: 0.5, r: 80 },
-      { id: 'value-whole', x: 30, y: 50, s: 0.5, o: 0.95, r: 110, c: C.pale, hold: VALUE_HOLD },
-      { id: 'value-sense', x: 30, y: 50, s: 0.95, o: 1, r: 140, g: 1.45, c: C.cool, hold: VALUE_HOLD },
-      { id: 'value-meaning', x: 30, y: 50, s: 0.85, o: 0.9, r: 170, g: 1.1, c: C.gold, hold: VALUE_HOLD, pulse: true },
-      { id: 'value-play', x: 30, y: 50, s: 0.9, o: 1, r: 215, m: 2.4, g: 1.15, c: C.bright, hold: VALUE_HOLD },
-      { id: 'value-rest', x: 30, y: 50, s: 0.78, o: 0.4, r: 235, m: 0.25, g: 0.7, c: C.deep, hold: VALUE_HOLD },
+      { id: 'value-whole', x: 30, y: 50, s: 0.5, o: 0.95, r: 110, c: C.stone, hold: VALUE_HOLD },
+      { id: 'value-sense', x: 30, y: 50, s: 0.95, o: 1, r: 140, g: 1.45, c: C.slate, hold: VALUE_HOLD },
+      { id: 'value-meaning', x: 30, y: 50, s: 0.85, o: 0.9, r: 170, g: 1.1, c: C.ochre, hold: VALUE_HOLD, pulse: true },
+      { id: 'value-play', x: 30, y: 50, s: 0.9, o: 1, r: 215, m: 2.4, g: 1.15, c: C.lichen, hold: VALUE_HOLD },
+      { id: 'value-rest', x: 30, y: 50, s: 0.78, o: 0.4, r: 235, m: 0.25, g: 0.7, c: C.dusk, hold: VALUE_HOLD },
       // Contact: the seal settles centred above the closing line.
       { id: 'contact', x: 50, y: 30, s: 0.8, o: 0.85, r: 270 },
     ];
@@ -249,13 +250,13 @@ function App() {
     // centre axis instead: scale, height, glow, tempo.
     const KEYS_MOBILE: Key[] = [
       { id: 'hero', x: 50, y: locked ? 36 : 50, s: 1.00, o: 1.00, r: 0, hold: 0.45 },
-      { id: 'about', x: 50, y: 24, s: 0.62, o: 0.10, r: 40, c: C.warm },
+      { id: 'about', x: 50, y: 24, s: 0.62, o: 0.10, r: 40, c: C.clay },
       { id: 'values', x: 50, y: 26, s: 0.55, o: 0.2, r: 80 },
-      { id: 'value-whole', x: 50, y: 26, s: 0.45, o: 0.35, r: 110, c: C.pale },
-      { id: 'value-sense', x: 50, y: 26, s: 0.7, o: 0.35, r: 140, g: 1.45, c: C.cool },
-      { id: 'value-meaning', x: 50, y: 26, s: 0.65, o: 0.35, r: 170, g: 1.1, c: C.gold, pulse: true },
-      { id: 'value-play', x: 50, y: 26, s: 0.65, o: 0.35, r: 215, m: 2.4, g: 1.15, c: C.bright },
-      { id: 'value-rest', x: 50, y: 26, s: 0.6, o: 0.2, r: 235, m: 0.25, g: 0.7, c: C.deep },
+      { id: 'value-whole', x: 50, y: 26, s: 0.45, o: 0.35, r: 110, c: C.stone },
+      { id: 'value-sense', x: 50, y: 26, s: 0.7, o: 0.35, r: 140, g: 1.45, c: C.slate },
+      { id: 'value-meaning', x: 50, y: 26, s: 0.65, o: 0.35, r: 170, g: 1.1, c: C.ochre, pulse: true },
+      { id: 'value-play', x: 50, y: 26, s: 0.65, o: 0.35, r: 215, m: 2.4, g: 1.15, c: C.lichen },
+      { id: 'value-rest', x: 50, y: 26, s: 0.6, o: 0.2, r: 235, m: 0.25, g: 0.7, c: C.dusk },
       { id: 'contact', x: 50, y: 30, s: 0.55, o: 0.60, r: 270 },
     ];
     const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
@@ -294,7 +295,7 @@ function App() {
         if (!next) {
           enter(scene, k);
           scene.setJourney({
-            x: toViewX(k.x), y: k.y, s: k.s, o: k.o, r: k.r, m: k.m ?? 1, g: k.g ?? 1, c: k.c ?? TEAL,
+            x: toViewX(k.x), y: k.y, s: k.s, o: k.o, r: k.r, m: k.m ?? 1, g: k.g ?? 1, c: k.c ?? SAGE,
           });
           return;
         }
@@ -321,7 +322,7 @@ function App() {
             r: lerp(k.r, n.r, t),
             m: lerp(k.m ?? 1, n.m ?? 1, t),
             g: lerp(k.g ?? 1, n.g ?? 1, t),
-            c: lerpHex(k.c ?? TEAL, n.c ?? TEAL, t),
+            c: lerpHex(k.c ?? SAGE, n.c ?? SAGE, t),
           });
           return;
         }

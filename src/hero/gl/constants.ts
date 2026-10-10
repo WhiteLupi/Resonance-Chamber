@@ -1,8 +1,7 @@
-// Oxidized teal — single accent shared with CSS --accent (#3d6e63). The seal
-// is the "ancient engine" — the energy reads as patinated/copper-oxidized,
-// not fluorescent. Emissive intensity + bloom push it to luminous range at
-// render time despite the muted source color.
-export const ACCENT = 0x3d6e63;
+// Sage with an earth undertone — the seal's light reads as something grown,
+// not fluorescent. Emissive intensity pushes it to luminous range at render
+// time, so the source stays low in chroma. Sections ease away from it (App).
+export const ACCENT = 0x5e665a;
 export const CORE_R = 0.18;
 // Roots reach just past the viewport edges vertically — tendrils emerge from
 // off-canvas, the engine feels bigger than the frame can contain. Text sits

@@ -110,9 +110,24 @@
   left: max(26px, calc((100vw - var(--content-max)) / 2 - 64px));
   z-index: 9;
   translate: 0 -50%;
+  /* Every length below is in em, so the whole spine scales with this. */
+  font-size: clamp(10px, 0.4vw + 5px, 16px);
   pointer-events: none;
   opacity: 0;
   transition: opacity 1.0s ease-out 0.4s;
+}
+
+/* The veins reach the screen edge; a soft dark pool keeps the name legible
+   where they cross behind it. */
+.section-header::after {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  inset: -3em -2.4em;
+  border-radius: 50%;
+  background: radial-gradient(ellipse at center, rgba(0, 0, 0, 0.9) 35%, rgba(0, 0, 0, 0.55) 65%, transparent 100%);
+  filter: blur(12px);
+  pointer-events: none;
 }
 
 .section-header--in { opacity: 1; }
@@ -122,11 +137,11 @@
 .section-header::before {
   content: '';
   position: absolute;
-  left: -8px;
+  left: -0.8em;
   top: 50%;
   translate: 0 -50%;
   width: 1px;
-  height: 168px;
+  height: 16.8em;
   background: linear-gradient(
     to bottom,
     transparent,
@@ -139,8 +154,8 @@
 
 .section-header__inner {
   position: relative;
-  width: 16px;
-  height: 192px;     /* reading length of the longest vertical title */
+  width: 1.6em;
+  height: 19.2em;    /* reading length of the longest vertical title */
   overflow: clip;
 }
 
@@ -155,12 +170,11 @@
   justify-content: center;
   font-family: 'Syne Mono', ui-monospace, monospace;
   font-weight: 400;
-  font-size: 10px;
   letter-spacing: 0.42em;
   text-transform: uppercase;
   /* teal light, not grey label — reads as a filament of the organism's glow */
-  color: rgba(170, 222, 205, 0.82);
-  text-shadow: 0 0 14px rgba(122, 196, 175, 0.6);
+  color: rgba(190, 234, 219, 0.95);
+  text-shadow: 0 0 3px rgba(0, 0, 0, 1), 0 0 14px rgba(122, 196, 175, 0.5);
   white-space: nowrap;
   /* Remounted (key=active) on each section change → slides up into place. The
      hairline carries the steady breath; the label just arrives. */
@@ -335,7 +349,7 @@
   translate: -50% 0;
   font-family: 'Syne Mono', ui-monospace, monospace;
   font-weight: 400;
-  font-size: 10px;
+  font-size: clamp(10px, 0.3vw + 6px, 14px);
   letter-spacing: 0.42em;
   text-transform: uppercase;
   /* teal light, same language as the section marker — a touch dimmer since it
@@ -465,7 +479,7 @@
   display: flex;
   justify-content: center;
   gap: 22px;
-  font-size: 12px;
+  font-size: clamp(12px, 0.3vw + 8px, 16px);
   letter-spacing: 0.28em;
 }
 
@@ -502,7 +516,7 @@
 
 .cockpit-navbar__sep {
   color: var(--fg-faint);
-  font-size: 12px;
+  font-size: clamp(12px, 0.3vw + 8px, 16px);
   user-select: none;
 }
 
@@ -510,7 +524,7 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  font-size: 10px;
+  font-size: clamp(10px, 0.3vw + 6px, 14px);
   letter-spacing: 0.22em;
 }
 
