@@ -4,6 +4,7 @@ import { ACCENT, CORE_R } from '../gl/constants';
 import { readHeroPerf } from '../gl/perf';
 import type { HeroScene, Journey } from '../glScene';
 import { createTendrilFieldV2 } from './tendrils';
+import type { RootsFactory } from './roots';
 import { createCometsV2 } from './comets';
 import { createCoreGlow, createSonarRingsV2 } from './glows';
 
@@ -25,7 +26,7 @@ const MOBILE_MAX_W = 760;
 // identically. `perFrame` is the fraction covered in one 60Hz frame.
 const smoothing = (perFrame: number, dt: number) => 1 - Math.pow(1 - perFrame, dt * 60);
 
-export function startHero(host: HTMLElement): HeroScene {
+export function startHero(host: HTMLElement, createRoots: RootsFactory = createTendrilFieldV2): HeroScene {
   const PERF = readHeroPerf();
   const REDUCED_MOTION = prefersReducedMotion();
   if (REDUCED_MOTION) {
@@ -91,7 +92,7 @@ export function startHero(host: HTMLElement): HeroScene {
 
   const glow = createCoreGlow(sealGroup);
   const sonar = createSonarRingsV2(PERF.enableSonarRings, sealGroup);
-  const roots = createTendrilFieldV2(sealGroup);
+  const roots = createRoots(sealGroup);
   const comets = createCometsV2(PERF.enableComets, particlesGroup);
 
   const applySize = () => {
@@ -135,9 +136,13 @@ export function startHero(host: HTMLElement): HeroScene {
   };
 
   const clock = new THREE.Clock(false);
+  const broadcast = (t: number) => {
+    sonar.trigger(t);
+    roots.pulse?.(t);
+  };
   const press = () => {
     clickHeld = true;
-    if (locked) sonar.trigger(clock.getElapsedTime());
+    if (locked) broadcast(clock.getElapsedTime());
   };
   const onPointerMove = (e: PointerEvent) => {
     lastClientX = e.clientX;
@@ -246,16 +251,16 @@ export function startHero(host: HTMLElement): HeroScene {
       charge = 1;
       locked = true;
       for (const cb of lockSubs) cb();
-      sonar.trigger(t);
+      broadcast(t);
       nextIdleRingAt = REDUCED_MOTION ? Infinity : t + IDLE_RING_INTERVAL;
     }
     if (locked && t >= nextIdleRingAt) {
-      sonar.trigger(t);
+      broadcast(t);
       nextIdleRingAt = t + IDLE_RING_INTERVAL;
     }
 
     const motionT = REDUCED_MOTION ? 0 : t;
-    roots.update(charge, motionT);
+    roots.update(charge, motionT, t);
 
     const pointerMotion = Math.min(1, (Math.abs(mouseX - parallaxX) + Math.abs(mouseY - parallaxY)) * 1.8);
     const pull = comets.update({ dt, charge, locked, pointerMotion });

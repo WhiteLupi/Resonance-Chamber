@@ -27,13 +27,14 @@ function App() {
     const stage = stageRef.current
     if (!stage) return
     // three.js ships in its own chunk, so the page paints before the engine loads.
-    // /v2 runs the GPU-first engine for side-by-side comparison.
-    const engine = window.location.pathname.startsWith('/v2')
-      ? import('./hero/v2/scene')
-      : import('./hero/glScene')
+    // Any path other than / picks a comparison engine (/v2, /a, /b, /c).
+    const variant = window.location.pathname.replace(/^\/+|\/+$/g, '')
+    const engine = variant
+      ? import('./hero/v2/engines').then((m) => m.engineFor(variant))
+      : import('./hero/glScene').then((m) => m.startHero)
     let cancelled = false
     let teardown = () => {}
-    engine.then(({ startHero }) => {
+    engine.then((startHero) => {
       if (cancelled) return
       const scene = startHero(stage)
       sceneRef.current = scene

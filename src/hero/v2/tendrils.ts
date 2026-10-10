@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { ACCENT, BASE_COLOR, CORE_R, ROOTS_SCALE } from '../gl/constants';
+import type { RootsModule } from './roots';
 
 // The whole root system is ONE mesh: every layer of every tendril is a ribbon
 // in a single static buffer. Growth, the travelling-wave flex and the
@@ -129,14 +130,14 @@ const sampleTendril = (spinePoints: THREE.Vector3[], helix: Helix | null, sample
 // Widths are CSS px. Multiple layers per tendril, each shorter and thicker than
 // the next, give the base-heavy taper; the shader smooths each layer's end.
 const mainLayers = (jitter: number): Layer[] => [
-  { width: 3.85, opacity: 0.72, ratio: 0.45 + jitter * 0.05 },
-  { width: 2.6, opacity: 0.82, ratio: 0.72 + jitter * 0.04 },
-  { width: 1.55, opacity: 0.90, ratio: 0.90 + jitter * 0.03 },
-  { width: 0.85, opacity: 0.85, ratio: 1.00 },
+  { width: 5.0, opacity: 0.72, ratio: 0.45 + jitter * 0.05 },
+  { width: 3.4, opacity: 0.82, ratio: 0.72 + jitter * 0.04 },
+  { width: 2.0, opacity: 0.90, ratio: 0.90 + jitter * 0.03 },
+  { width: 1.1, opacity: 0.85, ratio: 1.00 },
 ];
 const branchLayers: Layer[] = [
-  { width: 2.0, opacity: 0.75, ratio: 0.60 },
-  { width: 0.7, opacity: 0.85, ratio: 1.00 },
+  { width: 2.6, opacity: 0.75, ratio: 0.60 },
+  { width: 1.1, opacity: 0.85, ratio: 1.00 },
 ];
 
 const buildLayout = (): TendrilDef[] => {
@@ -354,7 +355,7 @@ const fragmentShader = /* glsl */ `
   }
 `;
 
-export function createTendrilFieldV2(parent: THREE.Object3D) {
+export function createTendrilFieldV2(parent: THREE.Object3D): RootsModule {
   const defs = buildLayout();
 
   const params = new Float32Array(defs.length * PARAM_TEXELS * 4);
