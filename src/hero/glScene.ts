@@ -45,6 +45,14 @@ export type HeroScene = {
 const LOCK_THRESHOLD = 0.999;
 const HOLD_FILL_S = 2.0;
 const RELEASE_FALL_S = 0.9;
+// Charging starts slow and gathers pace: rate = (FLOOR + GAIN·charge) / HOLD_FILL_S,
+// which still fills in ~HOLD_FILL_S. Each press adds a small kick on top.
+const CHARGE_FLOOR = 0.4;
+const CHARGE_GAIN = 1.6;
+const PRESS_KICK = 0.05;
+// Post-lock, every click adds energy that dies away; quick clicks stack it.
+const CLICK_ENERGY = 0.3;
+const ENERGY_DECAY_S = 1.8;
 // The core settles toward a backdrop on scroll but never goes out.
 const CORE_GLOW_FLOOR = 0.72;
 // No post-processing means the frame is cheap enough to render at the display's
@@ -182,6 +190,7 @@ export function startHero(host: HTMLElement): HeroScene {
 
   // Interaction
   let charge = 0;
+  let energy = 0;
   let lastNotifiedCharge = -1;
   let clickHeld = false;
   let mouseX = 0, mouseY = 0;
@@ -220,11 +229,16 @@ export function startHero(host: HTMLElement): HeroScene {
   let motionT = 0;
   const broadcast = (t: number) => {
     sonar.trigger(t);
-    roots.pulse(t);
+    roots.pulse(t, energy);
   };
   const press = () => {
     clickHeld = true;
-    if (locked) broadcast(t);
+    if (!locked) {
+      charge = Math.min(LOCK_THRESHOLD - 0.01, charge + PRESS_KICK);
+      return;
+    }
+    energy = Math.min(1, energy + CLICK_ENERGY);
+    broadcast(t);
   };
   const onPointerMove = (e: PointerEvent) => {
     lastClientX = e.clientX;
@@ -367,10 +381,11 @@ export function startHero(host: HTMLElement): HeroScene {
       charge = 1;
     } else if (clickHeld) {
       // Reduced motion: a single press wakes the engine instead of a sustained hold.
-      charge = REDUCED_MOTION ? 1 : Math.min(1, charge + dt / HOLD_FILL_S);
+      charge = REDUCED_MOTION ? 1 : Math.min(1, charge + (dt * (CHARGE_FLOOR + CHARGE_GAIN * charge)) / HOLD_FILL_S);
     } else {
       charge = Math.max(0, charge - dt / RELEASE_FALL_S);
     }
+    energy *= Math.exp(-dt / ENERGY_DECAY_S);
     if (charge !== lastNotifiedCharge) {
       lastNotifiedCharge = charge;
       for (const cb of chargeSubs) cb(charge);
@@ -380,6 +395,8 @@ export function startHero(host: HTMLElement): HeroScene {
       locked = true;
       for (const cb of lockSubs) cb();
       broadcast(t);
+      // The lock leaves an afterglow that dies away like a click's.
+      energy = 0.6;
       nextIdleRingAt = REDUCED_MOTION ? Infinity : t + IDLE_RING_INTERVAL;
     }
     if (locked && t >= nextIdleRingAt) {
@@ -391,7 +408,7 @@ export function startHero(host: HTMLElement): HeroScene {
     roots.update(charge, motionT, t);
 
     const pointerMotion = Math.min(1, (Math.abs(mouseX - parallaxX) + Math.abs(mouseY - parallaxY)) * 1.8);
-    const pull = comets.update({ dt, charge, locked, pointerMotion });
+    const pull = comets.update({ dt, charge, energy, locked, pointerMotion });
     // Post-lock the seal leans a hair toward passing comets; pre-lock it stays
     // pinned dead-centre inside the charge ring.
     const tug = locked ? 0.0015 : 0;
@@ -414,20 +431,21 @@ export function startHero(host: HTMLElement): HeroScene {
     const rootJVis = PERF.mobile ? Math.max(jVis, 0.6) : jVis;
     const pulse = PERF.enableChargePulse ? 1 : 0;
     const chargeFx = charge * pulse;
+    const surge = energy * pulse;
     const breath = 1 + Math.sin(t * 1.25) * 0.04 * pulse;
-    coreMesh.scale.setScalar(breath);
+    coreMesh.scale.setScalar(breath * (1 + surge * 0.06));
     coreMat.emissive.copy(accent);
     rimLight.color.copy(accent);
-    coreMat.emissiveIntensity = (1.6 + chargeFx * 3.0 + Math.sin(t * 1.7) * 0.15 * pulse) * coreGlow;
+    coreMat.emissiveIntensity = (1.6 + chargeFx * 3.0 + surge * 2.2 + Math.sin(t * 1.7) * 0.15 * pulse) * coreGlow;
 
     glow.update(
-      (1.0 + chargeFx * 0.5) * breath,
-      (0.28 + chargeFx * 0.18) * coreGlow,
-      (0.20 + chargeFx * 0.22) * coreGlow * 3.0,
+      (1.0 + chargeFx * 0.5 + surge * 0.35) * breath,
+      (0.28 + chargeFx * 0.18 + surge * 0.15) * coreGlow,
+      (0.20 + chargeFx * 0.22 + surge * 0.3) * coreGlow * 3.0,
     );
     sonar.update(t, breath, sealVis);
     comets.setOpacity(0.95 * sealVis);
-    roots.applyVisibility(charge, rootsVis, rootJVis, (PERF.mobile ? 1.8 : 1) * journeyCur.g);
+    roots.applyVisibility(charge, rootsVis, rootJVis, (PERF.mobile ? 1.8 : 1) * journeyCur.g * (1 + surge * 0.45));
 
     const timing = PERF.profile && beginGpuTimer();
     renderer.render(scene, camera);

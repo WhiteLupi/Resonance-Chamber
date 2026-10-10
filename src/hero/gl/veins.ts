@@ -274,14 +274,17 @@ export function createVeins(parent: THREE.Object3D, accent: THREE.Color) {
   };
 
   // The first pulse is the lock: a full-strength wave that also settles the
-  // growing tips. Later presses send a softer one.
-  const pulse = (t: number) => {
+  // growing tips. Later presses send a softer one, stronger and faster the more
+  // energy the clicks have built up.
+  const pulse = (t: number, energy = 0) => {
     if (!locked) {
       locked = true;
       uniforms.uLockT.value = t;
     }
     uniforms.uWaveT.value = t;
-    uniforms.uWaveAmp.value = uniforms.uWaveT.value === uniforms.uLockT.value ? VEINS.lockWave : VEINS.pressWave;
+    const base = uniforms.uWaveT.value === uniforms.uLockT.value ? VEINS.lockWave : VEINS.pressWave;
+    uniforms.uWaveAmp.value = base * (1 + 0.8 * energy);
+    uniforms.uWaveS.value = VEINS.waveS / (1 + 0.6 * energy);
   };
 
   const applyVisibility = (charge: number, rootsVis: number, jVis: number, brightnessMul = 1) => {

@@ -138,11 +138,12 @@ export function createComets(enabled: boolean, parent: THREE.Object3D, accent: T
   mesh.frustumCulled = false;
   parent.add(mesh);
 
-  // Pre-lock the comets accelerate with charge; post-lock they drift at idle.
+  // Pre-lock the comets accelerate with charge; post-lock they drift at idle
+  // and quicken with the energy of clicks.
   // Trail length follows speed (world units travelled in ~16 frames at 60fps),
   // shortened while the pointer moves so parallax doesn't smear them.
-  const update = (o: { dt: number; charge: number; locked: boolean; pointerMotion: number }) => {
-    const speedMul = o.locked ? 0.35 : 0.35 + o.charge * 3.2;
+  const update = (o: { dt: number; charge: number; energy: number; locked: boolean; pointerMotion: number }) => {
+    const speedMul = o.locked ? 0.35 + o.energy * 1.2 : 0.35 + o.charge * 3.2;
     clock += speedMul * Math.min(o.dt, 0.05);
     uniforms.uClock.value = clock;
     uniforms.uTrailK.value = speedMul * (16 / 60) * (1 - o.pointerMotion * 0.55);
