@@ -166,6 +166,10 @@ body {
   height: 100lvh;
   z-index: 0;
   translate: 0 calc(var(--p, 0) * 44lvh);
+  /* The veins run past the clip's top edge; sunk, that edge would slice them. */
+  --fade: calc(var(--p, 0) * 35%);
+  -webkit-mask-image: linear-gradient(to bottom, transparent, #000 var(--fade));
+  mask-image: linear-gradient(to bottom, transparent, #000 var(--fade));
   opacity: calc(1 - var(--p, 0) * 0.75);
 }
 
