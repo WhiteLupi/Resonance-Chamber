@@ -22,14 +22,12 @@ export function HeroVideo({ onCharge, onLock }: Props) {
     const loop = loopRef.current;
     if (!grow || !loop) return;
     let started = false;
-    let locked = false;
     let raf = 0;
 
     const follow = () => {
       const charge = Math.min(1, grow.currentTime / LOCK_AT_S);
       onCharge(charge);
       if (charge >= 1) {
-        locked = true;
         onLock();
         return;
       }
@@ -39,7 +37,9 @@ export function HeroVideo({ onCharge, onLock }: Props) {
       if (started) return;
       started = true;
       grow.play().catch(() => {});
-      // Started inside the gesture, so iOS lets it play later without one.
+      // Fetched only once wanted, and started inside the gesture so iOS lets
+      // it play later without one.
+      loop.load();
       loop.play().then(() => loop.pause(), () => {});
       raf = requestAnimationFrame(follow);
     };
@@ -47,7 +47,7 @@ export function HeroVideo({ onCharge, onLock }: Props) {
       if (e.key === 'Enter' && !(document.activeElement instanceof HTMLAnchorElement)) start();
     };
     const onEnded = () => {
-      if (!locked) onLock();
+      onLock();
       if (prefersReducedMotion()) return;
       loop.currentTime = 0;
       loop.play().then(() => {
@@ -70,7 +70,7 @@ export function HeroVideo({ onCharge, onLock }: Props) {
   return (
     <div className="hero-video" aria-hidden="true">
       <video ref={growRef} src="/hero/grow.mp4" poster="/hero/poster.jpg" muted playsInline preload="auto" />
-      <video ref={loopRef} src="/hero/loop.mp4" muted playsInline loop preload="auto" style={{ opacity: 0 }} />
+      <video ref={loopRef} src="/hero/loop.mp4" muted playsInline loop preload="none" style={{ opacity: 0 }} />
     </div>
   );
 }

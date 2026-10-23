@@ -87,6 +87,6 @@ ff([
   `[a][b]xfade=transition=fade:duration=${SEAM_S}:offset=${LOOP_S - SEAM_S}`,
   ...x264, join(OUT, 'loop.mp4'),
 ]);
-// rmSync(FRAMES) after a run you are happy with
+rmSync(FRAMES, { recursive: true, force: true });
 
 console.log(`LOCK_AT_S = ${(lockFrame / FPS).toFixed(3)}; grow ${(growFrames / FPS).toFixed(2)} s`);

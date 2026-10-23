@@ -13,7 +13,6 @@ import { Signature } from './hero/Signature'
 import { prefersReducedMotion } from './motion'
 import { createJourney } from './journey'
 import { HeroVideo } from './hero/HeroVideo'
-import { videoJourney } from './hero/videoJourney'
 import { MOBILE_MAX_W } from './hero/gl/constants'
 
 // Phones play the scene as recorded video: three.js stuttered on iOS. Decided
@@ -165,10 +164,9 @@ function App() {
       setProgress(p);
     };
 
-    const updateJourney = createJourney(locked, VIDEO_HERO)
+    const updateJourney = createJourney(locked)
     const computeJourney = () => {
-      const target = VIDEO_HERO ? videoJourney : sceneRef.current
-      if (target) updateJourney(target)
+      if (sceneRef.current) updateJourney(sceneRef.current)
     }
 
     // One frame, one batch of layout reads — for both progress and journey.

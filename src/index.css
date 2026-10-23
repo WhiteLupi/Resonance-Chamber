@@ -156,7 +156,8 @@ body {
 }
 
 /* Phone hero: the recorded scene. 100lvh, so the address bar collapsing never
-   rescales it. The journey (videoJourney) moves it per section via --vy/--vs/--vo/--fade. */
+   rescales it. Past the hero the seal drops from 36% of the frame to the
+   screen's centre and stays there; the sections' scrims carry legibility. */
 .hero-video {
   position: fixed;
   top: 0;
@@ -164,12 +165,18 @@ body {
   width: 100%;
   height: 100lvh;
   z-index: 0;
-  transform-origin: 50% 36%;
-  translate: 0 var(--vy, 0lvh);
-  scale: var(--vs, 1);
-  opacity: var(--vo, 1);
-  -webkit-mask-image: linear-gradient(to bottom, transparent, #000 var(--fade, 0%));
-  mask-image: linear-gradient(to bottom, transparent, #000 var(--fade, 0%));
+  translate: 0 calc(var(--p, 0) * 14lvh);
+}
+
+/* The veins run past the clip's top edge; dropped, that edge would slice them.
+   A gradient over it fades in with the drop — opacity only, no repaint. */
+.hero-video::after {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto;
+  height: 12%;
+  background: linear-gradient(#000, transparent);
+  opacity: var(--p, 0);
 }
 
 .hero-video video {
