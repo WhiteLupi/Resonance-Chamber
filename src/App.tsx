@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import Lenis from 'lenis'
 import type { HeroScene } from './hero/glScene'
 import { Hero } from './hero/Hero'
@@ -12,11 +12,26 @@ import { SectionHeader } from './hero/SectionHeader'
 import { Signature } from './hero/Signature'
 import { prefersReducedMotion } from './motion'
 import { createJourney } from './journey'
+import { HeroVideo } from './hero/HeroVideo'
+import { MOBILE_MAX_W } from './hero/gl/constants'
+
+// Phones play the scene as recorded video: three.js stuttered on iOS. Decided
+// once per load, like the layout the clips were recorded in.
+const VIDEO_HERO = window.innerWidth <= MOBILE_MAX_W
 
 // three.js ships in its own chunk, so the page paints before the engine loads.
 // The download starts as this module runs, alongside React's first render
 // instead of after it.
-const loadHero = import('./hero/glScene')
+const loadHero = VIDEO_HERO ? null : import('./hero/glScene')
+
+// Written per frame while charging, so only on its two readers: on <html> it
+// restyled the whole page every frame and stuttered phones.
+let chargeReaders: NodeListOf<HTMLElement> | null = null
+const writeCharge = (c: number) => {
+  chargeReaders ??= document.querySelectorAll<HTMLElement>('.hero-prompt, .charge-indicator')
+  const v = c.toFixed(4)
+  for (const el of chargeReaders) el.style.setProperty('--charge', v)
+}
 
 function App() {
   const stageRef = useRef<HTMLDivElement>(null)
@@ -25,10 +40,11 @@ function App() {
   const [overCore, setOverCore] = useState(false)
 
   const lenisRef = useRef<Lenis | null>(null)
+  const onVideoLock = useCallback(() => setLocked(true), [])
 
   useEffect(() => {
     const stage = stageRef.current
-    if (!stage) return
+    if (!stage || !loadHero) return
     let cancelled = false
     let teardown = () => {}
     loadHero.then(({ startHero }) => {
@@ -36,13 +52,7 @@ function App() {
       const scene = startHero(stage)
       sceneRef.current = scene
       const unsub = scene.onLock(() => setLocked(true))
-      // Written per frame while holding, so only on its two readers: on <html>
-      // it restyled the whole page every frame and stuttered phones.
-      const chargeReaders = document.querySelectorAll<HTMLElement>('.hero-prompt, .charge-indicator')
-      const unsubCharge = scene.onCharge((c) => {
-        const v = c.toFixed(4)
-        for (const el of chargeReaders) el.style.setProperty('--charge', v)
-      })
+      const unsubCharge = scene.onCharge(writeCharge)
       const unsubHover = scene.onHover(setOverCore)
       teardown = () => {
         sceneRef.current = null
@@ -67,7 +77,7 @@ function App() {
     window.scrollTo(0, 0)
     // Under reduced motion the browser's own scrolling is the right amount of
     // motion — no Lenis; the gate below still works (start() on null no-ops).
-    if (prefersReducedMotion()) return
+    if (prefersReducedMotion() || VIDEO_HERO) return
     // Glide: longer duration + a touch less wheel travel per notch so the
     // transition reads as a flowing scrub, not a couple of jumpy notches.
     const lenis = new Lenis({
@@ -196,12 +206,14 @@ function App() {
           feel.
         </p>
       </header>
-      <div ref={stageRef} className="gl-stage" aria-hidden="true" />
+      {VIDEO_HERO
+        ? <HeroVideo onCharge={writeCharge} onLock={onVideoLock} />
+        : <div ref={stageRef} className="gl-stage" aria-hidden="true" />}
       <ChargeIndicator locked={locked} />
       <SectionHeader locked={locked} />
       <Signature locked={locked} />
       <main>
-        <Hero locked={locked} />
+        <Hero locked={locked} touch={VIDEO_HERO} />
         <About />
         <Values />
         <Contact />

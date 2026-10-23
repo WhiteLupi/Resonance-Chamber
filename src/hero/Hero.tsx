@@ -2,6 +2,8 @@ import './hero.css';
 
 type HeroProps = {
   locked: boolean;
+  /** phones: a touch plays the recorded awakening instead of a hold */
+  touch: boolean;
 };
 
 // The canvas paints the seal and veins behind; once awake, the question stands
@@ -10,17 +12,17 @@ type HeroProps = {
 // ritual from the keyboard (App's lock gate listens window-wide). The prompt is
 // a real button so AT users find a labelled control, and focusing it reveals
 // the key hint.
-export function Hero({ locked }: HeroProps) {
+export function Hero({ locked, touch }: HeroProps) {
   return (
     <section id="hero" className={`hero-section ${locked ? 'hero-section--revealed' : ''}`}>
       <button
         type="button"
         className="hero-prompt"
-        aria-label="Hold Enter to wake the engine"
+        aria-label={touch ? 'Press Enter to wake the engine' : 'Hold Enter to wake the engine'}
         aria-hidden={locked}
         disabled={locked}
       >
-        HOLD
+        {touch ? 'TOUCH' : 'HOLD'}
       </button>
       <div className="hero-inscription">
         <div className="hero-inscription__bottom" aria-hidden={!locked}>

@@ -154,3 +154,27 @@ body {
   /* Fades in once, when the engine can draw its first frame (glScene). */
   transition: opacity 0.6s ease-out;
 }
+
+/* Phone hero: the recorded scene. 100lvh, so the address bar collapsing never
+   rescales it. Past the hero it settles into a faint backdrop, like the GL
+   seal's mobile route (rises toward the top, shrinks, dims). */
+.hero-video {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100lvh;
+  z-index: 0;
+  transform-origin: 50% 36%;
+  translate: 0 calc(var(--p, 0) * -12lvh);
+  scale: calc(1 - var(--p, 0) * 0.38);
+  opacity: calc(1 - var(--p, 0) * 0.75);
+}
+
+.hero-video video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
