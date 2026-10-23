@@ -186,3 +186,12 @@ body {
   height: 100%;
   object-fit: cover;
 }
+
+.hero-video__loop,
+.hero-video--looping video:first-child {
+  opacity: 0;
+}
+
+.hero-video--looping .hero-video__loop {
+  opacity: 1;
+}

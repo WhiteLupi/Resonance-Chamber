@@ -4,15 +4,16 @@
 //   npm run build && npx vite preview --port 4173 &
 //   PW=/path/to/playwright-core/index.mjs node scripts/record-hero-video.mjs
 //
-// Writes public/hero/{poster.jpg,grow.mp4,loop.mp4} and prints the lock time
-// that src/hero/HeroVideo.tsx needs as LOCK_AT_S.
+// Writes public/hero/{poster.jpg,grow.mp4,loop.mp4} and prints the hold and
+// lock times that src/hero/HeroVideo.tsx needs.
 import { execFileSync } from 'node:child_process';
 import { mkdirSync, rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 const { chromium } = await import(process.env.PW ?? 'playwright-core');
 
-const URL = process.env.URL ?? 'http://localhost:4173/';
+// ?hero-3d keeps the live scene at phone width instead of these very clips.
+const URL = process.env.URL ?? 'http://localhost:4173/?hero-3d';
 const FPS = 30;
 const LEAD_S = 0.2;
 const SETTLE_S = 3.0;
@@ -89,4 +90,4 @@ ff([
 ]);
 rmSync(FRAMES, { recursive: true, force: true });
 
-console.log(`LOCK_AT_S = ${(lockFrame / FPS).toFixed(3)}; grow ${(growFrames / FPS).toFixed(2)} s`);
+console.log(`HOLD_AT_S = ${LEAD_S}; LOCK_AT_S = ${(lockFrame / FPS).toFixed(3)}; grow ${(growFrames / FPS).toFixed(2)} s`);
