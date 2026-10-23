@@ -156,8 +156,7 @@ body {
 }
 
 /* Phone hero: the recorded scene. 100lvh, so the address bar collapsing never
-   rescales it. Past the hero it sinks, full width, until the seal sits near
-   the bottom edge (36% → 80%) as a faint backdrop. */
+   rescales it. The journey (videoJourney) moves it per section via --vy/--vs/--vo/--fade. */
 .hero-video {
   position: fixed;
   top: 0;
@@ -165,12 +164,12 @@ body {
   width: 100%;
   height: 100lvh;
   z-index: 0;
-  translate: 0 calc(var(--p, 0) * 44lvh);
-  /* The veins run past the clip's top edge; sunk, that edge would slice them. */
-  --fade: calc(var(--p, 0) * 35%);
-  -webkit-mask-image: linear-gradient(to bottom, transparent, #000 var(--fade));
-  mask-image: linear-gradient(to bottom, transparent, #000 var(--fade));
-  opacity: calc(1 - var(--p, 0) * 0.75);
+  transform-origin: 50% 36%;
+  translate: 0 var(--vy, 0lvh);
+  scale: var(--vs, 1);
+  opacity: var(--vo, 1);
+  -webkit-mask-image: linear-gradient(to bottom, transparent, #000 var(--fade, 0%));
+  mask-image: linear-gradient(to bottom, transparent, #000 var(--fade, 0%));
 }
 
 .hero-video video {

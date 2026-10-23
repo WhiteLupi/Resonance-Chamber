@@ -1,4 +1,6 @@
 import type { HeroScene } from './hero/glScene';
+
+export type JourneyTarget = Pick<HeroScene, 'setJourney' | 'pulse'>;
 import { ACCENT, MOBILE_MAX_W } from './hero/gl/constants';
 
 // Travelling seal: the route moves through the empty space in each section,
@@ -37,7 +39,8 @@ const toViewX = (x: number) => 50 + (x - 50) * Math.min(1, CONTENT_MAX / window.
 const ease = (t: number) => (t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2);
 
 // Returns the per-frame update: reads section positions, sets the seal's target.
-export function createJourney(locked: boolean) {
+// `video` is the phone's recorded hero, where only y, s and o apply.
+export function createJourney(locked: boolean, video: boolean) {
   // Pre-lock the seal sits dead centre inside the charge ring; once awake it
   // drifts left and the question takes the right.
   const HERO_X = locked ? 33 : 50;
@@ -71,16 +74,26 @@ export function createJourney(locked: boolean) {
     { id: 'contact', x: 50, y: 47, s: 0.55, o: 0.60, r: 270 },
   ];
 
+  // The recorded seal: down at the edge under the manifesto, gone while the
+  // values are read, back in the middle for the close.
+  const KEYS_VIDEO: Key[] = [
+    { id: 'hero', x: 50, y: 36, s: 1, o: 1, r: 0 },
+    { id: 'about', x: 50, y: 80, s: 1, o: 0.25, r: 0 },
+    { id: 'values', x: 50, y: 80, s: 1, o: 0, r: 0 },
+    { id: 'value-rest', x: 50, y: 80, s: 1, o: 0, r: 0 },
+    { id: 'contact', x: 50, y: 50, s: 0.9, o: 0.5, r: 0 },
+  ];
+
   let segment = '';
-  const enter = (scene: HeroScene, k: Key) => {
+  const enter = (scene: JourneyTarget, k: Key) => {
     if (k.id === segment) return;
     segment = k.id;
     if (k.pulse) scene.pulse();
   };
 
-  return (scene: HeroScene) => {
+  return (scene: JourneyTarget) => {
     const mobile = window.innerWidth <= MOBILE_MAX_W;
-    const activeKeys = mobile ? KEYS_MOBILE : KEYS;
+    const activeKeys = video ? KEYS_VIDEO : mobile ? KEYS_MOBILE : KEYS;
     const mid = window.innerHeight * (mobile ? 0.12 : 0.5);
     const secs = activeKeys
       .map((k) => ({ k, el: document.getElementById(k.id) }))
