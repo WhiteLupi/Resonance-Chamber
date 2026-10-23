@@ -1,5 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
-import Lenis from 'lenis'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import type { HeroScene } from './hero/glScene'
 import { Hero } from './hero/Hero'
 import { Navbar } from './hero/Navbar'
@@ -12,11 +11,28 @@ import { SectionHeader } from './hero/SectionHeader'
 import { Signature } from './hero/Signature'
 import { prefersReducedMotion } from './motion'
 import { createJourney } from './journey'
+import { HeroVideo } from './hero/HeroVideo'
+import { MOBILE_MAX_W } from './hero/gl/constants'
+
+// Phones play the scene as recorded video: three.js stuttered on iOS. Decided
+// once per load, like the layout the clips were recorded in. ?hero-3d keeps
+// the live scene at phone width, which is how the clips get recorded.
+const VIDEO_HERO = window.innerWidth <= MOBILE_MAX_W &&
+  !new URLSearchParams(window.location.search).has('hero-3d')
 
 // three.js ships in its own chunk, so the page paints before the engine loads.
 // The download starts as this module runs, alongside React's first render
 // instead of after it.
-const loadHero = import('./hero/glScene')
+const loadHero = VIDEO_HERO ? null : import('./hero/glScene')
+
+// Written per frame while charging, so only on its two readers — set on <html>
+// it would restyle the whole page each frame.
+let chargeReaders: NodeListOf<HTMLElement> | null = null
+const writeCharge = (c: number) => {
+  chargeReaders ??= document.querySelectorAll<HTMLElement>('.hero-prompt, .charge-indicator')
+  const v = c.toFixed(4)
+  for (const el of chargeReaders) el.style.setProperty('--charge', v)
+}
 
 function App() {
   const stageRef = useRef<HTMLDivElement>(null)
@@ -24,11 +40,13 @@ function App() {
   const [locked, setLocked] = useState(false)
   const [overCore, setOverCore] = useState(false)
 
-  const lenisRef = useRef<Lenis | null>(null)
+  const wakeRef = useRef<(() => void) | null>(null)
+  const onVideoLock = useCallback(() => setLocked(true), [])
+  const wake = useCallback(() => wakeRef.current?.(), [])
 
   useEffect(() => {
     const stage = stageRef.current
-    if (!stage) return
+    if (!stage || !loadHero) return
     let cancelled = false
     let teardown = () => {}
     loadHero.then(({ startHero }) => {
@@ -36,13 +54,7 @@ function App() {
       const scene = startHero(stage)
       sceneRef.current = scene
       const unsub = scene.onLock(() => setLocked(true))
-      // Written per frame while holding, so only on its two readers: on <html>
-      // it restyled the whole page every frame and stuttered phones.
-      const chargeReaders = document.querySelectorAll<HTMLElement>('.hero-prompt, .charge-indicator')
-      const unsubCharge = scene.onCharge((c) => {
-        const v = c.toFixed(4)
-        for (const el of chargeReaders) el.style.setProperty('--charge', v)
-      })
+      const unsubCharge = scene.onCharge(writeCharge)
       const unsubHover = scene.onHover(setOverCore)
       teardown = () => {
         sceneRef.current = null
@@ -58,51 +70,54 @@ function App() {
     }
   }, [])
 
-  // Lenis lifecycle — created stopped; the lock gate below decides when it
-  // runs. Always begin at the hero: paired with scrollRestoration='manual'
-  // (main.tsx), this guarantees the hold-ritual runs from the top on every
-  // load — a refresh deeper in the page can't strand the visitor at a scroll
-  // offset while the engine is still un-locked.
+  // Lenis arrives with the lock: until then the gate allows no scrolling at
+  // all. Reduced motion keeps the browser's own scrolling, and phones too —
+  // native touch scrolling is what iOS keeps smooth.
   useEffect(() => {
-    window.scrollTo(0, 0)
-    // Under reduced motion the browser's own scrolling is the right amount of
-    // motion — no Lenis; the gate below still works (start() on null no-ops).
-    if (prefersReducedMotion()) return
-    // Glide: longer duration + a touch less wheel travel per notch so the
-    // transition reads as a flowing scrub, not a couple of jumpy notches.
-    const lenis = new Lenis({
-      anchors: true,
-      duration: 1.5,
-      wheelMultiplier: 0.85,
-      easing: (t: number) => 1 - Math.pow(1 - t, 3),
-    })
-    lenis.stop()
-    lenisRef.current = lenis
-    let raf = 0
-    const tick = (time: number) => {
-      lenis.raf(time)
+    if (!locked || VIDEO_HERO || prefersReducedMotion()) return
+    let cancelled = false
+    let teardown = () => {}
+    import('lenis').then(({ default: Lenis }) => {
+      if (cancelled) return
+      // Glide: longer duration + a touch less wheel travel per notch so the
+      // transition reads as a flowing scrub, not a couple of jumpy notches.
+      const lenis = new Lenis({
+        anchors: true,
+        duration: 1.5,
+        wheelMultiplier: 0.85,
+        easing: (t: number) => 1 - Math.pow(1 - t, 3),
+      })
+      let raf = 0
+      const tick = (time: number) => {
+        lenis.raf(time)
+        raf = requestAnimationFrame(tick)
+      }
       raf = requestAnimationFrame(tick)
-    }
-    raf = requestAnimationFrame(tick)
+      teardown = () => {
+        cancelAnimationFrame(raf)
+        lenis.destroy()
+      }
+    })
     return () => {
-      cancelAnimationFrame(raf)
-      lenis.destroy()
-      lenisRef.current = null
+      cancelled = true
+      teardown()
     }
-  }, [])
+  }, [locked])
 
   // Lock gate — the whole pre-lock input policy in one place. No scroll until
   // the engine is activated: overflow:hidden stops wheel/touch, and since
   // Chromium still lets keyboard scrolling (Space, PageDown, End…) move an
   // overflow-hidden viewport, the gate swallows those keys too. Holding Enter
   // anywhere charges the ritual — the keyboard's version of holding the ball
-  // (links keep their Enter). On lock everything opens and Lenis takes over.
+  // (links keep their Enter); on phones it wakes the video. Always begin at
+  // the hero: paired with scrollRestoration='manual' (main.tsx), a refresh
+  // deeper in the page can't strand the visitor below a still-locked hero.
   useEffect(() => {
     if (locked) {
       document.body.style.overflow = ''
-      lenisRef.current?.start()
       return
     }
+    window.scrollTo(0, 0)
     document.body.style.overflow = 'hidden'
     const SCROLL_KEYS = new Set([
       ' ', 'PageDown', 'PageUp', 'End', 'Home', 'ArrowDown', 'ArrowUp',
@@ -111,7 +126,8 @@ function App() {
       if (SCROLL_KEYS.has(e.key)) e.preventDefault()
       if (e.key !== 'Enter' || e.repeat) return
       if (document.activeElement instanceof HTMLAnchorElement) return
-      sceneRef.current?.holdStart()
+      if (wakeRef.current) wakeRef.current()
+      else sceneRef.current?.holdStart()
     }
     const onKeyUp = (e: KeyboardEvent) => {
       if (e.key === 'Enter') sceneRef.current?.holdEnd()
@@ -196,12 +212,14 @@ function App() {
           feel.
         </p>
       </header>
-      <div ref={stageRef} className="gl-stage" aria-hidden="true" />
+      {VIDEO_HERO
+        ? <HeroVideo wakeRef={wakeRef} onCharge={writeCharge} onLock={onVideoLock} />
+        : <div ref={stageRef} className="gl-stage" aria-hidden="true" />}
       <ChargeIndicator locked={locked} />
       <SectionHeader locked={locked} />
       <Signature locked={locked} />
       <main>
-        <Hero locked={locked} />
+        <Hero locked={locked} onWake={VIDEO_HERO ? wake : undefined} />
         <About />
         <Values />
         <Contact />

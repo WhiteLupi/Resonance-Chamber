@@ -154,3 +154,44 @@ body {
   /* Fades in once, when the engine can draw its first frame (glScene). */
   transition: opacity 0.6s ease-out;
 }
+
+/* Phone hero: the recorded scene. 100lvh, so the address bar collapsing never
+   rescales it. Past the hero the seal drops from 36% of the frame to the
+   screen's centre and stays there; the sections' scrims carry legibility. */
+.hero-video {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100lvh;
+  z-index: 0;
+  translate: 0 calc(var(--p, 0) * 14lvh);
+}
+
+/* The veins run past the clip's top edge; dropped, that edge would slice them.
+   A gradient over it fades in with the drop — opacity only, no repaint. */
+.hero-video::after {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto;
+  height: 12%;
+  background: linear-gradient(#000, transparent);
+  opacity: var(--p, 0);
+}
+
+.hero-video video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.hero-video__loop,
+.hero-video--looping video:first-child {
+  opacity: 0;
+}
+
+.hero-video--looping .hero-video__loop {
+  opacity: 1;
+}
