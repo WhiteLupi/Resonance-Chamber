@@ -74,14 +74,11 @@ export function createJourney(locked: boolean, video: boolean) {
     { id: 'contact', x: 50, y: 47, s: 0.55, o: 0.60, r: 270 },
   ];
 
-  // The recorded seal: down at the edge under the manifesto, gone while the
-  // values are read, back in the middle for the close.
+  // The recorded seal leaves the hero for the centre of the screen and stays
+  // there at full strength; the sections' own scrims keep the copy legible.
   const KEYS_VIDEO: Key[] = [
     { id: 'hero', x: 50, y: 36, s: 1, o: 1, r: 0 },
-    { id: 'about', x: 50, y: 80, s: 1, o: 0.25, r: 0 },
-    { id: 'values', x: 50, y: 80, s: 1, o: 0, r: 0 },
-    { id: 'value-rest', x: 50, y: 80, s: 1, o: 0, r: 0 },
-    { id: 'contact', x: 50, y: 50, s: 0.9, o: 0.5, r: 0 },
+    { id: 'about', x: 50, y: 50, s: 1, o: 1, r: 0 },
   ];
 
   let segment = '';
