@@ -156,8 +156,8 @@ body {
 }
 
 /* Phone hero: the recorded scene. 100lvh, so the address bar collapsing never
-   rescales it. Past the hero it settles into a faint backdrop, like the GL
-   seal's mobile route (rises toward the top, shrinks, dims). */
+   rescales it. Past the hero it sinks, full width, until the seal sits near
+   the bottom edge (36% → 80%) as a faint backdrop. */
 .hero-video {
   position: fixed;
   top: 0;
@@ -165,9 +165,7 @@ body {
   width: 100%;
   height: 100lvh;
   z-index: 0;
-  transform-origin: 50% 36%;
-  translate: 0 calc(var(--p, 0) * -12lvh);
-  scale: calc(1 - var(--p, 0) * 0.38);
+  translate: 0 calc(var(--p, 0) * 44lvh);
   opacity: calc(1 - var(--p, 0) * 0.75);
 }
 
